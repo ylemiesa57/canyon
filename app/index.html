@@ -353,7 +353,7 @@
       </div>
       <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Manufacturability findings</div>
       <sc-for list="{{ findings }}" as="f" hint-placeholder-count="3">
-        <div style="border:1px solid var(--color-divider);border-left:3px solid var(--color-divider-strong);background:var(--color-surface);padding:14px 16px;margin-bottom:14px;transition:opacity .5s ease,transform .5s ease;{{ f.vis }};{{ f.rule }}">
+        <div sc-camel-on-click="{{ f.pick }}" style="border:1px solid var(--color-divider);border-left:3px solid var(--color-divider-strong);background:var(--color-surface);padding:14px 16px;margin-bottom:14px;cursor:pointer;transition:opacity .5s ease,transform .5s ease,box-shadow .2s ease;{{ f.vis }};{{ f.rule }};{{ f.selSt }}">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
             <span style="width:19px;height:19px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-size:11.5px;font-weight:700">{{ f.n }}</span>
             <span class="tag" style="{{ f.sevStyle }}">{{ f.sev }}</span>
@@ -368,7 +368,7 @@
             <div><div style="font-size:11.5px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">If changed</div><div style="font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;color:var(--color-accent-700)">{{ f.saving }}</div></div>
           </div>
           <div style="background:color-mix(in srgb,var(--color-text) 5%,transparent);padding:10px 12px;font-size:12.5px;line-height:1.45">{{ f.fix }}</div>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+          <div sc-camel-on-click="{{ f.noop }}" style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
             <sc-if value="{{ f.open }}" hint-placeholder-val="{{ true }}">
               <button sc-camel-on-click="{{ f.apply }}" class="btn btn-primary" style="padding:7px 12px;font-size:12px">Apply change and re-price</button>
               <button sc-camel-on-click="{{ f.dismiss }}" class="btn btn-secondary" style="padding:7px 12px;font-size:12px">Dismiss</button>

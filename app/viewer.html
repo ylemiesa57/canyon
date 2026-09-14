@@ -5,134 +5,276 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Canyon part viewer</title>
 <style>
-  /* Image-based part viewer: one or more rendered views with finding regions drawn on top.
-     Embed in an iframe. Drive it with postMessage (see the API at the bottom) or open with ?demo=1. */
-  :root { --bg: #f5f6f8; --surface: #fff; --ink: #1e2328; --muted: #6f7883; --line: rgba(30,35,40,.14); --accent: #c9612a; --bad: #b83a2f; --warn: #b7791f; --good: #2f7d4f; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #1e2328; --surface: #252b32; --ink: #e9ecef; --muted: #9aa4b0; --line: rgba(233,236,239,.16); --accent: #dc7439; --bad: #e0776b; --warn: #d9a441; --good: #7fb27a; } }
-  :root[data-theme="dark"] { --bg: #1e2328; --surface: #252b32; --ink: #e9ecef; --muted: #9aa4b0; --line: rgba(233,236,239,.16); --accent: #dc7439; --bad: #e0776b; --warn: #d9a441; --good: #7fb27a; }
+  /* Part viewer for an iframe: a 3D STL view with findings painted on the surface and pinned in space,
+     a drawing tab (PDF), and optional image views. Driven by postMessage; see the API at the bottom. */
+  :root { --bg: #f5f6f8; --surface: #fff; --ink: #1e2328; --muted: #6f7883; --line: rgba(30,35,40,.14); --accent: #c9612a; --bad: #b83a2f; --warn: #b7791f; --good: #2f7d4f; --low: #6f7883; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #1e2328; --surface: #252b32; --ink: #e9ecef; --muted: #9aa4b0; --line: rgba(233,236,239,.16); --accent: #dc7439; --bad: #e0776b; --warn: #d9a441; --good: #7fb27a; --low: #9aa4b0; } }
+  :root[data-theme="dark"] { --bg: #1e2328; --surface: #252b32; --ink: #e9ecef; --muted: #9aa4b0; --line: rgba(233,236,239,.16); --accent: #dc7439; --bad: #e0776b; --warn: #d9a441; --good: #7fb27a; --low: #9aa4b0; }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
-  body { background: var(--bg); color: var(--ink); font: 13px/1.45 "Archivo", "Helvetica Neue", Arial, sans-serif; display: flex; flex-direction: column; }
+  body { background: var(--bg); color: var(--ink); font: 13px/1.45 "Archivo", "Helvetica Neue", Arial, sans-serif; display: flex; flex-direction: column; overflow: hidden; }
   .bar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); flex: none; }
-  .bar button { border: 1px solid var(--line); background: transparent; color: var(--ink); font: 500 12px inherit; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+  .bar button, .bar label.file { border: 1px solid var(--line); background: transparent; color: var(--ink); font: 500 12px inherit; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
   .bar button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .bar .spacer { flex: 1; }
-  .bar .status { color: var(--muted); font-size: 12px; }
-  .stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; overflow: hidden; }
-  .stage img, .stage svg.base { max-width: 100%; max-height: 100%; display: block; }
-  .frame { position: relative; display: inline-block; }
-  .overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .overlay .region { pointer-events: auto; cursor: pointer; fill: transparent; stroke: transparent; stroke-width: 2; transition: fill 140ms ease, stroke 140ms ease; }
-  .overlay .region.high { stroke: var(--bad); stroke-dasharray: 5 4; fill: color-mix(in srgb, var(--bad) 14%, transparent); }
-  .overlay .region.medium { stroke: var(--warn); stroke-dasharray: 5 4; fill: color-mix(in srgb, var(--warn) 14%, transparent); }
-  .overlay .region.low { stroke: var(--muted); stroke-dasharray: 5 4; fill: color-mix(in srgb, var(--muted) 12%, transparent); }
-  .overlay .region:hover, .overlay .region.is-selected { stroke-dasharray: none; stroke-width: 2.5; }
-  .overlay .region.high.is-selected, .overlay .region.high:hover { fill: color-mix(in srgb, var(--bad) 28%, transparent); }
-  .overlay .region.medium.is-selected, .overlay .region.medium:hover { fill: color-mix(in srgb, var(--warn) 28%, transparent); }
-  .overlay .pin { pointer-events: none; font: 700 11px inherit; }
-  .overlay .pin circle { fill: var(--ink); }
-  .overlay .pin text { fill: var(--bg); text-anchor: middle; dominant-baseline: central; }
-  .legend { position: absolute; left: 10px; bottom: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .bar .status { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar input[type=file] { display: none; }
+  .stage { position: relative; flex: 1; min-height: 0; }
+  .stage > * { position: absolute; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  iframe.pdf { width: 100%; height: 100%; border: 0; background: #fff; }
+  .imgview { display: grid; place-items: center; }
+  .imgview img { max-width: 100%; max-height: 100%; }
+  .pins { pointer-events: none; overflow: hidden; }
+  .pin { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: opacity 120ms ease; }
+  .pin .dot { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); color: var(--ink); border: 2px solid var(--ink); font: 700 11px inherit; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  .pin.high .dot { border-color: var(--bad); } .pin.medium .dot { border-color: var(--warn); } .pin.low .dot { border-color: var(--low); }
+  .pin.is-selected .dot, .pin:hover .dot { background: var(--ink); color: var(--bg); }
+  .pin .lbl { background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; font-size: 12px; white-space: nowrap; opacity: 0; transform: translateX(-4px); transition: opacity 120ms ease, transform 120ms ease; }
+  .pin.is-selected .lbl, .pin:hover .lbl { opacity: 1; transform: none; }
+  .pin.behind { opacity: .3; }
+  .legend { position: absolute; left: 10px; bottom: 10px; display: flex; gap: 6px; flex-wrap: wrap; pointer-events: auto; }
   .legend button { border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 88%, transparent); color: var(--ink); font: 500 12px inherit; padding: 4px 9px; border-radius: 6px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
   .legend button[aria-pressed="true"] { border-color: var(--ink); }
   .legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-  .legend .high i { background: var(--bad); } .legend .medium i { background: var(--warn); } .legend .low i { background: var(--muted); }
-  .empty { color: var(--muted); text-align: center; padding: 24px; }
+  .legend .high i { background: var(--bad); } .legend .medium i { background: var(--warn); } .legend .low i { background: var(--low); }
+  .hint { position: absolute; right: 10px; bottom: 10px; color: var(--muted); font-size: 11.5px; pointer-events: none; }
+  .empty { display: grid; place-items: center; color: var(--muted); text-align: center; padding: 24px; }
+  .drop { outline: 2px dashed var(--accent); outline-offset: -8px; }
 </style>
 </head>
 <body>
 <div class="bar">
   <div id="views"></div>
   <span class="spacer"></span>
+  <label class="file" title="Open an STL from your computer">Open STL<input type="file" id="file" accept=".stl,model/stl"></label>
   <span class="status" id="status">No part loaded</span>
 </div>
-<div class="stage" id="stage"><div class="empty">Send a <code>load</code> message or open with <code>?demo=1</code>.</div></div>
+<div class="stage" id="stage"><div class="empty">Send a <code>load</code> message, open an STL, or add <code>?demo=1</code> to the URL.</div></div>
 
-<script>
-(function () {
-  const $ = (s) => document.querySelector(s);
-  let model = null, view = null, selected = null;
+<script type="module">
+import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js";
 
-  function render() {
-    const stage = $("#stage"), views = $("#views");
-    if (!model) return;
-    views.innerHTML = model.views.map((v) => `<button type="button" data-view="${v.id}" aria-pressed="${v.id === view}">${v.label}</button>`).join("");
-    views.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { view = b.dataset.view; render(); }));
-    const v = model.views.find((x) => x.id === view) || model.views[0];
-    const w = v.width || 1000, h = v.height || 750;
-    const regions = model.findings.flatMap((f) => (f.regions[v.id] || []).map((r, i) => ({ f, r, i })));
-    const base = v.src ? `<img src="${v.src}" width="${w}" height="${h}" alt="${v.label}">` : (v.svg || "");
-    stage.innerHTML = `<div class="frame">${base}
-      <svg class="overlay" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-        ${regions.map(({ f, r, i }) => {
-          const cls = `region ${f.sev.toLowerCase()}${selected === f.id ? " is-selected" : ""}`;
-          const shape = r.type === "circle" ? `<circle class="${cls}" data-id="${f.id}" cx="${r.cx}" cy="${r.cy}" r="${r.r}"><title>${f.title}</title></circle>`
-            : `<polygon class="${cls}" data-id="${f.id}" points="${r.points.map((p) => p.join(",")).join(" ")}"><title>${f.title}</title></polygon>`;
-          const c = r.type === "circle" ? [r.cx, r.cy - r.r] : r.points[0];
-          const pin = i === 0 ? `<g class="pin" transform="translate(${c[0]},${c[1]})"><circle r="10"></circle><text>${f.n}</text></g>` : "";
-          return shape + pin;
-        }).join("")}
-      </svg>
-      <div class="legend">${model.findings.map((f) => `<button type="button" class="${f.sev.toLowerCase()}" data-id="${f.id}" aria-pressed="${selected === f.id}"><i></i>${f.n} ${f.title}</button>`).join("")}</div>
-    </div>`;
-    stage.querySelectorAll(".region, .legend button").forEach((el) => {
-      el.addEventListener("click", () => select(el.dataset.id, true));
-      el.addEventListener("mouseenter", () => post({ type: "hover", id: el.dataset.id }));
+const $ = (s) => document.querySelector(s);
+const stage = $("#stage");
+const SEV = { high: "bad", medium: "warn", low: "low" };
+let model = null, view = null, selected = null, three = null;
+
+/* ── STL parsing: binary or ASCII, into a flat position array ── */
+function parseSTL(buf) {
+  const bytes = new Uint8Array(buf);
+  const isBinary = bytes.length >= 84 && bytes.length === 84 + 50 * new DataView(buf).getUint32(80, true);
+  if (isBinary) {
+    const dv = new DataView(buf), n = dv.getUint32(80, true), pos = new Float32Array(n * 9);
+    for (let i = 0; i < n; i++) { const o = 84 + i * 50 + 12; for (let k = 0; k < 9; k++) pos[i * 9 + k] = dv.getFloat32(o + k * 4, true); }
+    return pos;
+  }
+  const text = new TextDecoder().decode(bytes), out = [];
+  for (const m of text.matchAll(/vertex\s+([-\d.eE+]+)\s+([-\d.eE+]+)\s+([-\d.eE+]+)/g)) out.push(+m[1], +m[2], +m[3]);
+  return new Float32Array(out);
+}
+
+/* ── Colour helpers: CSS variables as three colours ── */
+const cssColor = (name) => new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#888");
+
+/* ── The 3D view ── */
+function build3D(positions) {
+  if (three) three.dispose();
+  const wrap = document.createElement("div"); wrap.className = "view3d";
+  stage.replaceChildren(wrap);
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+  catch (e) { wrap.innerHTML = '<div class="empty">3D needs WebGL, which this browser has turned off.</div>'; return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  wrap.appendChild(renderer.domElement);
+  const pins = document.createElement("div"); pins.className = "pins"; wrap.appendChild(pins);
+  const legend = document.createElement("div"); legend.className = "legend"; pins.appendChild(legend);
+  const hint = document.createElement("div"); hint.className = "hint"; hint.textContent = "Drag to orbit · Scroll to zoom · Shift-drag to pan · Click a pin"; pins.appendChild(hint);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 10000);
+  camera.up.set(0, 0, 1); // STL parts are z-up
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f96, 1.1));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(1, -1.2, 2); scene.add(key);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.5); fill.position.set(-1.5, 1, 0.5); scene.add(fill);
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geo.computeVertexNormals();
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox, size = new THREE.Vector3(), center = new THREE.Vector3();
+  bb.getSize(size); bb.getCenter(center);
+  const maxDim = Math.max(size.x, size.y, size.z) || 1;
+  const colors = new Float32Array(positions.length);
+  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.15, roughness: 0.62, flatShading: true });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.copy(center).negate();
+  scene.add(mesh);
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 25), new THREE.LineBasicMaterial({ transparent: true, opacity: 0.45 }));
+  edges.position.copy(mesh.position); scene.add(edges);
+  const grid = new THREE.GridHelper(maxDim * 3, 30); grid.rotation.x = Math.PI / 2; grid.position.z = -size.z / 2 - 0.01; grid.material.transparent = true; grid.material.opacity = 0.25; scene.add(grid);
+
+  // Findings: an anchor in model space (fractions of the bounding box, or absolute), plus a region to paint.
+  const anchors = [];
+  const toModel = (r) => {
+    const p = r.position ? new THREE.Vector3(...r.position) : new THREE.Vector3(bb.min.x + size.x * r.at[0], bb.min.y + size.y * r.at[1], bb.min.z + size.z * r.at[2]);
+    return p;
+  };
+  for (const f of model.findings) {
+    (f.regions || []).forEach((r, i) => {
+      const p = toModel(r);
+      anchors.push({ f, r, p, world: p.clone().add(mesh.position), pin: i === 0 });
     });
-    $("#status").textContent = `${model.name || "Part"} · ${model.findings.length} finding${model.findings.length === 1 ? "" : "s"} · ${v.label}`;
   }
-  function select(id, fromUser) {
-    selected = selected === id ? null : id;
-    render();
-    if (fromUser) post({ type: "select", id: selected });
+  function paint() {
+    const base = cssColor("--surface").lerp(cssColor("--ink"), 0.32);
+    const tri = new THREE.Vector3();
+    const n = positions.length / 9;
+    for (let i = 0; i < n; i++) {
+      tri.set((positions[i*9] + positions[i*9+3] + positions[i*9+6]) / 3, (positions[i*9+1] + positions[i*9+4] + positions[i*9+7]) / 3, (positions[i*9+2] + positions[i*9+5] + positions[i*9+8]) / 3);
+      let c = base;
+      for (const a of anchors) {
+        const inside = a.r.type === "box"
+          ? Math.abs(tri.x - a.p.x) <= (a.r.size[0] / 2) && Math.abs(tri.y - a.p.y) <= (a.r.size[1] / 2) && Math.abs(tri.z - a.p.z) <= (a.r.size[2] / 2)
+          : tri.distanceTo(a.p) <= (a.r.radius != null ? a.r.radius : maxDim * (a.r.radiusFrac || 0.06));
+        if (inside) { const sc = cssColor("--" + SEV[a.f.sev.toLowerCase()]); c = base.clone().lerp(sc, selected === a.f.id ? 0.85 : 0.55); }
+      }
+      for (let k = 0; k < 3; k++) { colors[i*9 + k*3] = c.r; colors[i*9 + k*3 + 1] = c.g; colors[i*9 + k*3 + 2] = c.b; }
+    }
+    geo.attributes.color.needsUpdate = true;
+    edges.material.color = cssColor("--ink");
+    legend.innerHTML = model.findings.map((f) => `<button type="button" class="${f.sev.toLowerCase()}" data-id="${f.id}" aria-pressed="${selected === f.id}"><i></i>${f.n} ${f.title}</button>`).join("");
+    legend.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => select(b.dataset.id, true)));
   }
-  function post(msg) { if (window.parent !== window) window.parent.postMessage(Object.assign({ source: "canyon-viewer" }, msg), "*"); }
-
-  // API: parent -> viewer
-  //   { type: "load", model: { name, views: [{ id, label, src | svg, width, height }], findings: [{ id, n, sev, title, regions: { [viewId]: [ {type:"polygon", points:[[x,y],...]} | {type:"circle", cx, cy, r} ] } }] } }
-  //   { type: "select", id }        highlight a finding (null clears)
-  //   { type: "view", id }          switch view
-  //   { type: "theme", value }      "dark" | "light" | ""
-  // viewer -> parent: { source: "canyon-viewer", type: "ready" | "select" | "hover", id }
-  window.addEventListener("message", (e) => {
-    const m = e.data || {};
-    if (m.type === "load") { model = m.model; view = model.views[0] && model.views[0].id; selected = null; render(); }
-    if (m.type === "select") { selected = m.id || null; render(); }
-    if (m.type === "view") { view = m.id; render(); }
-    if (m.type === "theme") { if (m.value) document.documentElement.dataset.theme = m.value; else delete document.documentElement.dataset.theme; }
+  // Pins as HTML, projected every frame; dimmed when the part is in front of them.
+  const pinEls = anchors.filter((a) => a.pin).map((a) => {
+    const el = document.createElement("div"); el.className = "pin " + a.f.sev.toLowerCase(); el.dataset.id = a.f.id;
+    el.innerHTML = `<span class="dot">${a.f.n}</span><span class="lbl">${a.f.title}</span>`;
+    el.addEventListener("click", (e) => { e.stopPropagation(); select(a.f.id, true); });
+    el.addEventListener("mouseenter", () => post({ type: "hover", id: a.f.id }));
+    pins.appendChild(el); return { a, el };
   });
-
-  // Demo: the Actuator Housing from the buyer mockup, drawn as SVG so no image asset is needed.
-  const demoPart = (fill, edge) => `<svg class="base" viewBox="0 0 1000 750" width="1000" height="750" xmlns="http://www.w3.org/2000/svg">
-    <rect width="1000" height="750" fill="${fill}"/>
-    <g fill="none" stroke="${edge}" stroke-width="2">
-      <path d="M150 560 L150 300 L420 180 L850 180 L850 440 L580 560 Z" fill="${fill}"/>
-      <path d="M150 300 L420 180 L850 180 L580 300 Z" fill="color-mix(in srgb, ${edge} 10%, ${fill})"/>
-      <path d="M580 300 L850 180 L850 440 L580 560 Z" fill="color-mix(in srgb, ${edge} 22%, ${fill})"/>
-      <path d="M150 300 L580 300 L580 560 L150 560 Z"/>
-      <rect x="200" y="350" width="120" height="160" rx="10"/><rect x="330" y="350" width="120" height="160" rx="10"/><rect x="460" y="350" width="90" height="160" rx="10"/>
-      <circle cx="245" cy="325" r="16"/><circle cx="515" cy="325" r="16"/>
-      <path d="M200 350 l-20 -8 M320 350 l-20 -8 M330 350 l-20 -8 M450 350 l-20 -8" stroke-dasharray="3 3"/>
-    </g></svg>`;
-  if (new URLSearchParams(location.search).get("demo") === "1") {
-    const dark = matchMedia("(prefers-color-scheme: dark)").matches;
-    const fill = dark ? "#252b32" : "#ffffff", edge = dark ? "#c3cad2" : "#363c44";
-    model = {
-      name: "HAL-4417 Actuator Housing",
-      views: [
-        { id: "iso", label: "ISO", svg: demoPart(fill, edge), width: 1000, height: 750 },
-        { id: "top", label: "Top", svg: demoPart(fill, edge).replace('viewBox="0 0 1000 750"', 'viewBox="0 0 1000 750"'), width: 1000, height: 750 },
-      ],
-      findings: [
-        { id: "f1", n: "1", sev: "High", title: "Wall thickness vs. pocket depth", regions: { iso: [{ type: "polygon", points: [[320, 350], [330, 350], [330, 510], [320, 510]] }, { type: "polygon", points: [[450, 350], [460, 350], [460, 510], [450, 510]] }], top: [{ type: "polygon", points: [[320, 350], [330, 350], [330, 510], [320, 510]] }] } },
-        { id: "f2", n: "2", sev: "Medium", title: "Ø0.3750 bores, half-thou band", regions: { iso: [{ type: "circle", cx: 245, cy: 325, r: 24 }, { type: "circle", cx: 515, cy: 325, r: 24 }], top: [{ type: "circle", cx: 245, cy: 325, r: 24 }] } },
-        { id: "f3", n: "3", sev: "Low", title: "Internal corners at R0.031", regions: { iso: [{ type: "circle", cx: 200, cy: 510, r: 18 }, { type: "circle", cx: 550, cy: 510, r: 18 }], top: [{ type: "circle", cx: 200, cy: 510, r: 18 }] } },
-      ],
-    };
-    view = "iso"; render();
+  const ray = new THREE.Raycaster(), v = new THREE.Vector3();
+  function placePins() {
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    for (const { a, el } of pinEls) {
+      v.copy(a.world).project(camera);
+      el.style.left = ((v.x + 1) / 2 * w) + "px"; el.style.top = ((1 - v.y) / 2 * h) + "px";
+      el.style.display = v.z > 1 ? "none" : "";
+      const dir = a.world.clone().sub(camera.position); const dist = dir.length(); ray.set(camera.position, dir.normalize());
+      const hit = ray.intersectObject(mesh, false)[0];
+      el.classList.toggle("behind", !!hit && hit.distance < dist - maxDim * 0.02);
+      el.classList.toggle("is-selected", selected === a.f.id);
+    }
   }
-  post({ type: "ready" });
-})();
+
+  // Orbit, zoom, pan
+  const target = new THREE.Vector3(0, 0, 0);
+  const sph = { r: maxDim * 2.2, theta: -0.9, phi: 1.05 };
+  const place = () => { camera.position.set(target.x + sph.r * Math.sin(sph.phi) * Math.cos(sph.theta), target.y + sph.r * Math.sin(sph.phi) * Math.sin(sph.theta), target.z + sph.r * Math.cos(sph.phi)); camera.lookAt(target); };
+  let drag = null;
+  renderer.domElement.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY, pan: e.shiftKey || e.button === 2, moved: 0 }; renderer.domElement.setPointerCapture(e.pointerId); });
+  renderer.domElement.addEventListener("pointermove", (e) => {
+    if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy);
+    if (drag.pan) { const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0), up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1); target.addScaledVector(right, -dx * sph.r * 0.0015).addScaledVector(up, dy * sph.r * 0.0015); }
+    else { sph.theta -= dx * 0.006; sph.phi = Math.min(Math.PI - 0.05, Math.max(0.05, sph.phi - dy * 0.006)); }
+    place();
+  });
+  renderer.domElement.addEventListener("pointerup", (e) => {
+    if (drag && drag.moved < 5) {
+      const r = renderer.domElement.getBoundingClientRect();
+      ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+      const hit = ray.intersectObject(mesh, false)[0];
+      let picked = null;
+      if (hit) { const local = hit.point.clone().sub(mesh.position); for (const a of anchors) { const rad = a.r.type === "box" ? Math.max(...a.r.size) : (a.r.radius != null ? a.r.radius : maxDim * (a.r.radiusFrac || 0.06)); if (local.distanceTo(a.p) <= rad * 1.2) { picked = a.f.id; break; } } }
+      select(picked, true);
+    }
+    drag = null;
+  });
+  renderer.domElement.addEventListener("contextmenu", (e) => e.preventDefault());
+  renderer.domElement.addEventListener("wheel", (e) => { e.preventDefault(); sph.r = Math.min(maxDim * 12, Math.max(maxDim * 0.4, sph.r * (1 + Math.sign(e.deltaY) * 0.1))); place(); }, { passive: false });
+
+  const resize = () => { const w = wrap.clientWidth || 1, h = wrap.clientHeight || 1; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); };
+  const ro = new ResizeObserver(resize); ro.observe(wrap);
+  resize(); place(); paint();
+  let raf = 0;
+  const frame = () => { renderer.render(scene, camera); placePins(); raf = requestAnimationFrame(frame); };
+  frame();
+  three = { repaint: paint, dispose: () => { cancelAnimationFrame(raf); ro.disconnect(); renderer.dispose(); geo.dispose(); } };
+  $("#status").textContent = `${model.name || "Part"} · ${(positions.length / 9).toLocaleString()} triangles · ${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}`;
+}
+
+/* ── Views bar, drawing tab, image tabs ── */
+function renderViews() {
+  const list = [];
+  if (model.stlPositions) list.push({ id: "3d", label: "3D" });
+  if (model.pdf) list.push({ id: "pdf", label: "Drawing" });
+  for (const v of model.views || []) list.push({ id: v.id, label: v.label });
+  $("#views").innerHTML = list.map((v) => `<button type="button" data-view="${v.id}" aria-pressed="${v.id === view}">${v.label}</button>`).join("");
+  $("#views").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { view = b.dataset.view; show(); }));
+}
+function show() {
+  renderViews();
+  if (view === "3d") { build3D(model.stlPositions); return; }
+  if (three) { three.dispose(); three = null; }
+  if (view === "pdf") { stage.innerHTML = `<iframe class="pdf" src="${model.pdf}#toolbar=0&view=FitH" title="Drawing"></iframe>`; $("#status").textContent = `${model.name || "Part"} · drawing`; return; }
+  const v = (model.views || []).find((x) => x.id === view);
+  if (v) { stage.innerHTML = `<div class="imgview"><img src="${v.src}" alt="${v.label}"></div>`; $("#status").textContent = `${model.name || "Part"} · ${v.label}`; }
+}
+function select(id, fromUser) {
+  selected = selected === id ? null : id;
+  if (three) three.repaint();
+  if (fromUser) post({ type: "select", id: selected });
+}
+function post(msg) { if (window.parent !== window) window.parent.postMessage(Object.assign({ source: "canyon-viewer" }, msg), "*"); }
+
+async function loadModel(m) {
+  model = m; selected = null;
+  if (m.stl) { $("#status").textContent = "Loading STL…"; const buf = await (await fetch(m.stl)).arrayBuffer(); model.stlPositions = parseSTL(buf); }
+  view = model.stlPositions ? "3d" : model.pdf ? "pdf" : (model.views && model.views[0] && model.views[0].id);
+  show();
+}
+async function loadFile(file) {
+  const buf = await file.arrayBuffer();
+  model = model || { name: file.name, findings: [] };
+  model.name = file.name; model.stlPositions = parseSTL(buf); view = "3d"; selected = null; show();
+}
+$("#file").addEventListener("change", (e) => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+stage.addEventListener("dragover", (e) => { e.preventDefault(); stage.classList.add("drop"); });
+stage.addEventListener("dragleave", () => stage.classList.remove("drop"));
+stage.addEventListener("drop", (e) => { e.preventDefault(); stage.classList.remove("drop"); const f = e.dataTransfer.files[0]; if (f) loadFile(f); });
+
+/* API, parent → viewer:
+     { type: "load", model: { name, stl: url, pdf: url, views: [{ id, label, src }],
+         findings: [{ id, n, sev: "High|Medium|Low", title,
+                      regions: [{ at: [fx, fy, fz] | position: [x, y, z], type: "sphere", radius | radiusFrac } | { ..., type: "box", size: [dx, dy, dz] }] }] } }
+     { type: "select", id }   { type: "view", id }   { type: "theme", value: "dark" | "light" | "" }
+   viewer → parent: { source: "canyon-viewer", type: "ready" | "select" | "hover", id } */
+window.addEventListener("message", (e) => {
+  const m = e.data || {};
+  if (m.type === "load") loadModel(m.model);
+  if (m.type === "select") { selected = m.id || null; if (three) three.repaint(); }
+  if (m.type === "view") { view = m.id; show(); }
+  if (m.type === "theme") { if (m.value) document.documentElement.dataset.theme = m.value; else delete document.documentElement.dataset.theme; if (three) three.repaint(); }
+});
+
+if (new URLSearchParams(location.search).get("demo") === "1") {
+  // The stand-in Actuator Housing: a 180 x 110 x 25 plate with three pockets. Anchors are bounding-box fractions,
+  // so they land on the same features when the real STL replaces the file.
+  loadModel({
+    name: "HAL-4417 Actuator Housing",
+    stl: "/assets/parts/actuator-housing.stl",
+    pdf: "/assets/parts/actuator-housing.pdf",
+    findings: [
+      { id: "f1", n: "1", sev: "High", title: "Wall thickness vs. pocket depth", regions: [{ at: [65 / 180, 0.5, 0.85], type: "box", size: [14, 64, 18] }, { at: [115 / 180, 0.5, 0.85], type: "box", size: [14, 64, 18] }] },
+      { id: "f2", n: "2", sev: "Medium", title: "Ø0.3750 bores, half-thou band", regions: [{ at: [35 / 180, 12 / 110, 1], type: "sphere", radius: 9 }, { at: [145 / 180, 12 / 110, 1], type: "sphere", radius: 9 }] },
+      { id: "f3", n: "3", sev: "Low", title: "Internal corners at R0.031", regions: [{ at: [20 / 180, 25 / 110, 0.7], type: "sphere", radius: 6 }, { at: [160 / 180, 85 / 110, 0.7], type: "sphere", radius: 6 }] },
+    ],
+  });
+}
+post({ type: "ready" });
 </script>
 </body>
 </html>
