@@ -18,8 +18,12 @@
     var a = new URLSearchParams(location.search).get("for");
     if (a !== "buyer" && a !== "shop") { try { a = localStorage.getItem("canyon-audience"); } catch (e) {} }
     document.documentElement.dataset.audience = (a === "shop") ? "shop" : "buyer";
+    document.documentElement.classList.add("js");
   })();
 </script>
+
+<!-- The canyon viewport sits behind the whole page. Scroll flies the camera down the canyon. -->
+<div class="viewport" aria-hidden="true"></div>
 
 <header class="nav">
   <div class="wrap">
@@ -36,6 +40,7 @@
     <nav aria-label="Primary">
       <ul class="nav-links">
         <li><a href="#how">How it works</a></li>
+        <li><a href="#demo">Demo</a></li>
         <li><a href="#pricing">Pricing</a></li>
       </ul>
     </nav>
@@ -51,291 +56,173 @@
 
 <main id="top">
 
-  <!-- Hero: the canyon being machined, live. Audience toggle switches the whole page. -->
+  <!-- Hero -->
   <section class="hero" aria-label="Introduction">
-    <div class="hero-canvas" aria-hidden="true"></div>
     <div class="wrap">
       <div class="hero-copy">
         <div class="seg" role="group" aria-label="Choose your version of this page">
           <button type="button" data-audience-pick="buyer" aria-pressed="true">I'm buying parts</button>
           <button type="button" data-audience-pick="shop" aria-pressed="false">I run a machine shop</button>
         </div>
-
         <div data-audience="buyer">
           <h1>The CAD file is the quote.</h1>
           <p class="hero-sub">Upload a STEP. Get a price and a lead time in minutes from a shop we've verified.</p>
           <div class="hero-actions">
             <a class="btn btn-primary btn-lg" href="#trial">Price a part</a>
-            <button class="btn btn-secondary btn-lg" type="button" data-open-demo>Watch the demo</button>
+            <a class="btn btn-secondary btn-lg" href="#demo">Watch the demo</a>
           </div>
         </div>
-
         <div data-audience="shop">
           <h1>Quote in four minutes, not forty.</h1>
           <p class="hero-sub">Canyon reads the model and drafts the quote in your rates. You sign off.</p>
           <div class="hero-actions">
             <a class="btn btn-primary btn-lg" href="#trial">Start free trial</a>
-            <button class="btn btn-secondary btn-lg" type="button" data-open-demo>Watch the demo</button>
+            <a class="btn btn-secondary btn-lg" href="#demo">Watch the demo</a>
           </div>
         </div>
+        <p class="hero-hint">Drag to orbit. Click the canyon to send a pulse.</p>
       </div>
-      <aside class="readout" aria-label="Live toolpath readout">
-        <dl>
-          <dt>Operation</dt><dd>Adaptive roughing</dd>
-          <dt>Pass</dt><dd id="ro-pass">1 of 22</dd>
-          <dt>Removed</dt><dd id="ro-removed">0.0 cm³</dd>
-          <dt>Cycle time</dt><dd id="ro-time">0.0 min</dd>
-          <dt>Price band</dt><dd>$412 to $486</dd>
-          <div class="bar"><i id="ro-bar"></i></div>
-        </dl>
-        <p class="readout-hint">Drag the viewport to orbit.</p>
-      </aside>
     </div>
   </section>
 
   <!-- Trusted by -->
-  <section class="trusted section-tight" aria-label="Customers">
+  <section class="section-tight" aria-label="Customers">
     <div class="wrap">
-      <p class="trusted-label">Trusted by</p>
-      <!-- Placeholder wordmarks. Swap for real customer logos as they sign. -->
-      <ul class="logo-row">
-        <li class="w1">Halvorsen</li>
-        <li class="w2">Cascade CNC</li>
-        <li class="w3">ironwood_tool</li>
-        <li class="w4">Redline Precision</li>
-        <li class="w5">Meridian</li>
-        <li class="w6">Sable Aerospace</li>
-      </ul>
+      <div class="panel trusted reveal">
+        <p class="trusted-label">Trusted by</p>
+        <!-- Placeholder wordmarks. Swap for real customer logos as they sign. -->
+        <ul class="logo-row">
+          <li class="w1">Halvorsen</li>
+          <li class="w2">Cascade CNC</li>
+          <li class="w3">ironwood_tool</li>
+          <li class="w4">Redline Precision</li>
+          <li class="w5">Meridian</li>
+          <li class="w6">Sable Aerospace</li>
+        </ul>
+      </div>
     </div>
   </section>
 
-  <!-- How it works: three steps, different per audience -->
+  <!-- Vista: the canyon shows through, one line of type -->
+  <div class="vista" aria-hidden="true">
+    <p class="vista-line reveal"><span data-audience="buyer">Every feature. Every setup. Priced from the model.</span><span data-audience="shop">Your rates. Your machines. Quoted from the model.</span></p>
+  </div>
+
+  <!-- How it works -->
   <section class="section" id="how">
     <div class="wrap">
-      <div class="section-head">
+      <div class="panel reveal">
         <h2>How it works</h2>
+        <ol class="steps" data-audience="buyer">
+          <li><h3>Upload the file</h3><p>STEP, IGES, or native CAD.</p></li>
+          <li><h3>See the price</h3><p>A price band and a lead time in minutes.</p></li>
+          <li><h3>Approve the match</h3><p>Your agent negotiates. You pick the shop.</p></li>
+        </ol>
+        <ol class="steps" data-audience="shop">
+          <li><h3>Forward the RFQ</h3><p>Email it in or drop the file.</p></li>
+          <li><h3>Check the draft</h3><p>Costed in your rates and setups.</p></li>
+          <li><h3>Send the quote</h3><p>Four minutes on average.</p></li>
+        </ol>
       </div>
-      <ol class="steps" data-audience="buyer">
-        <li><h3>Upload the file</h3><p>STEP, IGES, or native CAD.</p></li>
-        <li><h3>See the price</h3><p>A price band and a lead time, feature by feature.</p></li>
-        <li><h3>Approve the match</h3><p>Your agent negotiates with verified shops. You pick the winner.</p></li>
-      </ol>
-      <ol class="steps" data-audience="shop">
-        <li><h3>Forward the RFQ</h3><p>Email it in or drop the file.</p></li>
-        <li><h3>Check the draft</h3><p>Every feature costed in your rates and setups.</p></li>
-        <li><h3>Send the quote</h3><p>Four minutes on average. Cold RFQs included.</p></li>
-      </ol>
     </div>
   </section>
 
-  <!-- Product: the estimator, shared by both audiences -->
-  <section class="section section-deep" id="product">
+  <!-- Demo video -->
+  <section class="section" id="demo">
     <div class="wrap">
-      <div class="section-head">
-        <h2><span data-audience="buyer">See what each feature costs</span><span data-audience="shop">Every feature, costed in your rates</span></h2>
-        <p>Click a feature. Tighten the bore tolerance and watch the price move.</p>
-      </div>
-      <div class="split">
-        <figure class="drawing" aria-label="Drawing of bracket BRK-2041 with extracted features">
-          <svg viewBox="0 0 660 400" role="img" aria-labelledby="drawing-title">
-            <title id="drawing-title">Bracket BRK-2041, 180 by 110 mm, with pocket, bore, slot, and four clearance holes</title>
-            <g stroke="#56606c" stroke-width="1" fill="none">
-              <path d="M50 16v10M590 16v10M50 21h540"/>
-              <path d="M50 21l7-3v6zM590 21l-7-3v6z" fill="#56606c" stroke="none"/>
-              <path d="M604 35h10M604 365h10M609 35v330"/>
-              <path d="M609 35l-3 7h6zM609 365l-3-7h6z" fill="#56606c" stroke="none"/>
-            </g>
-            <text x="320" y="13" fill="#9aa4b0" font-size="11" text-anchor="middle" font-family="IBM Plex Mono, monospace">180</text>
-            <text x="628" y="204" fill="#9aa4b0" font-size="11" font-family="IBM Plex Mono, monospace">110</text>
-            <g class="feature" data-feature="stock" tabindex="0" role="button" aria-label="Stock and facing">
-              <rect class="fill" x="50" y="35" width="540" height="330" rx="9" fill="rgba(255,255,255,0.02)"/>
-              <rect class="edge" x="50" y="35" width="540" height="330" rx="9" fill="none" stroke="#c9d0d8" stroke-width="1.6"/>
-            </g>
-            <g class="feature" data-feature="fillet" tabindex="0" role="button" aria-label="R3 outside corners">
-              <g class="fill" fill="transparent">
-                <circle cx="59" cy="44" r="14"/><circle cx="581" cy="44" r="14"/><circle cx="59" cy="356" r="14"/><circle cx="581" cy="356" r="14"/>
-              </g>
-              <g class="edge" fill="none" stroke="#8593a8" stroke-width="1.6">
-                <path d="M50 44a9 9 0 0 1 9-9M581 35a9 9 0 0 1 9 9M590 356a9 9 0 0 1-9 9M59 365a9 9 0 0 1-9-9"/>
-              </g>
-            </g>
-            <g class="feature" data-feature="pocket" tabindex="0" role="button" aria-label="Through pocket 62 by 34 mm">
-              <rect class="fill" x="96" y="112" width="186" height="102" rx="15" fill="rgba(255,255,255,0.03)"/>
-              <rect class="edge" x="96" y="112" width="186" height="102" rx="15" fill="none" stroke="#c9d0d8" stroke-width="1.4"/>
-              <path d="M96 112l186 102M282 112L96 214" stroke="#3b434d" stroke-width="1" fill="none"/>
-            </g>
-            <g class="feature" data-feature="slot" tabindex="0" role="button" aria-label="Slot 8 by 40 mm">
-              <rect class="fill" x="318" y="140" width="24" height="120" rx="12" fill="rgba(255,255,255,0.03)"/>
-              <rect class="edge" x="318" y="140" width="24" height="120" rx="12" fill="none" stroke="#c9d0d8" stroke-width="1.4"/>
-              <path d="M330 130v140" stroke="#3b434d" stroke-width="1" stroke-dasharray="6 3 1 3"/>
-            </g>
-            <g class="feature" data-feature="bore" tabindex="0" role="button" aria-label="Bore 20 mm H7">
-              <circle class="fill" cx="470" cy="200" r="30" fill="rgba(255,255,255,0.03)"/>
-              <circle class="edge" cx="470" cy="200" r="30" fill="none" stroke="#c9d0d8" stroke-width="1.4"/>
-              <path d="M430 200h80M470 160v80" stroke="#3b434d" stroke-width="1" stroke-dasharray="6 3 1 3"/>
-              <path d="M492 178l40-34h58" stroke="#8593a8" stroke-width="1" fill="none"/>
-            </g>
-            <text x="536" y="139" fill="#9aa4b0" font-size="11" font-family="IBM Plex Mono, monospace">Ø20 H7</text>
-            <g class="feature" data-feature="holes" tabindex="0" role="button" aria-label="Four 6.6 mm clearance holes">
-              <g class="fill" fill="rgba(255,255,255,0.03)">
-                <circle cx="82" cy="67" r="10"/><circle cx="558" cy="67" r="10"/><circle cx="82" cy="333" r="10"/><circle cx="558" cy="333" r="10"/>
-              </g>
-              <g class="edge" fill="none" stroke="#c9d0d8" stroke-width="1.4">
-                <circle cx="82" cy="67" r="10"/><circle cx="558" cy="67" r="10"/><circle cx="82" cy="333" r="10"/><circle cx="558" cy="333" r="10"/>
-              </g>
-              <g stroke="#3b434d" stroke-width="1" stroke-dasharray="4 2 1 2">
-                <path d="M68 67h28M82 53v28M544 67h28M558 53v28M68 333h28M82 319v28M544 333h28M558 319v28"/>
-              </g>
-            </g>
-            <text x="102" y="60" fill="#9aa4b0" font-size="11" font-family="IBM Plex Mono, monospace">4x Ø6.6</text>
-            <text x="120" y="250" fill="#9aa4b0" font-size="11" font-family="IBM Plex Mono, monospace">62 x 34 THRU</text>
-          </svg>
-          <figcaption class="drawing-caption">
-            <span>BRK-2041 rev C</span>
-            <span>6061-T6, 12.7 mm plate</span>
-            <span>qty 25</span>
-          </figcaption>
-        </figure>
-        <div>
-          <ul class="feature-list" id="feature-list" aria-label="Extracted features and cost"></ul>
-          <div class="total">
-            <span class="label">Price band, qty 25</span>
-            <span class="band" id="total-band">$0</span>
-            <span class="lead"><span id="total-unit"></span>. Lead time <strong id="total-lead"></strong>.</span>
-            <p class="lead" id="tol-note"></p>
-          </div>
+      <div class="panel reveal">
+        <h2>Canyon in two minutes</h2>
+        <!-- Set data-src to the embed URL (YouTube or Vimeo) when the walkthrough exists. -->
+        <div class="video" id="video" data-src="">
+          <button class="video-poster" type="button" id="video-play" aria-label="Play the demo video">
+            <span class="play" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 22 22" fill="currentColor"><path d="M6 3l13 8-13 8z"/></svg>
+            </span>
+            <span class="video-caption">Upload, price, negotiate, match</span>
+          </button>
+          <p class="video-note" id="video-note" hidden>The walkthrough is being recorded. Scroll on to see the agents in action.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Buyers: agent negotiation -->
-  <section class="section" id="negotiation" data-audience="buyer">
+  <!-- Vista -->
+  <div class="vista" aria-hidden="true">
+    <p class="vista-line reveal">Then the agents talk.</p>
+  </div>
+
+  <!-- Animated back and forth -->
+  <section class="section" id="exchange">
     <div class="wrap">
-      <div class="section-head">
-        <h2>Your agent negotiates. You approve.</h2>
-        <p>Set a target price and a lead time. Verified shops answer in rounds.</p>
-      </div>
-      <div class="negotiation">
-        <div class="chart-card">
-          <div class="chart-toolbar">
-            <div class="chart-legend">
-              <span style="color:#dc7439">Cascade CNC</span>
-              <span style="color:#8593a8">Halvorsen</span>
-              <span style="color:#5f6d80">Ironwood</span>
-            </div>
-            <button class="btn btn-secondary" type="button" id="neg-run">Run negotiation</button>
+      <div class="panel reveal">
+        <h2><span data-audience="buyer">Your agent negotiates. You approve.</span><span data-audience="shop">Your agent answers while you're at the machine.</span></h2>
+        <div class="thread" id="thread" aria-live="off">
+          <div class="thread-head">
+            <span class="side left"><span data-audience="buyer">Your agent</span><span data-audience="shop">Buyer agent</span></span>
+            <span class="offer" id="offer">Offer</span>
+            <span class="side right"><span data-audience="buyer">Cascade CNC</span><span data-audience="shop">Your agent</span></span>
           </div>
-          <svg id="neg-chart" role="img" aria-label="Offers per part from three shops converging toward the buyer target over five rounds"></svg>
+          <ol class="messages" id="messages">
+            <li class="msg left" data-offer="$440 target"><span>Target $440. Need it in 8 days.</span></li>
+            <li class="msg right" data-offer="$489"><span>$489 at 7 days.</span></li>
+            <li class="msg left" data-offer="$455"><span>$455 if the anodize comes off.</span></li>
+            <li class="msg right" data-offer="$469"><span>$469, anodize off. Good for 48 hours.</span></li>
+            <li class="msg left" data-offer="$461"><span>$461 and we sign today.</span></li>
+            <li class="msg right" data-offer="$461"><span>$461 at 7 days. Done.</span></li>
+            <li class="msg match" data-offer="Matched"><span>Matched. Cascade CNC, $461 per part, 7 days.</span></li>
+          </ol>
         </div>
-        <ol class="transcript" id="transcript" aria-live="polite" aria-label="Negotiation transcript"></ol>
       </div>
     </div>
   </section>
 
-  <!-- Shops: the verified profile -->
-  <section class="section" id="supply" data-audience="shop">
+  <!-- Pricing -->
+  <section class="section" id="pricing">
     <div class="wrap">
-      <div class="section-head">
-        <h2>Your verified profile brings the work</h2>
-        <p>Buyers filter on what we've verified. Toggle a requirement to see who gets the job.</p>
-      </div>
-      <div class="chips" role="group" aria-label="Part requirements">
-        <button class="chip" type="button" aria-pressed="true" data-cap="tol005">Holds ±0.005 mm</button>
-        <button class="chip" type="button" aria-pressed="false" data-cap="as9100">AS9100</button>
-        <button class="chip" type="button" aria-pressed="false" data-cap="5axis">5-axis</button>
-        <button class="chip" type="button" aria-pressed="false" data-cap="env500">Envelope over 500 mm</button>
-        <button class="chip" type="button" aria-pressed="false" data-cap="lead7">Lead 7 days or less</button>
-        <button class="chip" type="button" aria-pressed="false" data-cap="anodize">Anodize in house</button>
-      </div>
-      <!-- Placeholder shops. Verified profiles will populate this from the capability database. -->
-      <ul class="shops" id="shops">
-        <li data-caps="tol005 as9100 5axis lead7">
-          <span class="shop-name">Cascade CNC <span class="shop-loc">Bend, OR</span></span>
-          <span class="caps"><span data-cap="tol005">±0.005</span><span data-cap="as9100">AS9100</span><span data-cap="5axis">5-axis</span><span data-cap="lead7">7 day</span></span>
-          <span class="queue">Queue <strong>58%</strong></span>
-        </li>
-        <li data-caps="tol005 env500 anodize">
-          <span class="shop-name">Halvorsen Machine <span class="shop-loc">Duluth, MN</span></span>
-          <span class="caps"><span data-cap="tol005">±0.005</span><span data-cap="env500">1,020 mm</span><span data-cap="anodize">anodize</span></span>
-          <span class="queue">Queue <strong>71%</strong></span>
-        </li>
-        <li data-caps="as9100 5axis env500 lead7">
-          <span class="shop-name">Sable Aerospace <span class="shop-loc">Wichita, KS</span></span>
-          <span class="caps"><span data-cap="as9100">AS9100</span><span data-cap="5axis">5-axis</span><span data-cap="env500">760 mm</span><span data-cap="lead7">7 day</span></span>
-          <span class="queue">Queue <strong>84%</strong></span>
-        </li>
-        <li data-caps="tol005 lead7 anodize">
-          <span class="shop-name">Redline Precision <span class="shop-loc">Tempe, AZ</span></span>
-          <span class="caps"><span data-cap="tol005">±0.005</span><span data-cap="lead7">7 day</span><span data-cap="anodize">anodize</span></span>
-          <span class="queue">Queue <strong>39%</strong></span>
-        </li>
-        <li data-caps="tol005 as9100 env500">
-          <span class="shop-name">Ironwood Tool and Die <span class="shop-loc">Erie, PA</span></span>
-          <span class="caps"><span data-cap="tol005">±0.005</span><span data-cap="as9100">AS9100</span><span data-cap="env500">640 mm</span></span>
-          <span class="queue">Queue <strong>66%</strong></span>
-        </li>
-        <li data-caps="5axis lead7">
-          <span class="shop-name">Meridian Fab <span class="shop-loc">Greenville, SC</span></span>
-          <span class="caps"><span data-cap="5axis">5-axis</span><span data-cap="lead7">7 day</span></span>
-          <span class="queue">Queue <strong>47%</strong></span>
-        </li>
-      </ul>
-      <p class="match-count" id="match-count"></p>
-    </div>
-  </section>
-
-  <!-- Pricing: one plan per audience -->
-  <section class="section section-deep" id="pricing">
-    <div class="wrap">
-      <div class="section-head">
+      <div class="panel reveal">
         <h2>Pricing</h2>
-      </div>
-      <!-- Placeholder prices. -->
-      <div class="plan-single" data-audience="buyer">
-        <div class="price">Free to price <small>5% when a part ships</small></div>
-        <p>Upload as many parts as you like. You pay only on the parts you order.</p>
-        <a class="btn btn-primary btn-lg" href="#trial">Price a part</a>
-      </div>
-      <div class="plan-single" data-audience="shop">
-        <div class="price">$390 <small>per seat, per month</small></div>
-        <p>Unlimited RFQs through the estimator. Fourteen days free, no card.</p>
-        <a class="btn btn-primary btn-lg" href="#trial">Start free trial</a>
+        <!-- Placeholder prices. -->
+        <div class="plan-single" data-audience="buyer">
+          <div class="price">Free to price <small>5% when a part ships</small></div>
+          <a class="btn btn-primary btn-lg" href="#trial">Price a part</a>
+        </div>
+        <div class="plan-single" data-audience="shop">
+          <div class="price">$390 <small>per seat, per month. Fourteen days free.</small></div>
+          <a class="btn btn-primary btn-lg" href="#trial">Start free trial</a>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- Trial -->
   <section class="section" id="trial">
-    <div class="wrap trial">
-      <div>
-        <h2><span data-audience="buyer">Price your first part</span><span data-audience="shop">Start your free trial</span></h2>
-        <p class="trial-sub"><span data-audience="buyer">Sign in, drop the file, and read the price.</span><span data-audience="shop">Fourteen days with your own parts and your own rates.</span></p>
-      </div>
-      <form class="form" id="trial-form" novalidate>
-        <div class="form-fields" style="display:grid;gap:16px">
-          <div class="field">
-            <label for="trial-email">Work email</label>
-            <input id="trial-email" name="email" type="email" autocomplete="email" placeholder="you@shop.com" required>
-            <span class="error">Enter a valid email address.</span>
-          </div>
-          <div class="field">
-            <label for="trial-company">Company</label>
-            <input id="trial-company" name="company" type="text" autocomplete="organization" placeholder="Halvorsen Machine">
-          </div>
-          <div class="field">
-            <span class="field label" style="font-size:.9rem;font-weight:600">I am</span>
-            <div class="radio-row">
-              <label><input type="radio" name="role" value="buyer" id="role-buyer" checked> Buying parts</label>
-              <label><input type="radio" name="role" value="shop" id="role-shop"> A machine shop</label>
+    <div class="wrap">
+      <div class="panel trial reveal">
+        <div>
+          <h2><span data-audience="buyer">Price your first part</span><span data-audience="shop">Start your free trial</span></h2>
+          <p class="trial-sub"><span data-audience="buyer">Sign in, drop the file, read the price.</span><span data-audience="shop">Fourteen days with your own parts and rates.</span></p>
+        </div>
+        <form class="form" id="trial-form" novalidate>
+          <div class="form-fields" style="display:grid;gap:16px">
+            <div class="field">
+              <label for="trial-email">Work email</label>
+              <input id="trial-email" name="email" type="email" autocomplete="email" placeholder="you@shop.com" required>
+              <span class="error">Enter a valid email address.</span>
             </div>
+            <div class="field">
+              <span class="label" style="font-size:.9rem;font-weight:600">I am</span>
+              <div class="radio-row">
+                <label><input type="radio" name="role" value="buyer" id="role-buyer" checked> Buying parts</label>
+                <label><input type="radio" name="role" value="shop" id="role-shop"> A machine shop</label>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-lg" type="submit"><span data-audience="buyer">Price a part</span><span data-audience="shop">Start free trial</span></button>
           </div>
-          <button class="btn btn-primary btn-lg" type="submit"><span data-audience="buyer">Price a part</span><span data-audience="shop">Start free trial</span></button>
-        </div>
-        <div class="form-done" role="status">
-          <strong>Check your inbox.</strong> We sent a sign-in link to <span id="done-email"></span>.
-        </div>
-      </form>
+          <div class="form-done" role="status">
+            <strong>Check your inbox.</strong> We sent a sign-in link to <span id="done-email"></span>.
+          </div>
+        </form>
+      </div>
     </div>
   </section>
 
@@ -351,24 +238,6 @@
     </ul>
   </div>
 </footer>
-
-<dialog class="demo" id="demo-dialog" aria-labelledby="demo-title">
-  <div class="demo-body">
-    <div class="demo-head">
-      <h3 id="demo-title">Canyon in two minutes</h3>
-      <button class="btn btn-ghost" type="button" data-close-demo>Close</button>
-    </div>
-    <!-- Replace this poster with the recorded walkthrough when it exists. -->
-    <div class="demo-poster">
-      <div>
-        <div class="play" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor"><path d="M6 3l13 8-13 8z"/></svg>
-        </div>
-        <p>The recorded walkthrough lands here. Until then, every demo on this page is live. Scroll down and try them.</p>
-      </div>
-    </div>
-  </div>
-</dialog>
 
 <script type="module" src="js/main.js"></script>
 </body>
