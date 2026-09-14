@@ -158,53 +158,148 @@
       <sc-if value="{{ isCost }}" hint-placeholder-val="{{ false }}">
         <div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
-            <div><h6 style="color:var(--color-accent);margin:0 0 6px">Costing</h6><h2 style="margin:0">BRKT-001 <span class="tnum" style="color:var(--color-neutral-500);font-weight:400">$54.32 at qty 10</span></h2></div>
-            <div style="display:flex;gap:var(--space-3);align-items:center">
-              <div class="seg">
-                <button sc-camel-on-click="{{ setFeature }}" class="seg-opt" style="border:0;font:inherit;color:inherit;background:{{ gFeatureSt }}">Feature</button>
-                <button sc-camel-on-click="{{ setOp }}" class="seg-opt" style="border:0;font:inherit;color:inherit;background:{{ gOpSt }}">Operation</button>
-                <button sc-camel-on-click="{{ setPart }}" class="seg-opt" style="border:0;font:inherit;color:inherit;background:{{ gPartSt }}">Part</button>
-              </div>
-              <button sc-camel-on-click="{{ goQuote }}" class="btn btn-primary">Build quote</button>
-            </div>
+            <div><h6 style="color:var(--color-accent);margin:0 0 6px">Costing</h6><h2 style="margin:0">BRKT-001 <span class="tnum" style="color:var(--color-neutral-500);font-weight:400">{{ unitCost }} at qty 10</span></h2></div>
+            <button sc-camel-on-click="{{ goQuote }}" class="btn btn-primary">Build quote</button>
           </div>
           <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
-          <div style="display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,1fr);gap:var(--space-6);align-items:start">
-            <table class="table">
-              <thead><tr><th>Operation</th><th>Resource</th><th>Hours</th><th>Rate</th><th>Cost</th><th style="width:130px">Share</th></tr></thead>
-              <tbody sc-each="{{ costOps }}" sc-as="o">
-                <tr>
-                  <td style="font-weight:600">{{ o.name }}<div style="font-weight:400;font-size:12px;color:var(--color-neutral-600)">{{ o.detail }}</div></td>
-                  <td style="color:var(--color-neutral-700);white-space:nowrap">{{ o.resource }}</td>
-                  <td class="tnum">{{ o.hours }}</td><td class="tnum">{{ o.rate }}</td><td class="tnum" style="font-weight:600">{{ o.cost }}</td>
-                  <td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:6px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:100%;width:{{ o.pct }};background:{{ o.bar }}"></div></div><span class="tnum" style="font-size:11px;color:var(--color-neutral-600)">{{ o.pct }}</span></div></td>
-                </tr>
-                <tr sc-each="{{ o.features }}" sc-as="f" sc-when="{{ showFeatures }}" style="font-size:12.5px;color:var(--color-neutral-700)">
-                  <td style="padding-left:28px">{{ f.name }}<div style="font-size:11.5px;color:var(--color-neutral-600)">{{ f.detail }}</div></td>
-                  <td style="white-space:nowrap">{{ f.tool }}</td>
-                  <td class="tnum">{{ f.hours }}</td><td class="tnum">{{ f.rate }}</td><td class="tnum">{{ f.cost }}</td>
-                  <td class="tnum" style="font-size:11px">{{ f.pct }}</td>
-                </tr>
-              </tbody>
-            </table>
-            <div>
-              <div style="border-top:2px solid var(--color-text);padding-top:var(--space-3)">
-                <h5 style="margin:0 0 var(--space-2)">Unit cost by quantity</h5>
-                <sc-for list="{{ qtyCurve }}" as="q" hint-placeholder-count="5">
-                  <div style="display:grid;grid-template-columns:32px 1fr 70px;gap:10px;align-items:center;font-size:12.5px;padding:5px 0">
-                    <span class="tnum" style="color:var(--color-neutral-600)">{{ q.qty }}</span>
-                    <div style="height:8px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:100%;width:{{ q.w }};background:var(--color-accent)"></div></div>
-                    <span class="tnum" style="text-align:right;font-weight:600">{{ q.cost }}</span>
-                  </div>
-                </sc-for>
-              </div>
-              <div style="border-top:2px solid var(--color-text);padding-top:var(--space-3);margin-top:var(--space-4)">
-                <h5 style="margin:0 0 var(--space-2)">Levers</h5>
-                <sc-for list="{{ levers }}" as="l" hint-placeholder-count="4">
-                  <div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--color-divider);font-size:13px"><span>{{ l.k }}</span><b class="tnum" style="white-space:nowrap">{{ l.v }}</b></div>
-                </sc-for>
+          <div class="cost-wrap">
+          <div class="cost-grid">
+
+            <!-- Part drawing. Each <g class="ft"> is a region a cost row can light up; the class binding
+                 is '', 'hot' or 'off'. Scale 2 px/mm; top view origin (65,40), back view origin (65,290). -->
+            <div class="cost-part">
+              <div class="cost-part-head"><span>BRKT-001 · Rev A</span><span>mm · third angle</span></div>
+              <svg class="part-dwg" viewBox="0 0 440 480" role="img" aria-label="Drawing of BRKT-001 with highlighted features">
+                <text class="lbl" x="65" y="22">Top</text>
+                <text class="lbl" x="65" y="272">Back · flipped about X</text>
+
+                <g class="ft {{ ft.topFace }}" sc-camel-on-mouse-enter="{{ dwg.topFace.enter }}" sc-camel-on-mouse-leave="{{ dwg.topFace.leave }}" sc-camel-on-click="{{ dwg.topFace.pin }}">
+                  <rect class="face" x="65" y="40" width="310" height="170" rx="16"/>
+                </g>
+                <g class="ft {{ ft.backFace }}" sc-camel-on-mouse-enter="{{ dwg.backFace.enter }}" sc-camel-on-mouse-leave="{{ dwg.backFace.leave }}" sc-camel-on-click="{{ dwg.backFace.pin }}">
+                  <rect class="face" x="65" y="290" width="310" height="170" rx="16"/>
+                </g>
+
+                <g class="ft {{ ft.stock }}" sc-camel-on-mouse-enter="{{ dwg.stock.enter }}" sc-camel-on-mouse-leave="{{ dwg.stock.leave }}" sc-camel-on-click="{{ dwg.stock.pin }}">
+                  <rect class="stock" x="55" y="30" width="330" height="190"/>
+                  <text class="dimt" x="385" y="27" text-anchor="end">stock 165 × 95 × 52</text>
+                </g>
+
+                <g class="ft {{ ft.pocketsA }}" sc-camel-on-mouse-enter="{{ dwg.pocketsA.enter }}" sc-camel-on-mouse-leave="{{ dwg.pocketsA.leave }}" sc-camel-on-click="{{ dwg.pocketsA.pin }}">
+                  <rect class="pk" x="89" y="60" width="60" height="48" rx="12"/><rect class="pk" x="152.6" y="60" width="60" height="48" rx="12"/><rect class="pk" x="216.2" y="60" width="60" height="48" rx="12"/>
+                  <rect class="pk" x="89" y="111.6" width="60" height="48" rx="12"/><rect class="pk" x="152.6" y="111.6" width="60" height="48" rx="12"/><rect class="pk" x="216.2" y="111.6" width="60" height="48" rx="12"/>
+                </g>
+                <g class="ft {{ ft.ribs }}" sc-camel-on-mouse-enter="{{ dwg.ribs.enter }}" sc-camel-on-mouse-leave="{{ dwg.ribs.leave }}" sc-camel-on-click="{{ dwg.ribs.pin }}">
+                  <rect class="rib" x="149" y="60" width="3.6" height="99.6"/><rect class="rib" x="212.6" y="60" width="3.6" height="99.6"/><rect class="rib" x="89" y="108" width="187.2" height="3.6"/>
+                </g>
+                <g class="ft {{ ft.pocketsB }}" sc-camel-on-mouse-enter="{{ dwg.pocketsB.enter }}" sc-camel-on-mouse-leave="{{ dwg.pocketsB.leave }}" sc-camel-on-click="{{ dwg.pocketsB.pin }}">
+                  <rect class="pk" x="89" y="166" width="20" height="18" rx="3"/><rect class="pk" x="115" y="166" width="20" height="18" rx="3"/><rect class="pk" x="141" y="166" width="20" height="18" rx="3"/><rect class="pk" x="167" y="166" width="20" height="18" rx="3"/>
+                  <rect class="pk" x="193" y="166" width="20" height="18" rx="3"/><rect class="pk" x="219" y="166" width="20" height="18" rx="3"/><rect class="pk" x="245" y="166" width="20" height="18" rx="3"/><rect class="pk" x="271" y="166" width="20" height="18" rx="3"/>
+                </g>
+                <g class="ft {{ ft.cbores }}" sc-camel-on-mouse-enter="{{ dwg.cbores.enter }}" sc-camel-on-mouse-leave="{{ dwg.cbores.leave }}" sc-camel-on-click="{{ dwg.cbores.pin }}">
+                  <circle class="hole" cx="301" cy="64" r="12"/><circle class="hole" cx="301" cy="64" r="6.5"/>
+                  <circle class="hole" cx="355" cy="64" r="12"/><circle class="hole" cx="355" cy="64" r="6.5"/>
+                  <circle class="hole" cx="301" cy="186" r="12"/><circle class="hole" cx="301" cy="186" r="6.5"/>
+                  <circle class="hole" cx="355" cy="186" r="12"/><circle class="hole" cx="355" cy="186" r="6.5"/>
+                  <circle class="hole" cx="85" cy="314" r="6.5"/><circle class="hole" cx="139" cy="314" r="6.5"/><circle class="hole" cx="85" cy="436" r="6.5"/><circle class="hole" cx="139" cy="436" r="6.5"/>
+                </g>
+                <g class="ft {{ ft.bores }}" sc-camel-on-mouse-enter="{{ dwg.bores.enter }}" sc-camel-on-mouse-leave="{{ dwg.bores.leave }}" sc-camel-on-click="{{ dwg.bores.pin }}">
+                  <circle class="hole" cx="328" cy="100" r="8"/><path class="ln thin" d="M316 100h24M328 88v24"/>
+                  <circle class="hole" cx="328" cy="150" r="8"/><path class="ln thin" d="M316 150h24M328 138v24"/>
+                  <circle class="hole" cx="112" cy="350" r="8"/><circle class="hole" cx="112" cy="400" r="8"/>
+                </g>
+                <g class="ft {{ ft.backPocket }}" sc-camel-on-mouse-enter="{{ dwg.backPocket.enter }}" sc-camel-on-mouse-leave="{{ dwg.backPocket.leave }}" sc-camel-on-click="{{ dwg.backPocket.pin }}">
+                  <rect class="pk" x="165" y="334" width="120" height="80" rx="12"/>
+                </g>
+                <g class="ft {{ ft.chamfers }}" sc-camel-on-mouse-enter="{{ dwg.chamfers.enter }}" sc-camel-on-mouse-leave="{{ dwg.chamfers.leave }}" sc-camel-on-click="{{ dwg.chamfers.pin }}">
+                  <rect class="ln thin" x="68" y="43" width="304" height="164" rx="13"/>
+                  <rect class="ln thin" x="68" y="293" width="304" height="164" rx="13"/>
+                </g>
+                <g class="ft {{ ft.profile }}" sc-camel-on-mouse-enter="{{ dwg.profile.enter }}" sc-camel-on-mouse-leave="{{ dwg.profile.leave }}" sc-camel-on-click="{{ dwg.profile.pin }}">
+                  <rect class="ln edge" x="65" y="40" width="310" height="170" rx="16"/>
+                  <rect class="ln edge" x="65" y="290" width="310" height="170" rx="16"/>
+                </g>
+                <g class="ft {{ ft.datum }}" sc-camel-on-mouse-enter="{{ dwg.datum.enter }}" sc-camel-on-mouse-leave="{{ dwg.datum.leave }}" sc-camel-on-click="{{ dwg.datum.pin }}">
+                  <path class="dat" d="M65 125l-9-6v12z"/><path class="ln" d="M56 125h-10"/>
+                  <rect class="ln" x="30" y="117" width="16" height="16"/><text class="datt" x="38" y="129" text-anchor="middle">A</text>
+                </g>
+
+                <path class="dim" d="M65 232v8M375 232v8M65 236h310"/><text class="dimt" x="220" y="250" text-anchor="middle">155</text>
+                <path class="dim" d="M395 40h8M395 210h8M399 40v170"/><text class="dimt" x="406" y="129">85</text>
+              </svg>
+              <div class="cost-cap {{ capCls }}">
+                <div class="cost-cap-title">{{ cap.title }}</div>
+                <div class="cost-cap-detail">{{ cap.detail }}</div>
+                <div class="cost-cap-row"><span>{{ cap.meta }}</span><b class="tnum">{{ cap.cost }}</b></div>
+                <div class="cost-cap-hint">{{ cap.hint }}</div>
               </div>
             </div>
+
+            <div class="cost-tables">
+              <section>
+                <div class="cost-sec-head"><h5>Manufacturing steps <span>{{ stepCount }}</span></h5><span class="cost-sec-note">Each step runs on a machine at a per-hour rate. Setup is amortised over the qty 10 break.</span></div>
+                <div style="overflow-x:auto">
+                <table class="table cost-table">
+                  <thead><tr><th>Step</th><th>Machine</th><th class="num">Setup min</th><th class="num">Run min / part</th><th class="num">$ / hr</th><th class="num">$ / part</th></tr></thead>
+                  <tbody sc-each="{{ steps }}" sc-as="s">
+                    <tr class="cost-step {{ s.cls }}" sc-camel-on-mouse-enter="{{ s.enter }}" sc-camel-on-mouse-leave="{{ s.leave }}" sc-camel-on-click="{{ s.pin }}">
+                      <td><div class="cost-name"><button class="chev" sc-camel-on-click="{{ s.toggle }}" aria-label="Toggle features">{{ s.chev }}</button><div><b>{{ s.name }}</b><div class="cost-sub">{{ s.detail }}</div></div></div></td>
+                      <td class="nowrap">{{ s.machine }}</td>
+                      <td class="num tnum">{{ s.setupStr }}</td><td class="num tnum">{{ s.runStr }}</td><td class="num tnum">{{ s.rateStr }}</td><td class="num tnum"><b>{{ s.cost }}</b></td>
+                    </tr>
+                    <tr sc-each="{{ s.rows }}" sc-as="f" sc-when="{{ s.open }}" class="cost-feat {{ f.cls }}" sc-camel-on-mouse-enter="{{ f.enter }}" sc-camel-on-mouse-leave="{{ f.leave }}" sc-camel-on-click="{{ f.pin }}">
+                      <td><div class="cost-name cost-indent"><span class="cost-dot"></span><div>{{ f.name }}<div class="cost-sub">{{ f.detail }}</div></div></div></td>
+                      <td class="nowrap cost-sub">{{ f.tool }}</td>
+                      <td></td><td class="num tnum">{{ f.minStr }}</td><td></td><td class="num tnum">{{ f.cost }}</td>
+                    </tr>
+                  </tbody>
+                  <tfoot><tr><td colspan="5">Subtotal · machine time</td><td class="num tnum">{{ stepsSub }}</td></tr></tfoot>
+                </table>
+                </div>
+              </section>
+
+              <section>
+                <div class="cost-sec-head"><h5>Materials, services &amp; tooling <span>{{ lineCount }}</span></h5><span class="cost-sec-note">Scrap % is added on top of the base cost. Outside ops can be held out of the unit cost.</span></div>
+                <div style="overflow-x:auto">
+                <table class="table cost-table">
+                  <thead><tr><th>Item</th><th>Type</th><th class="num">Cost</th><th class="num">Scrap %</th><th>Mode</th><th class="num">Per part</th></tr></thead>
+                  <tbody sc-each="{{ materials }}" sc-as="m">
+                    <tr class="cost-step {{ m.cls }}" style="{{ m.rowStyle }}" sc-camel-on-mouse-enter="{{ m.enter }}" sc-camel-on-mouse-leave="{{ m.leave }}" sc-camel-on-click="{{ m.pin }}">
+                      <td><div class="cost-name"><span class="cost-dot"></span><div><b>{{ m.item }}</b><div class="cost-sub">{{ m.detail }}</div></div></div></td>
+                      <td><span class="tag {{ m.tagClass }}">{{ m.type }}</span></td>
+                      <td class="num tnum">{{ m.costStr }}</td><td class="num tnum">{{ m.scrapStr }}</td>
+                      <td class="nowrap">{{ m.mode }}<sc-if value="{{ m.optional }}"><button class="btn btn-ghost cost-inc" sc-camel-on-click="{{ m.toggleInc }}">{{ m.incLabel }}</button></sc-if></td>
+                      <td class="num tnum"><b>{{ m.per }}</b></td>
+                    </tr>
+                  </tbody>
+                  <tfoot><tr><td colspan="5">Subtotal · materials &amp; services</td><td class="num tnum">{{ matSub }}</td></tr></tfoot>
+                </table>
+                </div>
+              </section>
+
+              <div class="cost-total"><span>Unit cost · qty 10</span><b class="tnum">{{ unitCost }}</b></div>
+
+              <div class="cost-aside">
+                <div style="border-top:2px solid var(--color-text);padding-top:var(--space-3)">
+                  <h5 style="margin:0 0 var(--space-2)">Unit cost by quantity</h5>
+                  <sc-for list="{{ qtyCurve }}" as="q" hint-placeholder-count="5">
+                    <div style="display:grid;grid-template-columns:32px 1fr 70px;gap:10px;align-items:center;font-size:12.5px;padding:5px 0">
+                      <span class="tnum" style="color:var(--color-neutral-600)">{{ q.qty }}</span>
+                      <div style="height:8px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:100%;width:{{ q.w }};background:var(--color-accent)"></div></div>
+                      <span class="tnum" style="text-align:right;font-weight:600">{{ q.cost }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="border-top:2px solid var(--color-text);padding-top:var(--space-3)">
+                  <h5 style="margin:0 0 var(--space-2)">Levers</h5>
+                  <sc-for list="{{ levers }}" as="l" hint-placeholder-count="4">
+                    <div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--color-divider);font-size:13px"><span>{{ l.k }}</span><b class="tnum" style="white-space:nowrap">{{ l.v }}</b></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+          </div>
           </div>
         </div>
       </sc-if>

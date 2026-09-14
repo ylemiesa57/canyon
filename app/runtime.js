@@ -1,6 +1,7 @@
 // Canyon customer UI.
 // The markup in <template id="dc"> is the Claude Design mockup, verbatim apart from colour tokens.
-// Below is a small renderer for its template syntax ({{ path }}, <sc-if>, <sc-for>, sc-camel-on-click),
+// Below is a small renderer for its template syntax ({{ path }}, <sc-if>, <sc-for>, sc-camel-on-click,
+// sc-camel-on-mouse-enter/-leave),
 // a DOM morph so CSS transitions survive re-renders, and the mockup's own screen logic (Component).
 
 // Shared runtime for the Canyon app mockups: a renderer for the design template syntax
@@ -13,6 +14,7 @@ window.DC = (function () {
   const root = document.getElementById("root");
   const tpl = document.getElementById("dc").content;
 
+  const SVG_NS = "http://www.w3.org/2000/svg";
   const strip = (s) => (s || "").replace(/^\s*\{\{\s*|\s*\}\}\s*$/g, "").trim();
   const get = (scope, path) => {
     if (path === "true") return true;
@@ -45,11 +47,13 @@ window.DC = (function () {
         list.forEach((item, i) => renderNodes([clone], Object.assign({}, scope, { [as]: item, $index: i }), out));
         continue;
       }
-      const el = document.createElement(tag);
+      const el = n.namespaceURI === SVG_NS ? document.createElementNS(SVG_NS, n.localName) : document.createElement(tag);
       for (const a of Array.from(n.attributes)) {
         if (a.name === "sc-when") continue;
         if (a.name === "sc-camel-on-click") { const fn = get(scope, strip(a.value)); if (typeof fn === "function") el.__click = fn; continue; }
         if (a.name === "sc-on-input") { const fn = get(scope, strip(a.value)); if (typeof fn === "function") el.__input = fn; continue; }
+        if (a.name === "sc-camel-on-mouse-enter") { const fn = get(scope, strip(a.value)); if (typeof fn === "function") el.__enter = fn; continue; }
+        if (a.name === "sc-camel-on-mouse-leave") { const fn = get(scope, strip(a.value)); if (typeof fn === "function") el.__leave = fn; continue; }
         if (a.name.startsWith("hint-")) continue;
         if (a.name === "style-hover") { el.dataset.hover = a.value; continue; }
         el.setAttribute(a.name, interp(a.value, scope));
@@ -71,6 +75,7 @@ window.DC = (function () {
     }
     oldN.__click = newN.__click;
     oldN.__input = newN.__input;
+    oldN.__enter = newN.__enter; oldN.__leave = newN.__leave;
     morphChildren(oldN, newN);
   }
   function morphChildren(oldN, newN) {
@@ -91,6 +96,15 @@ window.DC = (function () {
     let t = e.target;
     while (t && t !== root) { if (t.__input) { t.__input(e); return; } t = t.parentNode; }
   });
+  const hoverHandler = (key) => (e) => {
+    let t = e.target;
+    while (t && t !== root) {
+      if (t[key]) { if (!(e.relatedTarget && t.contains(e.relatedTarget))) t[key](e); return; }
+      t = t.parentNode;
+    }
+  };
+  root.addEventListener("mouseover", hoverHandler("__enter"));
+  root.addEventListener("mouseout", hoverHandler("__leave"));
   root.addEventListener("mouseover", (e) => {
     const t = e.target.closest && e.target.closest("[data-hover]");
     if (t && !t.__hoverBase) { t.__hoverBase = t.getAttribute("style") || ""; t.setAttribute("style", t.__hoverBase + ";" + t.dataset.hover); }

@@ -1,38 +1,105 @@
 // Shop-side screens: the merchant mockup's logic, data synced with the buyer side.
 (function () {
   const DCLogic = window.DC.DCLogic;
+
+  // ── Costing model ──────────────────────────────────────────────────────────
+  // Machine-time steps and material/service lines for BRKT-001. Every row names the regions
+  // of the part drawing it touches, so hovering a row lights up the matching geometry.
+  // Money is computed here (not typed in) so the tables, caption and header always agree.
+  const QTY = 10;
+  const STEPS = [
+    { id:'op10', name:'Op10 · Rough', detail:'Top side, 3-axis, vise', machine:'Haas VF-2SS', rate:85,
+      setup:24, setupDetail:'Standard vise · 24 min per batch', setupTool:'Kurt vise', setupRegions:['topFace'], features:[
+      { id:'pocketsA', name:'Pocket set A · 6 pockets', detail:'Ø12 rougher, 22 mm deep, 1.8 mm walls', tool:'Ø12 3-flute', min:5.4, regions:['pocketsA'] },
+      { id:'pocketsB', name:'Pocket set B · 8 pockets', detail:'Ø8 rougher, 14 mm deep', tool:'Ø8 3-flute', min:3, regions:['pocketsB'] },
+      { id:'profile', name:'Outer profile', detail:'Full-depth contour, 2 passes', tool:'Ø16 rougher', min:2.4, regions:['profile'] } ] },
+    { id:'op20', name:'Op20 · Finish + back', detail:'Flip, soft jaws, finish ribs', machine:'Haas VF-2SS', rate:85,
+      setup:36, setupDetail:'Soft jaws machined once, reused · 36 min per batch', setupTool:'Soft jaws', setupRegions:['backFace'], features:[
+      { id:'ribs', name:'Thin ribs · 1.8 mm', detail:'Light passes, chatter-limited feed', tool:'Ø6 finisher', min:3.6, regions:['ribs'] },
+      { id:'backPocket', name:'Back pocket', detail:'Second-side access only', tool:'Ø10 finisher', min:3, regions:['backPocket'] },
+      { id:'chamfers', name:'Chamfers + deburr', detail:'0.5 mm all edges per note 4', tool:'90° chamfer mill', min:1.8, regions:['chamfers'] } ] },
+    { id:'op30', name:'Op30 · Precision bores', detail:'Ream + counterbore, ⊥ 0.02', machine:'DMG Mori DMU 50', rate:95,
+      setup:0, features:[
+      { id:'bores', name:'Ø8 H7 ×2 · reamed', detail:'True position Ø0.1 to datum A', tool:'Ø8 H7 reamer', min:2.4, regions:['bores','datum'] },
+      { id:'cbores', name:'Ø12 counterbores ×4', detail:'Ø6.5 thru, 6 mm deep', tool:'Ø12 c-bore', min:1.2, regions:['cbores'] } ] },
+    { id:'cmm', name:'Inspection', detail:'CMM true position + LPI note', machine:'Zeiss Contura', rate:70,
+      setup:0, features:[
+      { id:'cmm-run', name:'CMM · 6 bores, 2 datums', detail:'Program exists from similar bracket', tool:'Ø3 ruby stylus', min:3, regions:['bores','cbores','datum'] } ] }
+  ];
+  const MATERIALS = [
+    { id:'billet', item:'6061-T6 plate billet 165 × 95 × 52 mm', detail:'~2.1 kg cut, 0.61 kg part · Kaiser · AMS-QQ-A-250/11', type:'Material', tagClass:'tag-neutral', cost:9.06, scrap:4, mode:'Per part', regions:['stock'] },
+    { id:'lpi', item:'100% liquid penetrant inspection', detail:'Drawing note 7 · Sable NDT · +2 days lead', type:'Outside', tagClass:'tag-accent-2', cost:18, scrap:0, mode:'Per part', regions:['topFace','backFace'], optional:true }
+  ];
+  const REGIONS = ['stock','topFace','backFace','profile','pocketsA','pocketsB','ribs','bores','cbores','backPocket','chamfers','datum'];
+  // Hovering the drawing itself: region → the row it belongs to.
+  const REGION_ROW = { stock:'billet', topFace:'op10-setup', backFace:'op20-setup', profile:'profile', pocketsA:'pocketsA', pocketsB:'pocketsB', ribs:'ribs', bores:'bores', cbores:'cbores', backPocket:'backPocket', chamfers:'chamfers', datum:'cmm-run' };
+  const money = (v) => '$' + v.toFixed(2);
 class Component extends DCLogic {
-  state = { screen: 'inbox', agent: true, gran: 'feature', filter: 'all' };
+  state = { screen: 'inbox', agent: true, filter: 'all', hot: null, pin: null, closed: {}, lpi: false };
+  static TABS = [['inbox','Inbox'],['ingest','Ingest'],['part','Part'],['cost','Costing'],['quote','Quote'],['neg','Negotiation'],['shop','My shop'],['pdf','Quote PDF']];
+  // The tab lives in the URL hash (/app/shop/#cost) so a screen can be linked to directly.
+  constructor() { super(); const h = location.hash.slice(1); if (Component.TABS.some(([k]) => k === h)) this.state.screen = h; }
+  componentDidUpdate(p, prev) { if (prev.screen !== this.state.screen) history.replaceState(null, '', '#' + this.state.screen); }
   go(s) { return () => this.setState({ screen: s }); }
+
+  // Builds the Costing tab's view: step rows with their feature sub-rows, material lines,
+  // subtotals, the highlight state of every drawing region, and the caption.
+  costView() {
+    const { hot, pin, closed, lpi } = this.state;
+    const active = hot || pin;
+    const items = {};
+    const on = (id) => ({
+      enter: () => this.setState({ hot: id }),
+      leave: () => this.setState({ hot: null }),
+      pin: () => this.setState(st => ({ pin: st.pin === id ? null : id }))
+    });
+    const cls = (id) => (active === id ? 'is-hot' : '') + (pin === id ? ' is-pin' : '');
+
+    const steps = STEPS.map(s => {
+      const subs = [];
+      if (s.setup) subs.push({ id: s.id + '-setup', name: 'Setup, amortised over ' + QTY, detail: s.setupDetail, tool: s.setupTool, min: s.setup / QTY, regions: s.setupRegions });
+      subs.push(...s.features);
+      const run = s.features.reduce((a, f) => a + f.min, 0);
+      const perPart = (s.setup / QTY + run) / 60 * s.rate;
+      const rows = subs.map(f => {
+        const c = f.min / 60 * s.rate;
+        items[f.id] = { title: f.name, detail: f.detail, meta: f.tool + ' · ' + f.min.toFixed(1) + ' min @ $' + s.rate + '/hr', cost: money(c), regions: f.regions };
+        return { ...f, minStr: f.min.toFixed(1), cost: money(c), cls: cls(f.id), ...on(f.id) };
+      });
+      items[s.id] = { title: s.name, detail: s.detail, meta: s.machine + ' · $' + s.rate + '/hr', cost: money(perPart), regions: [...new Set(subs.flatMap(f => f.regions))] };
+      return { ...s, setupStr: s.setup ? String(s.setup) : '—', runStr: run.toFixed(1), rateStr: '$' + s.rate, cost: money(perPart), perPart,
+        open: !closed[s.id], chev: closed[s.id] ? '▸' : '▾', rows, cls: cls(s.id), ...on(s.id),
+        toggle: () => this.setState(st => ({ closed: { ...st.closed, [s.id]: !st.closed[s.id] } })) };
+    });
+    const materials = MATERIALS.map(m => {
+      const inc = m.optional ? lpi : true;
+      const per = m.cost * (1 + m.scrap / 100);
+      items[m.id] = { title: m.item, detail: m.detail, meta: m.type + ' · ' + m.mode + (m.scrap ? ' · +' + m.scrap + '% scrap' : '') + (inc ? '' : ' · not in unit cost'), cost: money(per), regions: m.regions };
+      return { ...m, inc, costStr: money(m.cost), scrapStr: m.scrap ? m.scrap + ' %' : '—', per: money(per), perPart: inc ? per : 0,
+        rowStyle: inc ? '' : 'opacity:.55', incLabel: inc ? 'Included' : 'Not in unit cost', cls: cls(m.id), ...on(m.id),
+        toggleInc: () => this.setState(st => ({ lpi: !st.lpi })) };
+    });
+    const stepsSub = steps.reduce((a, s) => a + s.perPart, 0);
+    const matSub = materials.reduce((a, m) => a + m.perPart, 0);
+
+    const hotRegions = active && items[active] ? items[active].regions : [];
+    const ft = {};
+    REGIONS.forEach(r => { ft[r] = active ? (hotRegions.includes(r) ? 'hot' : 'off') : ''; });
+    const dwg = {};
+    REGIONS.forEach(r => { dwg[r] = on(REGION_ROW[r]); });
+
+    const cap = active && items[active]
+      ? { ...items[active], hint: pin === active ? 'Pinned · click to release' : 'Click to pin' }
+      : { title: 'BRKT-001 · Industrial Bracket, Rev A', detail: 'Hover a step, feature or material line to see where it lands on the part. Click to pin it.', meta: '155 × 85 × 42 mm · 6061-T6', cost: money(stepsSub + matSub), hint: '' };
+
+    return { steps, materials, stepsSub: money(stepsSub), matSub: money(matSub), unitCost: money(stepsSub + matSub), stepCount: steps.length + ' steps', lineCount: materials.length + ' lines', ft, dwg, cap, capCls: active ? 'is-on' : '' };
+  }
   renderVals() {
-    const { screen, agent, gran, filter } = this.state;
+    const { screen, agent, filter } = this.state;
     const escalated = this.props.escalated ?? true;
-    const granularity = this.props.granularity ?? gran;
-    const defs = [['inbox','Inbox'],['ingest','Ingest'],['part','Part'],['cost','Costing'],['quote','Quote'],['neg','Negotiation'],['shop','My shop'],['pdf','Quote PDF']];
-    const tabs = defs.map(([k,label]) => ({ label, go: this.go(k), color: screen===k ? 'var(--color-accent)' : 'var(--color-neutral-700)', line: screen===k ? 'var(--color-accent)' : 'transparent' }));
+    const tabs = Component.TABS.map(([k,label]) => ({ label, go: this.go(k), color: screen===k ? 'var(--color-accent)' : 'var(--color-neutral-700)', line: screen===k ? 'var(--color-accent)' : 'transparent' }));
     const red='var(--color-accent)', amber='var(--color-accent-2-600)', ink='var(--color-text)';
-    const bars=['var(--color-neutral-400)','var(--color-text)','var(--color-neutral-700)','var(--color-accent)','var(--color-accent-400)','var(--color-neutral-500)'];
-    const costOps=[
-      {name:'Material',detail:'6061-T6 plate 165×95×52 mm, 71% removed',resource:'Stock · Kaiser',hours:'—',rate:'$9.40/kg',cost:'$9.40',pct:'17.3%',share:17.3,features:[
-        {name:'Billet',detail:'2.1 kg cut, 0.61 kg part',tool:'Saw cut, +5 mm',hours:'—',rate:'',cost:'$8.10',pct:'14.9%'},
-        {name:'Scrap risk allowance',detail:'Thin ribs · 4% expected',tool:'',hours:'—',rate:'',cost:'$1.30',pct:'2.4%'}]},
-      {name:'Op10 · Rough',detail:'Top side, 3-axis, vise',resource:'Haas VF-2SS',hours:'0.18',rate:'$85',cost:'$15.30',pct:'28.2%',features:[
-        {name:'Pocket set A · 6 pockets',detail:'Ø12 rougher, 22 mm deep, 1.8 mm walls',tool:'Ø12 3-flute',hours:'0.09',rate:'85',cost:'$7.65',pct:'14.1%'},
-        {name:'Pocket set B · 8 pockets',detail:'Ø8 rougher, 14 mm deep',tool:'Ø8 3-flute',hours:'0.05',rate:'85',cost:'$4.25',pct:'7.8%'},
-        {name:'Outer profile',detail:'Full-depth contour, 2 passes',tool:'Ø16 rougher',hours:'0.04',rate:'85',cost:'$3.40',pct:'6.3%'}]},
-      {name:'Op20 · Finish + back',detail:'Flip, soft jaws, finish ribs',resource:'Haas VF-2SS',hours:'0.14',rate:'$85',cost:'$11.90',pct:'21.9%',features:[
-        {name:'Thin ribs · 1.8 mm',detail:'Light passes, chatter-limited feed',tool:'Ø6 finisher',hours:'0.06',rate:'85',cost:'$5.10',pct:'9.4%'},
-        {name:'Back pocket',detail:'Second-side access only',tool:'Ø10 finisher',hours:'0.05',rate:'85',cost:'$4.25',pct:'7.8%'},
-        {name:'Chamfers + deburr',detail:'0.5 mm all edges per note 4',tool:'90° chamfer mill',hours:'0.03',rate:'85',cost:'$2.55',pct:'4.7%'}]},
-      {name:'Op30 · Precision bores',detail:'Ream + counterbore, ⊥ 0.02',resource:'DMU 50 · 5-axis',hours:'0.06',rate:'$95',cost:'$5.70',pct:'10.5%',features:[
-        {name:'Ø8 H7 ×2 · reamed',detail:'True position Ø0.1 to datum A',tool:'Ø8 H7 reamer',hours:'0.04',rate:'95',cost:'$3.80',pct:'7.0%'},
-        {name:'Ø12 counterbores ×4',detail:'',tool:'Ø12 c-bore',hours:'0.02',rate:'95',cost:'$1.90',pct:'3.5%'}]},
-      {name:'Setups',detail:'2 setups + soft jaws, amortised over 10',resource:'Setter · 1.0 hr',hours:'0.10',rate:'$85',cost:'$8.52',pct:'15.7%',features:[
-        {name:'Op10 vise setup',detail:'Standard',tool:'',hours:'0.04',rate:'85',cost:'$3.40',pct:'6.3%'},
-        {name:'Op20 soft-jaw setup',detail:'Jaws machined once, reused',tool:'',hours:'0.06',rate:'85',cost:'$5.12',pct:'9.4%'}]},
-      {name:'Inspection',detail:'CMM true position + LPI note',resource:'Zeiss Contura',hours:'0.05',rate:'$70',cost:'$3.50',pct:'6.4%',features:[
-        {name:'CMM · 6 bores, 2 datums',detail:'Program exists from similar bracket',tool:'',hours:'0.05',rate:'70',cost:'$3.50',pct:'6.4%'}]}
-    ].map((o,i)=>({...o,bar:bars[i]}));
+    const cost = this.costView();
     const mk=(qty,cost,mkp)=>{const p=cost*(1+mkp/100);return{qty,cost:'$'+cost.toFixed(2),mk:mkp+' %',price:'$'+p.toFixed(2),total:'$'+(p*qty).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),margin:(100-100/(1+mkp/100)).toFixed(1)+'%'}};
     const brk=(id,name,mat,rev,costs)=>costs.map(([q,c],i)=>({...mk(q,c,20),label:i===0?id:'',sub:i===0?name+' · '+mat:'',rev:i===0?rev:'',fw:i===0?700:400}));
     const quoteLines=[
@@ -48,9 +115,6 @@ class Component extends DCLogic {
       profile: { name: 'Cascade CNC', loc: 'Bend, OR', certs: ['ISO 9001', 'AS9100D'], onTime: '91%', quality: '93%', response: '97%', wOnTime: 'width:91%', wQuality: 'width:93%', wResponse: 'width:97%' }, toggleAgent: () => this.setState(s=>({agent:!s.agent})),
       goInbox:this.go('inbox'), goIngest:this.go('ingest'), goPart:this.go('part'), goCost:this.go('cost'), goQuote:this.go('quote'), goNeg:this.go('neg'), goPdf:this.go('pdf'),
       isInbox:screen==='inbox', isIngest:screen==='ingest', isPart:screen==='part', isCost:screen==='cost', isQuote:screen==='quote', isNeg:screen==='neg', isShop:screen==='shop', isPdf:screen==='pdf',
-      gFeatureSt: granularity==='feature' ? 'var(--color-accent);color:var(--color-bg)' : 'transparent', gOpSt: granularity==='operation' ? 'var(--color-accent);color:var(--color-bg)' : 'transparent', gPartSt: granularity==='part' ? 'var(--color-accent);color:var(--color-bg)' : 'transparent',
-      gFeature:granularity==='feature', gOp:granularity==='operation', gPart:granularity==='part', showFeatures:granularity==='feature',
-      setFeature:()=>this.setState({gran:'feature'}), setOp:()=>this.setState({gran:'operation'}), setPart:()=>this.setState({gran:'part'}),
       inboxStats:[{k:'Needs you',v:'2',sub:'1 escalation · 1 rev conflict'},{k:'Agent negotiating',v:'4',sub:'$38,975 in play'},{k:'Quoted this week',v:'$38,410',sub:'avg. 4 min to quote'},{k:'Win rate · 30 d',v:'41%',sub:'↑ 6 pts vs. last month'}],
       rfqs:[
         // group: needs | neg | quoted
@@ -83,7 +147,7 @@ class Component extends DCLogic {
         {n:'3',sev:'Medium',tags:'Tolerance · GD&T',title:'Ø8 H7 bores, true position Ø0.1',body:'Ream in one setup on the DMU to hold position to datum A. CMM program from a similar bracket exists.',k1:'Tol band',v1:'+0.015 / 0',k2:'Op',v2:'Op30 · 5-axis',cost:'$9.20',rule:amber,tagClass:'tag-accent-2'},
         {n:'4',sev:'Medium',tags:'Inspection · Outside op',title:'100% liquid penetrant, no indications',body:'Drawing note 7. Adds a 2-day outside step at Sable NDT; agent has added it to lead time.',k1:'Vendor',v1:'Sable NDT · 2 d',k2:'Cost',v2:'$18 / part',cost:'$18.00',rule:amber,tagClass:'tag-accent-2'}
       ],
-      costOps,
+      ...cost,
       qtyCurve:[{qty:'1',w:'100%',cost:'$54.32'},{qty:'5',w:'83%',cost:'$45.26'},{qty:'10',w:'79%',cost:'$43.18'},{qty:'25',w:'75%',cost:'$40.79'},{qty:'50',w:'72%',cost:'$39.21'}],
       levers:[{k:'Near-net extrusion at qty 50',v:'−$6.10'},{k:'Relax rib to 2.5 mm (ask buyer)',v:'−$3.20'},{k:'Run Op30 on VF-2SS with boring head',v:'−$0.60, +risk'},{k:'Drop LPI to sample AQL',v:'−$14.40'}],
       quoteTotals:[{k:'Subtotal · cost',v:'$3,925.66',sub:'2 parts, all breaks',bg:'var(--color-bg)',fg:'var(--color-text)'},{k:'Total markup',v:'$785.13',sub:'20% blended',bg:'var(--color-bg)',fg:'var(--color-text)'},{k:'Lead time',v:'8–10 d',sub:'incl. LPI + anodize',bg:'var(--color-bg)',fg:'var(--color-text)'},{k:'Quote total',v:'$4,890.79',sub:'incl. $180 fixture',bg:'var(--color-accent)',fg:'var(--color-bg)'}],

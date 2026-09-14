@@ -235,3 +235,75 @@ textarea.input { min-height: 90px; resize: vertical; }
 
 a:hover { color: var(--color-accent-700); }
 .tnum { font-variant-numeric: tabular-nums; }
+
+/* — costing: part drawing + cost tables (shop side) — */
+.cost-wrap { container-type: inline-size; }
+.cost-grid { display: grid; grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1.5fr); gap: var(--space-6); align-items: start; }
+.cost-part { position: sticky; top: 72px; background: var(--color-surface); padding: var(--space-3); }
+.cost-part-head { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2); }
+.part-dwg { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+.part-dwg .lbl { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--color-neutral-600); }
+.part-dwg .dim { fill: none; stroke: var(--color-neutral-500); stroke-width: 1; }
+.part-dwg .dimt { font-size: 10px; fill: var(--color-neutral-600); }
+.part-dwg .ft { cursor: pointer; }
+.part-dwg .ft * { transition: fill 0.18s ease, stroke 0.18s ease, opacity 0.18s ease, stroke-width 0.18s ease; }
+.part-dwg .face { fill: color-mix(in srgb, var(--color-text) 5%, transparent); stroke: none; }
+.part-dwg .stock { fill: none; stroke: var(--color-neutral-600); stroke-width: 1; stroke-dasharray: 6 4; pointer-events: stroke; }
+.part-dwg .ln { fill: none; stroke: var(--color-neutral-700); stroke-width: 1.4; }
+.part-dwg .ln.thin { stroke-width: 0.8; }
+.part-dwg .ln.edge { pointer-events: stroke; }
+.part-dwg .pk { fill: color-mix(in srgb, var(--color-text) 9%, transparent); stroke: var(--color-neutral-700); stroke-width: 1.2; }
+.part-dwg .rib { fill: transparent; stroke: none; }
+.part-dwg .hole { fill: var(--color-surface); stroke: var(--color-neutral-700); stroke-width: 1.2; }
+.part-dwg .dat { fill: var(--color-neutral-700); }
+.part-dwg .datt { font-size: 11px; font-weight: 700; fill: var(--color-neutral-700); }
+.part-dwg .ft.off { opacity: 0.3; }
+.part-dwg .ft.hot { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--color-accent) 60%, transparent)); }
+.part-dwg .ft.hot .pk, .part-dwg .ft.hot .rib { fill: color-mix(in srgb, var(--color-accent) 45%, transparent); stroke: var(--color-accent); stroke-width: 2; }
+.part-dwg .ft.hot .ln, .part-dwg .ft.hot .stock { stroke: var(--color-accent); stroke-width: 2.2; }
+.part-dwg .ft.hot .hole { stroke: var(--color-accent); stroke-width: 2; fill: color-mix(in srgb, var(--color-accent) 35%, transparent); }
+.part-dwg .ft.hot .face { fill: color-mix(in srgb, var(--color-accent) 22%, transparent); }
+.part-dwg .ft.hot .dat, .part-dwg .ft.hot .datt { fill: var(--color-accent); }
+.part-dwg .ft.hot .dimt { fill: var(--color-accent); }
+
+.cost-cap { margin-top: var(--space-3); padding: var(--space-3) 0 0; border-top: 2px solid var(--color-divider); min-height: 104px; transition: border-color 0.18s ease; }
+.cost-cap.is-on { border-top-color: var(--color-accent); }
+.cost-cap-title { font-family: var(--font-heading); font-weight: 700; font-size: 14px; }
+.cost-cap-detail { font-size: 12.5px; color: var(--color-neutral-700); margin-top: 2px; }
+.cost-cap-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 12px; color: var(--color-neutral-600); margin-top: 8px; }
+.cost-cap-row b { color: var(--color-text); font-size: 15px; white-space: nowrap; }
+.cost-cap-hint { font-size: 11px; color: var(--color-accent); margin-top: 4px; min-height: 16px; }
+
+.cost-tables { display: flex; flex-direction: column; gap: var(--space-6); min-width: 0; }
+.cost-sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-2); }
+.cost-sec-head h5 { margin: 0; }
+.cost-sec-head h5 span { font-weight: 400; color: var(--color-neutral-600); margin-left: 6px; font-size: 13px; }
+.cost-sec-note { font-size: 12px; color: var(--color-neutral-600); }
+.cost-table { font-size: 13px; }
+.cost-table th, .cost-table td { padding-left: 6px; padding-right: 6px; }
+.cost-table th:first-child { min-width: 190px; }
+.cost-table th.num, .cost-table td.num { text-align: right; white-space: nowrap; width: 1%; }
+.cost-table th.num { min-width: 56px; }
+.cost-table td.nowrap { white-space: nowrap; width: 1%; }
+.cost-table tbody tr { cursor: pointer; transition: background 0.15s ease; }
+.cost-table tbody tr.is-hot { background: var(--color-accent-100); }
+.cost-table tr.is-hot td:first-child, .cost-table tr.is-pin td:first-child { box-shadow: inset 3px 0 0 var(--color-accent); }
+.cost-name { display: flex; gap: 8px; align-items: flex-start; }
+.cost-sub { font-size: 11.5px; color: var(--color-neutral-600); font-weight: 400; }
+.cost-feat td { padding-top: 5px; padding-bottom: 5px; color: var(--color-neutral-800); }
+.cost-indent { padding-left: 24px; }
+.cost-dot { width: 6px; height: 6px; margin-top: 7px; background: var(--color-neutral-500); flex: none; transition: background 0.15s ease; }
+tr.is-hot .cost-dot, tr.is-pin .cost-dot { background: var(--color-accent); }
+.chev { border: 0; background: none; color: var(--color-neutral-600); font: inherit; cursor: pointer; padding: 0 2px; width: 16px; flex: none; line-height: 1.5; }
+.chev:hover { color: var(--color-accent); }
+.cost-table tfoot td { border-bottom: 0; border-top: 2px solid var(--color-text); font-weight: 600; padding-top: 10px; }
+.cost-inc { font-size: 11px; padding: 0 4px; margin-left: 6px; }
+.cost-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: var(--space-3) var(--space-4); background: var(--color-accent); color: var(--color-bg); font-family: var(--font-heading); font-weight: 800; }
+.cost-total span { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.cost-total b { font-size: 22px; }
+.cost-aside { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); }
+@container (max-width: 900px) {
+  .cost-grid { grid-template-columns: 1fr; }
+  .cost-part { position: static; max-width: 560px; }
+  .cost-aside { grid-template-columns: 1fr; }
+}
