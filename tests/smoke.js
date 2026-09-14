@@ -95,6 +95,8 @@ async function load(file, reducedMotion) {
   await b.click(b.btn("Queue"));
   check(/RFQ-4417.*?Awarded/.test(b.text()), "queue shows the RFQ as awarded");
   check(b.has("Your agent") && b.has("Sent your award"), "agent band leads the queue and reflects the award");
+  const awardedRows = (b.text().match(/✓ Awarded/g) || []).length;
+  check(awardedRows === 3, "only human-awarded rows read Awarded (" + awardedRows + " of 6): the rail stops at Offers ready");
   check(b.errors.length === 0, "no runtime errors (" + b.errors.join("; ") + ")");
   b.w.close();
 

@@ -51,7 +51,7 @@
       qty: '250', needBy: 'Nov 14, 2026',
       applied: {}, dismissed: {}, released: false, awarded: null, selectedFinding: null,
       userFiles: [], stlBuffer: null, dragging: false, pickedAt: null,
-      awards: [], quoteFor: null, quoteFrom: 'offers', badgeBump: 0,
+      awards: [], quoteFor: null, quoteFrom: 'offers', badgeBump: 0, bioOpen: {},
       releaseDialog: false, theme: readTheme(),
     }, loadProfile());
 
@@ -181,7 +181,9 @@
       const considered = SHOPS.map((s) => {
         const criteria = judge(s);
         const matched = criteria.every((c) => c.ok || !c.hard);
-        return { name: s.name, loc: s.loc, bio: s.bio, matched,
+        const open = !!st.bioOpen[s.key];
+        return { name: s.name, loc: s.loc, bio: s.bio, matched, open, toggleLabel: open ? 'About this shop ▴' : 'About this shop ▾',
+          toggle: () => this.setState({ bioOpen: Object.assign({}, st.bioOpen, { [s.key]: !open }) }),
           badge: matched ? 'Matched' : 'Excluded', badgeSt: matched ? 'background:var(--color-good-soft);color:var(--color-good)' : 'background:color-mix(in srgb,var(--color-text) 8%,transparent)',
           cardSt: matched ? '' : 'opacity:.72',
           criteria: criteria.map((c) => ({ label: c.label, detail: c.detail, cls: c.ok ? 'ok' : c.hard ? 'no' : 'na', mark: c.ok ? '✓' : c.hard ? '✕' : '–' })),
@@ -224,7 +226,7 @@
       const agentLines = { 'RFQ-4417': st.awarded ? 'Award sent to the shop; PO draft ready' : st.released ? 'Negotiating: countered Midstate at $455, holding Net 45' : 'Priced from the model; release checks ' + (5 - failing.length) + ' of 5', 'RFQ-1235': 'Buyer final $4,480 is under the shop floor; waiting on Cascade CNC', 'RFQ-4402': 'Ranked 4 offers by your weights; recommending Midstate at $412', 'RFQ-4396': 'Repeat order awarded to the same shop as the last three', 'RFQ-4388': 'Matched 5 shops; pricing the .090 ribs at low confidence', 'RFQ-4371': 'Awarded to Cascade CNC at $61.80; on schedule for Oct 02' };
       const awardedTo = { 'RFQ-4417': st.awarded ? (st.awarded.key === 'split' ? 'Ridgeline + Midstate' : (st.awarded.label || '').split(' · ')[0]) : '', 'RFQ-4396': 'Ridgeline Tool Works', 'RFQ-4371': 'Cascade CNC' };
       const rowsAll = rowDefs.map((r, i) => {
-        const adv = r.live ? (r.base === 3 && t > 2 ? 4 : r.base) : Math.min(5, r.base + (t > i * 2 ? 1 : 0));
+        const adv = r.live ? (r.base === 3 && t > 2 ? 4 : r.base) : (r.base >= 5 ? 5 : Math.min(4, r.base + (t > i * 2 ? 1 : 0)));
         const needs = adv === 1 || adv === 4;
         return Object.assign({}, r, {
           stage: adv === 1 && r.live ? 'Priced · needs your release' : stageNames[adv], adv, needs, needsVis: needs ? 'visibility:visible' : 'visibility:hidden',
