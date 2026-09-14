@@ -44,7 +44,7 @@ class Component extends DCLogic {
       tabs, escalated, agentOpen: agent,
       filter, setFilter: (f) => () => this.setState({ filter: f }),
       filters: [['all','All'],['needs','Needs you'],['neg','Agent negotiating'],['quoted','Quoted']].map(([k,l]) => ({ label: l, go: () => this.setState({ filter: k }), on: filter === k ? 'background:var(--color-accent);color:var(--color-bg)' : '' })),
-      rfqCount: '8', buyerLink: '../index.html',
+      rfqCount: '8', buyerLink: '/app',
       profile: { name: 'Cascade CNC', loc: 'Bend, OR', certs: ['ISO 9001', 'AS9100D'], onTime: '91%', quality: '93%', response: '97%', wOnTime: 'width:91%', wQuality: 'width:93%', wResponse: 'width:97%' }, toggleAgent: () => this.setState(s=>({agent:!s.agent})),
       goInbox:this.go('inbox'), goIngest:this.go('ingest'), goPart:this.go('part'), goCost:this.go('cost'), goQuote:this.go('quote'), goNeg:this.go('neg'), goPdf:this.go('pdf'),
       isInbox:screen==='inbox', isIngest:screen==='ingest', isPart:screen==='part', isCost:screen==='cost', isQuote:screen==='quote', isNeg:screen==='neg', isShop:screen==='shop', isPdf:screen==='pdf',

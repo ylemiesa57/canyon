@@ -169,7 +169,7 @@ class Component extends DCLogic {
     });
 
     return {
-      shopLink: 'shop/index.html',
+      shopLink: '/app/shop',
       tabs, isHome: sc === 'home', isDash: sc === 'dash', isRfq: sc === 'rfq', isPart: sc === 'part', isNeg: sc === 'neg', isOffers: sc === 'offers',
       goRfq: this.go('rfq'), goPart: this.go('part'), goNeg: this.go('neg'), goOffers: this.go('offers'),
       rows, kpis,
