@@ -77,7 +77,7 @@ async function load(file, reducedMotion) {
   check(!!apply, "findings have an apply action");
   await b.click(apply);
   check(b.has("2 findings open"), "applying a finding reduces the open count");
-  await b.click(b.btn("Profile"));
+  await b.click(b.btnStarts("Profile"));
   await b.click(b.btn("Save mandate"));
   check(b.has("Request queue") && !b.has("Set your mandate first"), "saving the mandate returns to a queue without the banner");
   await b.click(newTab());
@@ -88,8 +88,13 @@ async function load(file, reducedMotion) {
   check(/\d shops responded/.test(b.text()), "offers screen lists the responding shops");
   await b.click(b.btn("Accept recommendation"));
   check(b.has("Awarded."), "accepting the split awards the RFQ");
+  await b.click(b.btnStarts("Profile"));
+  check(b.has("Awards") && /Profile1/.test(b.text().replace(/\s+/g, "")), "award lands on Profile with a badge");
+  await b.click(b.btnStarts("Quote PDF"));
+  check(b.has("Quotation Q-4417") && b.has("Halcyon Industrial"), "quote opens as a paper document");
   await b.click(b.btn("Queue"));
   check(/RFQ-4417.*?Awarded/.test(b.text()), "queue shows the RFQ as awarded");
+  check(b.has("Your agent") && b.has("Sent your award"), "agent band leads the queue and reflects the award");
   check(b.errors.length === 0, "no runtime errors (" + b.errors.join("; ") + ")");
   b.w.close();
 
