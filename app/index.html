@@ -18,25 +18,37 @@
 <template id="dc">
 <div style="min-height:100vh;background:var(--color-bg)">
 
-<div style="position:sticky;top:0;z-index:40;background:var(--color-bg);border-bottom:2px solid var(--color-divider)">
+<div style="position:sticky;top:0;z-index:40;background:var(--color-bg);border-bottom:1px solid var(--color-divider)">
   <div style="max-width:1440px;margin:0 auto;padding:0 28px;display:flex;align-items:center;gap:28px;height:56px">
-    <div style="display:flex;align-items:center;gap:9px">
-      <div style="width:16px;height:16px;background:var(--color-accent)"></div>
-      <span style="font-family:var(--font-heading);font-weight:800;font-size:17px;letter-spacing:-0.02em">CANYON</span>
+    <div sc-camel-on-click="{{ goHome }}" style="display:flex;align-items:center;gap:9px;cursor:pointer">
+      <div style="width:16px;height:16px;background:var(--color-accent);border-radius:3px"></div>
+      <span style="font-family:var(--font-heading);font-weight:700;font-size:17px;letter-spacing:-0.02em">CANYON</span>
     </div>
     <div style="width:1px;height:20px;background:var(--color-divider)"></div>
     <div style="display:flex;gap:2px;flex:1;min-width:0;overflow:hidden">
       <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
-        <button sc-camel-on-click="{{ t.go }}" style="border:0;background:transparent;cursor:pointer;font-family:var(--font-heading);font-weight:800;font-size:12.5px;letter-spacing:.02em;padding:6px 11px;color:inherit;white-space:nowrap;border-bottom:2px solid transparent;{{ t.sel }}">{{ t.label }}</button>
+        <button sc-camel-on-click="{{ t.go }}" style="border:0;background:transparent;cursor:pointer;font-family:var(--font-heading);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:6px 11px;color:inherit;white-space:nowrap;border-bottom:2px solid transparent;{{ t.sel }}">{{ t.label }}</button>
       </sc-for>
     </div>
     <div style="display:flex;align-items:center;gap:14px">
+      <button sc-camel-on-click="{{ toggleTheme }}" class="btn btn-ghost" style="font-size:12px;padding:4px 8px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ themeLabel }}</button>
       <a href="{{ shopLink }}" style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent);text-decoration:none;white-space:nowrap">Shop side</a>
-      <span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Halcyon Industrial · Buyer</span>
-      <div style="width:28px;height:28px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-family:var(--font-heading);font-weight:800;font-size:11px">DM</div>
+      <span style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Halcyon Industrial · Buyer</span>
+      <div style="width:28px;height:28px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-family:var(--font-heading);font-weight:700;font-size:11px">DM</div>
     </div>
   </div>
 </div>
+
+<sc-if value="{{ inRfq }}" hint-placeholder-val="{{ false }}">
+  <div style="border-bottom:1px solid var(--color-divider);background:var(--color-surface)">
+    <div style="max-width:1440px;margin:0 auto;padding:6px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <span style="font-weight:600;font-size:13px;font-variant-numeric:tabular-nums">RFQ-4417 <span style="font-weight:400;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Actuator Housing · Rev C</span></span>
+      <div class="stage-strip">
+        <sc-for list="{{ stages }}" as="s" hint-placeholder-count="4"><button sc-camel-on-click="{{ s.go }}" aria-current="{{ s.current }}"><span class="{{ s.markClass }}">{{ s.mark }}</span>{{ s.label }}</button><span class="sep">{{ s.sep }}</span></sc-for>
+      </div>
+    </div>
+  </div>
+</sc-if>
 
 <!-- ══ MARKETING ══ -->
 <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
@@ -44,39 +56,39 @@
   <div style="max-width:1440px;margin:0 auto;padding:0 28px">
     <div style="display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:56px;padding:84px 0 72px;align-items:start">
       <div>
-        <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--color-accent-700);margin-bottom:22px">Sourcing agent for machined parts</div>
+        <div style="font-size:12.5px;letter-spacing:0;font-weight:500;color:var(--color-accent-700);margin-bottom:22px">Sourcing agent for machined parts</div>
         <h1 style="font-size:clamp(42px,5.2vw,74px);line-height:.98;letter-spacing:-0.03em;margin:0 0 22px;max-width:14ch">Quote it like the shop would.</h1>
         <p style="font-size:18px;line-height:1.5;max-width:46ch;margin:0 0 28px;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Upload a STEP file. Canyon reads the geometry the way a senior estimator does, prices it, then negotiates with verified shops on the terms you set — while you do something else.</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button sc-camel-on-click="{{ goRfq }}" class="btn btn-primary" style="padding:12px 20px;font-size:14px">Upload a part</button>
           <button sc-camel-on-click="{{ goOffers }}" class="btn btn-secondary" style="padding:12px 20px;font-size:14px">See a live quote</button>
         </div>
-        <div style="display:flex;gap:32px;margin-top:44px;padding-top:22px;border-top:2px solid var(--color-divider);flex-wrap:wrap">
-          <div><div style="font-family:var(--font-heading);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums">90 sec</div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-top:3px">To a priced band</div></div>
-          <div><div style="font-family:var(--font-heading);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums">1,240</div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-top:3px">Verified shops</div></div>
-          <div><div style="font-family:var(--font-heading);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums">±6%</div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-top:3px">Band vs. awarded</div></div>
+        <div style="display:flex;gap:32px;margin-top:44px;padding-top:22px;border-top:1px solid var(--color-divider);flex-wrap:wrap">
+          <div><div style="font-family:var(--font-heading);font-weight:700;font-size:26px;font-variant-numeric:tabular-nums">90 sec</div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-top:3px">To a priced band</div></div>
+          <div><div style="font-family:var(--font-heading);font-weight:700;font-size:26px;font-variant-numeric:tabular-nums">1,240</div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-top:3px">Verified shops</div></div>
+          <div><div style="font-family:var(--font-heading);font-weight:700;font-size:26px;font-variant-numeric:tabular-nums">±6%</div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-top:3px">Band vs. awarded</div></div>
         </div>
       </div>
-      <div style="border:2px solid var(--color-text);background:var(--color-surface)">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:2px solid var(--color-text)">
-          <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Live — RFQ-4417 · Actuator Housing</span>
-          <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--color-accent-700)"><span style="width:7px;height:7px;background:var(--color-accent);animation:cy-pulse 1.4s infinite"></span>Negotiating</span>
+      <div style="border:1px solid var(--color-divider-strong);background:var(--color-surface)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--color-divider-strong)">
+          <span style="font-size:12px;letter-spacing:0;font-weight:500">Live — RFQ-4417 · Actuator Housing</span>
+          <span style="display:flex;align-items:center;gap:6px;font-size:12px;letter-spacing:0;font-weight:500;color:var(--color-good)"><span class="pulse-dot"></span>Negotiating</span>
         </div>
         <div style="position:relative;height:186px;overflow:hidden;background:repeating-linear-gradient(90deg,transparent 0 23px,color-mix(in srgb,var(--color-text) 8%,transparent) 23px 24px),repeating-linear-gradient(0deg,transparent 0 23px,color-mix(in srgb,var(--color-text) 8%,transparent) 23px 24px)">
           <div style="position:absolute;inset:0;display:grid;place-items:center">
-            <div style="width:58%;height:74px;background:color-mix(in srgb,var(--color-text) 12%,transparent);border:2px solid color-mix(in srgb,var(--color-text) 45%,transparent);position:relative">
-              <div style="position:absolute;left:14%;top:22%;width:18%;height:56%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 35%,transparent)"></div>
-              <div style="position:absolute;left:41%;top:22%;width:18%;height:56%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 35%,transparent)"></div>
-              <div style="position:absolute;left:68%;top:22%;width:18%;height:56%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 35%,transparent)"></div>
+            <div style="width:58%;height:74px;background:color-mix(in srgb,var(--color-text) 12%,transparent);border:1px solid color-mix(in srgb,var(--color-text) 45%,transparent);position:relative">
+              <div style="position:absolute;left:14%;top:22%;width:18%;height:56%;background:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-text) 35%,transparent)"></div>
+              <div style="position:absolute;left:41%;top:22%;width:18%;height:56%;background:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-text) 35%,transparent)"></div>
+              <div style="position:absolute;left:68%;top:22%;width:18%;height:56%;background:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-text) 35%,transparent)"></div>
             </div>
           </div>
           <div style="position:absolute;left:0;right:0;top:0;height:2px;background:var(--color-accent);animation:cy-scan 3.4s linear infinite"></div>
-          <div style="position:absolute;left:12px;bottom:10px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">STEP AP214 · 3 setups · 34 holes</div>
+          <div style="position:absolute;left:12px;bottom:10px;font-size:11.5px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">STEP AP214 · 3 setups · 34 holes</div>
         </div>
-        <div style="padding:16px 14px;border-top:2px solid var(--color-text)">
+        <div style="padding:16px 14px;border-top:1px solid var(--color-divider-strong)">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px">
-            <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Unit price band · 250 ea</span>
-            <span style="font-family:var(--font-heading);font-weight:800;font-size:20px;font-variant-numeric:tabular-nums">$94.90</span>
+            <span style="font-size:12px;letter-spacing:0;font-weight:500">Unit price band · 250 ea</span>
+            <span style="font-family:var(--font-heading);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums">$94.90</span>
           </div>
           <div style="position:relative;height:10px;background:color-mix(in srgb,var(--color-text) 12%,transparent)">
             <div style="position:absolute;top:0;bottom:0;background:var(--color-accent);animation:cy-band 3.8s cubic-bezier(.2,.8,.2,1) infinite alternate"></div>
@@ -86,24 +98,24 @@
       </div>
     </div>
 
-    <div style="border-top:2px solid var(--color-divider);display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
+    <div style="border-top:1px solid var(--color-divider);display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
       <sc-for list="{{ pillars }}" as="p" hint-placeholder-count="3">
-        <div style="padding:36px 30px 40px 0;border-right:2px solid var(--color-divider)">
-          <div style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent);margin-bottom:14px">{{ p.n }}</div>
+        <div style="padding:36px 30px 40px 0;border-right:1px solid var(--color-divider)">
+          <div style="font-family:var(--font-heading);font-weight:700;font-size:12px;color:var(--color-accent);margin-bottom:14px">{{ p.n }}</div>
           <h3 style="font-size:21px;letter-spacing:-0.02em;margin:0 0 10px;max-width:18ch">{{ p.title }}</h3>
           <p style="margin:0;font-size:14.5px;line-height:1.55;max-width:36ch;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ p.body }}</p>
         </div>
       </sc-for>
     </div>
 
-    <div style="border-top:2px solid var(--color-divider);padding:44px 0 8px">
+    <div style="border-top:1px solid var(--color-divider);padding:44px 0 8px">
       <h2 style="font-size:30px;letter-spacing:-0.025em;margin:0 0 28px">What happens after you drop the file</h2>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0">
         <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
           <div style="padding:0 26px 34px 0">
             <div style="height:4px;background:var(--color-accent);width:38px;margin-bottom:14px"></div>
-            <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:8px">Step {{ s.n }} · {{ s.time }}</div>
-            <div style="font-family:var(--font-heading);font-weight:800;font-size:17px;margin-bottom:7px">{{ s.title }}</div>
+            <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:8px">Step {{ s.n }} · {{ s.time }}</div>
+            <div style="font-family:var(--font-heading);font-weight:700;font-size:17px;margin-bottom:7px">{{ s.title }}</div>
             <p style="margin:0;font-size:13.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ s.body }}</p>
           </div>
         </sc-for>
@@ -115,7 +127,7 @@
     <div style="max-width:1440px;margin:0 auto;padding:52px 28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:28px">
       <sc-for list="{{ marketStats }}" as="m" hint-placeholder-count="4">
         <div>
-          <div style="font-family:var(--font-heading);font-weight:800;font-size:38px;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">{{ m.v }}</div>
+          <div style="font-family:var(--font-heading);font-weight:700;font-size:38px;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">{{ m.v }}</div>
           <div style="font-size:12px;line-height:1.45;margin-top:8px;max-width:26ch;color:color-mix(in srgb,#f3f2f2 70%,transparent)">{{ m.l }}</div>
         </div>
       </sc-for>
@@ -141,24 +153,24 @@
 <div style="max-width:1440px;margin:0 auto;padding:26px 28px 60px">
   <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:20px">
     <div>
-      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Halcyon Industrial · Grand Rapids, MI</div>
+      <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Halcyon Industrial · Grand Rapids, MI</div>
       <h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">Request queue</h2>
     </div>
     <button sc-camel-on-click="{{ goRfq }}" class="btn btn-primary" style="padding:10px 18px">New RFQ</button>
   </div>
   <sc-if value="{{ profileMissing }}" hint-placeholder-val="{{ false }}">
-    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:2px solid var(--color-accent);padding:12px 16px;margin-bottom:20px">
-      <span style="width:10px;height:10px;background:var(--color-accent)"></span>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:1px solid var(--color-warn);background:var(--color-warn-soft);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:20px">
+      <span style="width:10px;height:10px;border-radius:50%;background:var(--color-warn)"></span>
       <span style="font-size:13.5px;flex:1;min-width:240px"><b>Set your mandate first.</b> Ceiling, delivery buffer, terms, certifications, sources. Every request inherits it, and releases stay flagged until it is set.</span>
       <button sc-camel-on-click="{{ goProfile }}" class="btn btn-primary" style="padding:9px 16px">Set up mandate</button>
     </div>
   </sc-if>
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:2px solid var(--color-text);border-bottom:2px solid var(--color-divider);margin-bottom:22px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:1px solid var(--color-divider-strong);border-bottom:1px solid var(--color-divider);margin-bottom:22px">
     <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
-      <div style="padding:16px 20px 18px 0;border-right:2px solid var(--color-divider)">
-        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ k.l }}</div>
-        <div style="font-family:var(--font-heading);font-weight:800;font-size:25px;margin-top:5px;font-variant-numeric:tabular-nums">{{ k.v }}</div>
+      <div style="padding:16px 20px 18px 0;border-right:1px solid var(--color-divider)">
+        <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ k.l }}</div>
+        <div style="font-family:var(--font-heading);font-weight:700;font-size:25px;margin-top:5px;font-variant-numeric:tabular-nums">{{ k.v }}</div>
         <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ k.s }}</div>
       </div>
     </sc-for>
@@ -169,13 +181,13 @@
       <button sc-camel-on-click="{{ f.go }}" style="border:1px solid var(--color-divider);background:transparent;color:inherit;cursor:pointer;font:600 12px var(--font-body);padding:6px 12px;{{ f.on }}">{{ f.label }}</button>
     </sc-for>
   </div>
-  <div style="display:grid;grid-template-columns:minmax(0,150px) minmax(0,1.5fr) 74px minmax(0,110px) minmax(0,190px) minmax(0,130px) minmax(0,110px);gap:14px;padding:0 0 8px;border-bottom:2px solid var(--color-text);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">
+  <div style="display:grid;grid-template-columns:minmax(0,150px) minmax(0,1.5fr) 74px minmax(0,110px) minmax(0,190px) minmax(0,130px) minmax(0,110px);gap:14px;padding:0 0 8px;border-bottom:1px solid var(--color-divider-strong);font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">
     <span>RFQ</span><span>Part</span><span>Qty</span><span>Material</span><span>Stage</span><span>Unit band</span><span>Need by</span>
   </div>
   <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
     <div sc-camel-on-click="{{ r.open }}" style="display:grid;grid-template-columns:minmax(0,150px) minmax(0,1.5fr) 74px minmax(0,110px) minmax(0,190px) minmax(0,130px) minmax(0,110px);gap:14px;padding:15px 0;border-bottom:1px solid var(--color-divider);cursor:pointer;align-items:center" style-hover="background:color-mix(in srgb,var(--color-text) 5%,transparent)">
       <div>
-        <div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums">{{ r.id }}</div>
+        <div style="font-family:var(--font-heading);font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums">{{ r.id }}</div>
         <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ r.ago }}</div>
       </div>
       <div>
@@ -190,7 +202,7 @@
             <div style="height:6px;flex:1;transition:background .6s ease;{{ p.st }}"></div>
           </sc-for>
         </div>
-        <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;{{ r.stageColor }}">{{ r.stage }} <span style="{{ r.needsVis }}">· needs you</span></div>
+        <div style="font-size:12px;letter-spacing:0;font-weight:500;{{ r.stageColor }}">{{ r.stage }} <span style="{{ r.needsVis }}">· needs you</span></div>
       </div>
       <div style="font-size:13.5px;font-variant-numeric:tabular-nums;font-weight:600">{{ r.band }}</div>
       <div style="font-size:12.5px;font-variant-numeric:tabular-nums">{{ r.need }}</div>
@@ -208,36 +220,36 @@
   <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:26px;align-items:start">
     <div>
       <div style="border:2px dashed color-mix(in srgb,var(--color-text) 40%,transparent);padding:38px 26px;background:color-mix(in srgb,var(--color-text) 3%,transparent)">
-        <div style="font-family:var(--font-heading);font-weight:800;font-size:19px;margin-bottom:6px">Drop STEP, IGES, SLDPRT, X_T — or a folder</div>
+        <div style="font-family:var(--font-heading);font-weight:700;font-size:19px;margin-bottom:6px">Drop STEP, IGES, SLDPRT, X_T — or a folder</div>
         <div style="font-size:13px;color:color-mix(in srgb,var(--color-text) 62%,transparent);margin-bottom:16px">Drawings and PDFs are read too: Canyon pulls tolerances, finish callouts and notes off the print.</div>
         <button class="btn btn-secondary" style="padding:9px 16px">Browse files</button>
       </div>
-      <div style="margin-top:18px;border-top:2px solid var(--color-text)">
+      <div style="margin-top:18px;border-top:1px solid var(--color-divider-strong)">
         <sc-for list="{{ files }}" as="f" hint-placeholder-count="3">
           <div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--color-divider)">
-            <div style="width:30px;height:30px;border:2px solid var(--color-text);display:grid;place-items:center;font-size:9px;font-weight:800;letter-spacing:.04em">{{ f.ext }}</div>
+            <div style="width:30px;height:30px;border:1px solid var(--color-divider-strong);display:grid;place-items:center;font-size:9px;font-weight:700;letter-spacing:.04em">{{ f.ext }}</div>
             <div style="flex:1;min-width:0">
               <div style="font-size:13.5px;font-weight:600">{{ f.name }}</div>
               <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ f.meta }}</div>
             </div>
-            <span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--color-accent-700)">{{ f.state }}</span>
+            <span style="font-size:12px;letter-spacing:0;font-weight:500;color:var(--color-accent-700)">{{ f.state }}</span>
           </div>
         </sc-for>
       </div>
 
       <div style="margin-top:26px">
-        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Commercial requirements</div>
+        <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Commercial requirements</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px">
           <sc-for list="{{ reqFields }}" as="q" hint-placeholder-count="6">
             <div class="field">
               <label>{{ q.l }}</label>
               <sc-if value="{{ q.editable }}" hint-placeholder-val="{{ false }}">
-                <div style="position:relative"><input class="input" sc-on-input="{{ q.set }}" value="{{ q.v }}" style="font-size:13.5px;padding-right:60px;border-color:var(--color-accent)"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;{{ q.tagStyle }}">{{ q.tag }}</span></div>
+                <div style="position:relative"><input class="input" sc-on-input="{{ q.set }}" value="{{ q.v }}" style="font-size:13.5px;padding-right:60px;border-color:var(--color-accent)"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11.5px;letter-spacing:0;font-weight:500;{{ q.tagStyle }}">{{ q.tag }}</span></div>
               </sc-if>
               <sc-if value="{{ q.readonly }}" hint-placeholder-val="{{ true }}">
                 <div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px;background:transparent">
                   <span>{{ q.v }}</span>
-                  <span style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;{{ q.tagStyle }}">{{ q.tag }}</span>
+                  <span style="font-size:11.5px;letter-spacing:0;font-weight:500;{{ q.tagStyle }}">{{ q.tag }}</span>
                 </div>
               </sc-if>
             </div>
@@ -251,10 +263,10 @@
       </div>
     </div>
 
-    <div style="border:2px solid var(--color-text);background:var(--color-surface);position:sticky;top:74px">
-      <div style="padding:12px 16px;border-bottom:2px solid var(--color-text);display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Feature extraction</span>
-        <span style="font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--color-accent-700)">{{ extractPct }}%</span>
+    <div style="border:1px solid var(--color-divider-strong);background:var(--color-surface);position:sticky;top:74px">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--color-divider-strong);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;letter-spacing:0;font-weight:500">Feature extraction</span>
+        <span style="font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--color-accent-700)">{{ extractPct }}%</span>
       </div>
       <div style="height:5px;background:color-mix(in srgb,var(--color-text) 12%,transparent)">
         <div style="height:100%;background:var(--color-accent);transition:width .5s linear;{{ extractW }}"></div>
@@ -267,21 +279,17 @@
           </div>
         </sc-for>
       </div>
-      <div style="padding:14px 16px;border-top:2px solid var(--color-text);transition:opacity .6s ease;{{ priceVis }}">
-        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:8px">Estimated unit price · {{ qtyLabel }}</div>
+      <div style="padding:14px 16px;border-top:1px solid var(--color-divider-strong);transition:opacity .6s ease;{{ priceVis }}">
+        <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:8px">Estimated unit price · {{ qtyLabel }}</div>
         <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px">
-          <span style="font-family:var(--font-heading);font-weight:800;font-size:30px;font-variant-numeric:tabular-nums">{{ unitPrice }}</span>
+          <span style="font-family:var(--font-heading);font-weight:700;font-size:30px;font-variant-numeric:tabular-nums">{{ unitPrice }}</span>
           <span style="font-size:12.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ bandText }}</span>
         </div>
-        <sc-if value="{{ flagged }}" hint-placeholder-val="{{ true }}">
-          <div style="border:2px solid var(--color-accent);padding:10px 12px;margin-bottom:10px">
-            <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--color-accent-700);margin-bottom:6px"><span style="width:8px;height:8px;background:var(--color-accent)"></span>Not safe to release</div>
-            <sc-for list="{{ gateReasons }}" as="g" hint-placeholder-count="2">
-              <div style="font-size:12.5px;line-height:1.45;padding:3px 0;border-top:1px solid var(--color-divider)">{{ g }}</div>
-            </sc-for>
-          </div>
-        </sc-if>
-        <button sc-camel-on-click="{{ release }}" class="btn btn-block" style="padding:11px 16px;{{ releaseStyle }}">{{ releaseLabel }}</button>
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:2px"><span>Release checks</span><span>{{ passCount }} of {{ checkCount }} passing</span></div>
+          <sc-for list="{{ checks }}" as="c" hint-placeholder-count="5"><div class="check-row"><span class="check-mark {{ c.cls }}">{{ c.mark }}</span><span style="flex:1">{{ c.label }}</span><span style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ c.detail }}</span></div></sc-for>
+        </div>
+        <button sc-camel-on-click="{{ releaseClick }}" class="btn btn-block {{ releaseClass }}" style="padding:11px 16px">{{ releaseLabel }}</button>
         <button sc-camel-on-click="{{ goPart }}" class="btn btn-secondary btn-block" style="padding:11px 16px">Review manufacturability first</button>
         <div style="margin-top:10px;font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ releaseNote }}</div>
       </div>
@@ -293,19 +301,19 @@
 <!-- ══ PART / DFM ══ -->
 <sc-if value="{{ isPart }}" hint-placeholder-val="{{ false }}">
 <div>
-  <div style="max-width:1440px;margin:0 auto;padding:20px 28px 16px;border-bottom:2px solid var(--color-text)">
+  <div style="max-width:1440px;margin:0 auto;padding:20px 28px 16px;border-bottom:1px solid var(--color-divider-strong)">
     <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
-      <div style="width:34px;height:34px;border:2px solid var(--color-text);display:grid;place-items:center"><div style="width:12px;height:12px;background:var(--color-accent)"></div></div>
+      <div style="width:34px;height:34px;border:1px solid var(--color-divider-strong);display:grid;place-items:center"><div style="width:12px;height:12px;background:var(--color-accent)"></div></div>
       <div style="flex:1;min-width:220px">
         <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-family:var(--font-heading);font-weight:800;font-size:21px;letter-spacing:.01em">HAL-4417</span>
+          <span style="font-family:var(--font-heading);font-weight:700;font-size:21px;letter-spacing:.01em">HAL-4417</span>
           <span class="tag" style="background:var(--color-accent-200);color:var(--color-accent-800)">{{ openCount }} findings open</span>
         </div>
         <div style="font-size:13.5px;color:color-mix(in srgb,var(--color-text) 62%,transparent)">Actuator Housing · Rev C</div>
       </div>
       <div style="display:flex;gap:30px;flex-wrap:wrap">
         <sc-for list="{{ partMeta }}" as="m" hint-placeholder-count="5">
-          <div><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ m.l }}</div><div style="font-size:13px;font-variant-numeric:tabular-nums;margin-top:2px">{{ m.v }}</div></div>
+          <div><div style="font-size:11.5px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ m.l }}</div><div style="font-size:13px;font-variant-numeric:tabular-nums;margin-top:2px">{{ m.v }}</div></div>
         </sc-for>
       </div>
     </div>
@@ -316,9 +324,9 @@
         <button class="seg-opt" style="border:1px solid var(--color-divider);background:var(--color-text);color:var(--color-bg);padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">CAD</button>
         <button class="seg-opt" style="border:1px solid var(--color-divider);border-left:0;background:transparent;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;color:inherit">Drawing</button>
       </div>
-      <iframe src="/app/viewer?demo=1" title="Part viewer" style="display:block;width:100%;aspect-ratio:4/3;border:2px solid var(--color-text);background:var(--color-surface)"></iframe>
-      <div style="margin-top:18px;border-top:2px solid var(--color-divider);padding-top:14px">
-        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:10px">Cost drivers</div>
+      <iframe src="/app/viewer?demo=1" title="Part viewer" style="display:block;width:100%;aspect-ratio:4/3;border:1px solid var(--color-divider-strong);background:var(--color-surface)"></iframe>
+      <div style="margin-top:18px;border-top:1px solid var(--color-divider);padding-top:14px">
+        <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:10px">Cost drivers</div>
         <sc-for list="{{ drivers }}" as="d" hint-placeholder-count="4">
           <div style="display:grid;grid-template-columns:minmax(0,140px) minmax(0,1fr) 58px;gap:12px;align-items:center;padding:7px 0">
             <span style="font-size:12.5px">{{ d.l }}</span>
@@ -329,9 +337,9 @@
       </div>
     </div>
     <div style="padding:16px 28px 40px">
-      <div style="border:2px solid var(--color-text);padding:14px 16px;margin-bottom:20px">
+      <div style="border:1px solid var(--color-divider-strong);padding:14px 16px;margin-bottom:20px">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
-          <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Price band converging · 250 ea</span>
+          <span style="font-size:12px;letter-spacing:0;font-weight:500">Price band converging · 250 ea</span>
           <span style="font-size:11px;font-weight:600;color:var(--color-accent-700)">{{ bandConf }}</span>
         </div>
         <div style="position:relative;height:14px;background:color-mix(in srgb,var(--color-text) 10%,transparent)">
@@ -339,25 +347,25 @@
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;font-variant-numeric:tabular-nums">
           <span>{{ bandLo }}</span>
-          <span style="font-weight:800">{{ bandMid }} likely</span>
+          <span style="font-weight:700">{{ bandMid }} likely</span>
           <span>{{ bandHi }}</span>
         </div>
       </div>
-      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Manufacturability findings</div>
+      <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Manufacturability findings</div>
       <sc-for list="{{ findings }}" as="f" hint-placeholder-count="3">
-        <div style="border:1px solid var(--color-divider);border-left:4px solid var(--color-accent);background:var(--color-surface);padding:14px 16px;margin-bottom:14px;transition:opacity .5s ease,transform .5s ease;{{ f.vis }};{{ f.rule }}">
+        <div style="border:1px solid var(--color-divider);border-left:3px solid var(--color-divider-strong);background:var(--color-surface);padding:14px 16px;margin-bottom:14px;transition:opacity .5s ease,transform .5s ease;{{ f.vis }};{{ f.rule }}">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-            <span style="width:19px;height:19px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-size:10px;font-weight:800">{{ f.n }}</span>
+            <span style="width:19px;height:19px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-size:11.5px;font-weight:700">{{ f.n }}</span>
             <span class="tag" style="{{ f.sevStyle }}">{{ f.sev }}</span>
             <sc-for list="{{ f.tags }}" as="t" hint-placeholder-count="2">
-              <span style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 50%,transparent)">{{ t }}</span>
+              <span style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 50%,transparent)">{{ t }}</span>
             </sc-for>
           </div>
-          <div style="font-family:var(--font-heading);font-weight:800;font-size:15.5px;margin-bottom:6px">{{ f.title }}</div>
+          <div style="font-family:var(--font-heading);font-weight:700;font-size:15.5px;margin-bottom:6px">{{ f.title }}</div>
           <p style="margin:0 0 12px;font-size:13px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ f.body }}</p>
           <div style="display:flex;gap:26px;padding:10px 0;border-top:1px solid var(--color-divider);flex-wrap:wrap">
-            <div><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Cost impact</div><div style="font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px">{{ f.impact }}</div></div>
-            <div><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">If changed</div><div style="font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;color:var(--color-accent-700)">{{ f.saving }}</div></div>
+            <div><div style="font-size:11.5px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Cost impact</div><div style="font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px">{{ f.impact }}</div></div>
+            <div><div style="font-size:11.5px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">If changed</div><div style="font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;color:var(--color-accent-700)">{{ f.saving }}</div></div>
           </div>
           <div style="background:color-mix(in srgb,var(--color-text) 5%,transparent);padding:10px 12px;font-size:12.5px;line-height:1.45">{{ f.fix }}</div>
           <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
@@ -370,7 +378,7 @@
           </div>
         </div>
       </sc-for>
-      <sc-if value="{{ flagged }}" hint-placeholder-val="{{ true }}"><div style="border:2px solid var(--color-accent);padding:10px 12px;margin-bottom:10px"><div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--color-accent-700);margin-bottom:6px">Not safe to release</div><sc-for list="{{ gateReasons }}" as="g" hint-placeholder-count="2"><div style="font-size:12.5px;line-height:1.45;padding:3px 0;border-top:1px solid var(--color-divider)">{{ g }}</div></sc-for></div></sc-if><button sc-camel-on-click="{{ release }}" class="btn btn-block" style="padding:11px 16px;{{ releaseStyle }}">{{ releaseLabel }}</button>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px"><span>Release checks</span><span>{{ passCount }} of {{ checkCount }} passing</span></div><button sc-camel-on-click="{{ releaseClick }}" class="btn btn-block {{ releaseClass }}" style="padding:11px 16px">{{ releaseLabel }}</button>
     </div>
   </div>
 </div>
@@ -381,17 +389,17 @@
 <div style="max-width:1440px;margin:0 auto;padding:22px 28px 60px">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
     <h2 style="margin:0;font-size:26px;letter-spacing:-0.025em">RFQ-4417 · negotiation</h2>
-    <span style="display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--color-accent-700)"><span style="width:7px;height:7px;background:var(--color-accent);animation:cy-pulse 1.4s infinite"></span>Round {{ roundNo }} of 3 · live</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;letter-spacing:0;font-weight:500;color:var(--color-good)"><span class="pulse-dot"></span>Round {{ roundNo }} of 3 · live</span>
   </div>
   <div style="display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:12px 14px;border:1px solid var(--color-divider);margin-bottom:18px;font-size:12.5px">
-    <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700">Matched {{ matchedCount }} of 6</span>
+    <span style="font-size:11.5px;letter-spacing:0;font-weight:700">Matched {{ matchedCount }} of 6</span>
     <sc-for list="{{ matched }}" as="m" hint-placeholder-count="4"><span><b>{{ m.name }}</b> <span style="color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ m.why }}</span></span></sc-for>
-    <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-left:auto">Excluded {{ excludedCount }}</span>
+    <span style="font-size:11.5px;letter-spacing:0;font-weight:700;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-left:auto">Excluded {{ excludedCount }}</span>
     <sc-for list="{{ excluded }}" as="x" hint-placeholder-count="2"><span style="color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ x.name }}: {{ x.why }}</span></sc-for>
   </div>
-  <div style="display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr) minmax(0,250px);gap:0;border-top:2px solid var(--color-text)">
-    <div style="border-right:2px solid var(--color-divider);padding:18px 22px 18px 0">
-      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Your mandate</div>
+  <div style="display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr) minmax(0,250px);gap:0;border-top:1px solid var(--color-divider-strong)">
+    <div style="border-right:1px solid var(--color-divider);padding:18px 22px 18px 0">
+      <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Your mandate</div>
       <sc-for list="{{ mandate }}" as="m" hint-placeholder-count="6">
         <div style="padding:10px 0;border-bottom:1px solid var(--color-divider)">
           <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ m.l }}</div>
@@ -405,17 +413,17 @@
     <div style="padding:18px 22px">
       <sc-for list="{{ msgs }}" as="m" hint-placeholder-count="5">
         <div style="display:flex;gap:12px;padding:0 0 18px;transition:opacity .5s ease,transform .5s ease;{{ m.vis }}">
-          <div style="width:30px;height:30px;flex:none;display:grid;place-items:center;font-size:10px;font-weight:800;{{ m.avatar }}">{{ m.ini }}</div>
+          <div style="width:30px;height:30px;flex:none;display:grid;place-items:center;font-size:11.5px;font-weight:700;{{ m.avatar }}">{{ m.ini }}</div>
           <div style="flex:1;min-width:0;border-left:2px solid;padding-left:12px;{{ m.rule }}">
             <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:4px">
-              <span style="font-family:var(--font-heading);font-weight:800;font-size:13.5px">{{ m.who }}</span>
+              <span style="font-family:var(--font-heading);font-weight:700;font-size:13.5px">{{ m.who }}</span>
               <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 50%,transparent);font-variant-numeric:tabular-nums">{{ m.t }}</span>
             </div>
             <div style="font-size:13.5px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 82%,transparent)">{{ m.body }}</div>
             <sc-if value="{{ m.hasTerms }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:10px;padding:9px 12px;background:color-mix(in srgb,var(--color-text) 5%,transparent)">
                 <sc-for list="{{ m.terms }}" as="k" hint-placeholder-count="3">
-                  <div><div style="font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ k.l }}</div><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">{{ k.v }}</div></div>
+                  <div><div style="font-size:11.5px;letter-spacing:0;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ k.l }}</div><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">{{ k.v }}</div></div>
                 </sc-for>
               </div>
             </sc-if>
@@ -423,15 +431,15 @@
         </div>
       </sc-for>
       <div style="display:flex;align-items:center;gap:9px;font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent);transition:opacity .4s;{{ typingVis }}">
-        <span style="width:6px;height:6px;background:var(--color-accent);animation:cy-pulse 1s infinite"></span>{{ typingWho }}
+        <span class="pulse-dot" style="width:6px;height:6px"></span>{{ typingWho }}
       </div>
     </div>
 
     <div style="border-left:2px solid var(--color-divider);padding:18px 0 18px 22px">
-      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Position</div>
-      <div style="border:2px solid var(--color-text);padding:12px 14px;margin-bottom:16px">
+      <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Position</div>
+      <div style="border:1px solid var(--color-divider-strong);padding:12px 14px;margin-bottom:16px">
         <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 58%,transparent)">Best live offer</div>
-        <div style="font-family:var(--font-heading);font-weight:800;font-size:27px;font-variant-numeric:tabular-nums;transition:color .4s">{{ bestPrice }}</div>
+        <div style="font-family:var(--font-heading);font-weight:700;font-size:27px;font-variant-numeric:tabular-nums;transition:color .4s">{{ bestPrice }}</div>
         <div style="font-size:12px;margin-top:2px">{{ bestWho }}</div>
       </div>
       <sc-for list="{{ shopStates }}" as="s" hint-placeholder-count="4">
@@ -440,7 +448,7 @@
             <span style="font-size:12.5px;font-weight:600">{{ s.name }}</span>
             <span style="font-size:12.5px;font-variant-numeric:tabular-nums;font-weight:700;transition:opacity .4s;{{ s.vis }}">{{ s.price }}</span>
           </div>
-          <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin-top:3px;{{ s.stColor }}">{{ s.st }}</div>
+          <div style="font-size:12px;letter-spacing:0;font-weight:500;margin-top:3px;{{ s.stColor }}">{{ s.st }}</div>
         </div>
       </sc-for>
       <button sc-camel-on-click="{{ goOffers }}" class="btn btn-primary btn-block" style="margin-top:16px;padding:10px 14px">Go to offers</button>
@@ -458,40 +466,40 @@
       <p style="margin:0;font-size:14px;color:color-mix(in srgb,var(--color-text) 65%,transparent)">Ranked by Canyon on your mandate: {{ weightsLine }}.</p>
     </div>
     <div style="text-align:right">
-      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">vs. your last award</div>
-      <div style="font-family:var(--font-heading);font-weight:800;font-size:24px;color:var(--color-accent-700);font-variant-numeric:tabular-nums">−11.4%</div>
+      <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">vs. your last award</div>
+      <div style="font-family:var(--font-heading);font-weight:700;font-size:24px;color:var(--color-good);font-variant-numeric:tabular-nums">−11.4%</div>
     </div>
   </div>
   <div class="hr" style="margin:16px 0"></div>
   <sc-if value="{{ awarded }}" hint-placeholder-val="{{ false }}">
-    <div style="border:2px solid var(--color-accent);padding:12px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span style="width:10px;height:10px;background:var(--color-accent)"></span><b>Awarded.</b> <span>{{ awardedText }}</span><button sc-camel-on-click="{{ goDash }}" class="btn btn-secondary" style="margin-left:auto;padding:7px 12px">Back to queue</button></div>
+    <div style="border:1px solid var(--color-good);background:var(--color-good-soft);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span style="width:10px;height:10px;border-radius:50%;background:var(--color-good)"></span><b>Awarded.</b> <span>{{ awardedText }}</span><button sc-camel-on-click="{{ goDash }}" class="btn btn-secondary" style="margin-left:auto;padding:7px 12px">Back to queue</button></div>
   </sc-if>
   <sc-if value="{{ noneInside }}" hint-placeholder-val="{{ false }}">
-    <div style="border:2px solid var(--color-text);padding:12px 16px;margin-bottom:16px;font-size:13.5px"><b>None of the offers is inside your mandate</b> (ceiling {{ ceilingText }}). The round is closed. Award anyway, or decline all and revise the part or your mandate.</div>
+    <div style="border:1px solid var(--color-warn);background:var(--color-warn-soft);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:16px;font-size:13.5px"><b>None of the offers is inside your mandate</b> (ceiling {{ ceilingText }}). The round is closed. Award anyway, or decline all and revise the part or your mandate.</div>
   </sc-if>
   <div style="position:relative;{{ stackH }}">
     <sc-for list="{{ offers }}" as="o" hint-placeholder-count="4">
       <div style="position:absolute;left:0;right:0;top:0;transition:transform .85s cubic-bezier(.2,.8,.2,1);{{ o.y }}">
-        <div style="border:2px solid;background:var(--color-surface);display:grid;grid-template-columns:44px minmax(0,1.4fr) minmax(0,150px) minmax(0,1fr) minmax(0,150px);gap:18px;align-items:center;padding:16px 18px;{{ o.edge }}">
-          <div style="font-family:var(--font-heading);font-weight:800;font-size:24px;font-variant-numeric:tabular-nums;{{ o.rankColor }}">{{ o.rank }}</div>
+        <div style="border:1px solid;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);background:var(--color-surface);display:grid;grid-template-columns:44px minmax(0,1.4fr) minmax(0,150px) minmax(0,1fr) minmax(0,150px);gap:18px;align-items:center;padding:16px 18px;{{ o.edge }}">
+          <div style="font-family:var(--font-heading);font-weight:700;font-size:24px;font-variant-numeric:tabular-nums;{{ o.rankColor }}">{{ o.rank }}</div>
           <div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <span style="font-family:var(--font-heading);font-weight:800;font-size:16.5px">{{ o.name }}</span>
+              <span style="font-family:var(--font-heading);font-weight:700;font-size:16.5px">{{ o.name }}</span>
               <sc-for list="{{ o.certs }}" as="c" hint-placeholder-count="2">
-                <span style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;border:1px solid var(--color-divider);padding:2px 6px">{{ c }}</span>
+                <span style="font-size:11.5px;letter-spacing:0;font-weight:500;border:1px solid var(--color-divider);padding:2px 6px">{{ c }}</span>
               </sc-for>
             </div>
             <div style="font-size:12px;color:color-mix(in srgb,var(--color-text) 58%,transparent);margin-top:3px">{{ o.loc }} · {{ o.note }}</div>
           </div>
           <div>
-            <div style="font-family:var(--font-heading);font-weight:800;font-size:23px;font-variant-numeric:tabular-nums;transition:color .5s">{{ o.price }}</div>
+            <div style="font-family:var(--font-heading);font-weight:700;font-size:23px;font-variant-numeric:tabular-nums;transition:color .5s">{{ o.price }}</div>
             <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ o.total }} · {{ o.lead }}</div>
-            <div style="font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-top:2px;{{ o.ceilingStyle }}">{{ o.ceilingNote }}</div>
+            <div style="font-size:11.5px;letter-spacing:0;font-weight:500;margin-top:2px;{{ o.ceilingStyle }}">{{ o.ceilingNote }}</div>
           </div>
           <div>
             <sc-for list="{{ o.bars }}" as="b" hint-placeholder-count="3">
               <div style="display:grid;grid-template-columns:82px minmax(0,1fr) 40px;gap:8px;align-items:center;padding:2px 0">
-                <span style="font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ b.l }}</span>
+                <span style="font-size:11.5px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ b.l }}</span>
                 <div style="height:6px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:100%;background:var(--color-text);transition:width .8s;{{ b.w }}"></div></div>
                 <span style="font-size:11px;font-variant-numeric:tabular-nums;text-align:right">{{ b.v }}</span>
               </div>
@@ -505,9 +513,9 @@
       </div>
     </sc-for>
   </div>
-  <div style="border:2px solid var(--color-text);padding:16px 18px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+  <div style="border:1px solid var(--color-divider-strong);padding:16px 18px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap">
     <div style="max-width:62ch">
-      <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:4px">Canyon recommends a 60/40 split award</div>
+      <div style="font-family:var(--font-heading);font-weight:700;font-size:15px;margin-bottom:4px">Canyon recommends a 60/40 split award</div>
       <div style="font-size:13px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ splitText }}</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button sc-camel-on-click="{{ declineAll }}" class="btn btn-secondary" style="padding:12px 16px">Decline all</button><button sc-camel-on-click="{{ acceptSplit }}" class="btn btn-primary" style="padding:12px 20px">Accept recommendation</button></div>
@@ -519,7 +527,7 @@
 <div style="max-width:1440px;margin:0 auto;padding:26px 28px 60px">
   <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:6px">
     <div>
-      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Halcyon Industrial · Grand Rapids, MI</div>
+      <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Halcyon Industrial · Grand Rapids, MI</div>
       <h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">Your mandate</h2>
       <p style="margin:6px 0 0;font-size:14px;color:color-mix(in srgb,var(--color-text) 65%,transparent);max-width:60ch">Set once. Every request inherits it, your agent negotiates inside it, and Canyon never pauses to ask you. {{ profileSavedText }}</p>
     </div>
@@ -528,16 +536,16 @@
   <div class="hr" style="margin:16px 0 22px"></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;align-items:start">
     <div>
-      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--color-text)">Price and delivery</div>
+      <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--color-divider-strong)">Price and delivery</div>
       <div class="field" style="margin-bottom:12px"><label>Ceiling, % over Canyon's likely price</label><input class="input" type="number" step="1" sc-on-input="{{ setCeilingPct }}" value="{{ profile.ceilingPct }}"></div>
       <div class="field" style="margin-bottom:12px"><label>Delivery buffer before need-by, days</label><input class="input" type="number" step="1" sc-on-input="{{ setBufferDays }}" value="{{ profile.bufferDays }}"></div>
       <div class="field" style="margin-bottom:12px"><label>Payment terms</label><div style="display:flex;gap:8px"><input class="input" sc-on-input="{{ setTerms }}" value="{{ profile.terms }}" style="flex:1"><button sc-camel-on-click="{{ toggleTermsHard }}" class="btn btn-secondary" style="padding:6px 12px;font-size:12px;{{ termsHardSt }}">Hard requirement</button></div></div>
       <div style="margin-top:14px;padding:10px 12px;background:color-mix(in srgb,var(--color-text) 5%,transparent);font-size:12.5px;line-height:1.5">{{ ceilingPreview }}</div>
     </div>
     <div>
-      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--color-text)">Who may bid</div>
+      <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--color-divider-strong)">Who may bid</div>
       <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px 8px;align-items:center;font-size:13px">
-        <span style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Certification</span><span style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Required</span><span style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Preferred</span>
+        <span style="font-size:11.5px;letter-spacing:0;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Certification</span><span style="font-size:11.5px;letter-spacing:0;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Required</span><span style="font-size:11.5px;letter-spacing:0;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Preferred</span>
         <sc-for list="{{ certOptions }}" as="c" hint-placeholder-count="4">
           <span>{{ c.label }}</span>
           <button sc-camel-on-click="{{ c.toggleReq }}" style="border:1px solid var(--color-divider);background:transparent;color:inherit;cursor:pointer;font:600 11px var(--font-body);padding:5px 10px;{{ c.reqSt }}">Required</button>
@@ -551,7 +559,7 @@
       <div class="field" style="margin-top:14px;max-width:220px"><label>Qualified sources required</label><input class="input" type="number" step="1" min="1" sc-on-input="{{ setSources }}" value="{{ profile.sources }}"></div>
     </div>
     <div>
-      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--color-text)">How offers are ranked</div>
+      <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--color-divider-strong)">How offers are ranked</div>
       <div class="field" style="margin-bottom:10px"><label>Unit price, %</label><input class="input" type="number" sc-on-input="{{ setWPrice }}" value="{{ profile.wPrice }}"></div>
       <div class="field" style="margin-bottom:10px"><label>On-time record, %</label><input class="input" type="number" sc-on-input="{{ setWOntime }}" value="{{ profile.wOntime }}"></div>
       <div class="field" style="margin-bottom:10px"><label>Lead time, %</label><input class="input" type="number" sc-on-input="{{ setWLead }}" value="{{ profile.wLead }}"></div>
@@ -560,6 +568,21 @@
     </div>
   </div>
 </div>
+</sc-if>
+<!-- ══ RELEASE DIALOG ══ -->
+<sc-if value="{{ releaseDialog }}" hint-placeholder-val="{{ false }}">
+  <div class="dialog-backdrop" style="z-index:60">
+    <div class="dialog" style="width:min(520px,100%)">
+      <div class="dialog-title">Release with {{ failCount }} open issue{{ failPlural }}?</div>
+      <div class="dialog-body">Shops will receive the RFQ as released with open issues, and the issues travel with it.</div>
+      <div><sc-for list="{{ failing }}" as="c" hint-placeholder-count="2"><div class="check-row"><span class="check-mark no">✕</span><span style="flex:1">{{ c.label }}</span><span style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ c.detail }}</span></div></sc-for></div>
+      <div class="dialog-actions">
+        <button sc-camel-on-click="{{ closeDialog }}" class="btn btn-ghost">Cancel</button>
+        <button sc-camel-on-click="{{ releaseAnyway }}" class="btn btn-secondary">Release anyway</button>
+        <button sc-camel-on-click="{{ reviewFirst }}" class="btn btn-primary">Review first</button>
+      </div>
+    </div>
+  </div>
 </sc-if>
 
 
