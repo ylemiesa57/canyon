@@ -1,56 +1,83 @@
 /* Canyon customer UI. The design mockup's component CSS, with its Modernist tokens
    remapped onto the Canyon palette: CAD viewport at night, sandstone accent, 4px radius. */
 :root {
-  --color-bg: #1e2328;
-  --color-surface: #252b32;
-  --color-text: #e9ecef;
-  --color-accent: #dc7439;
-  --color-accent-2: #e8894f;
-  --color-divider: color-mix(in srgb, #e9ecef 22%, transparent);
+  /* Daylight: the buyer console is a light tool by default. Cool paper, graphite ink, sandstone accent. */
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-text: #1e2328;
+  --color-accent: #c9612a;
+  --color-accent-2: #d97a45;
+  --color-divider: color-mix(in srgb, #1e2328 14%, transparent);
+  --color-divider-strong: color-mix(in srgb, #1e2328 32%, transparent);
 
-  /* Ramps run dark to light so the mockup's usage (100 near the ground, 800/900 for ink) still reads. */
-  --color-neutral-100: #1b2025;
-  --color-neutral-200: #252b32;
-  --color-neutral-300: #313941;
-  --color-neutral-400: #3f4852;
-  --color-neutral-500: #56606c;
-  --color-neutral-600: #7a8593;
-  --color-neutral-700: #9aa4b0;
-  --color-neutral-800: #c3cad2;
-  --color-neutral-900: #e9ecef;
+  --color-neutral-100: #f7f8fa;
+  --color-neutral-200: #eceef1;
+  --color-neutral-300: #dde0e5;
+  --color-neutral-400: #c3c8cf;
+  --color-neutral-500: #9aa3ad;
+  --color-neutral-600: #6f7883;
+  --color-neutral-700: #545c66;
+  --color-neutral-800: #363c44;
+  --color-neutral-900: #1e2328;
 
-  --color-accent-100: #2a2019;
-  --color-accent-200: #3d2a1e;
-  --color-accent-300: #5a3a26;
-  --color-accent-400: #8a532f;
-  --color-accent-500: #dc7439;
-  --color-accent-600: #e48a54;
-  --color-accent-700: #ec9f70;
-  --color-accent-800: #f4bf9a;
-  --color-accent-900: #fbe0cc;
+  --color-accent-100: #fbeee6;
+  --color-accent-200: #f6d9c6;
+  --color-accent-300: #efbc9c;
+  --color-accent-400: #e59a6d;
+  --color-accent-500: #d97a45;
+  --color-accent-600: #c9612a;
+  --color-accent-700: #a64d1f;
+  --color-accent-800: #7d3a17;
+  --color-accent-900: #4f2610;
 
-  --color-accent-2-100: #2a2019;
-  --color-accent-2-200: #3d2a1e;
-  --color-accent-2-300: #5a3a26;
-  --color-accent-2-400: #8a532f;
-  --color-accent-2-500: #e8894f;
-  --color-accent-2-600: #ee9c68;
-  --color-accent-2-700: #f3b184;
-  --color-accent-2-800: #f8cba9;
-  --color-accent-2-900: #fce6d5;
+  --color-accent-2-100: #fbeee6; --color-accent-2-200: #f6d9c6; --color-accent-2-300: #efbc9c; --color-accent-2-400: #e59a6d;
+  --color-accent-2-500: #d97a45; --color-accent-2-600: #c9612a; --color-accent-2-700: #a64d1f; --color-accent-2-800: #7d3a17; --color-accent-2-900: #4f2610;
+
+  /* State is not the brand colour. */
+  --color-good: #2f7d4f;
+  --color-good-soft: color-mix(in srgb, #2f7d4f 12%, transparent);
+  --color-warn: #b7791f;
+  --color-warn-soft: color-mix(in srgb, #b7791f 14%, transparent);
+  --color-bad: #b83a2f;
+  --color-bad-soft: color-mix(in srgb, #b83a2f 12%, transparent);
 
   --font-heading: "Archivo", "Helvetica Neue", Arial, sans-serif;
-  --font-heading-weight: 800;
+  --font-heading-weight: 700;
   --font-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
 
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px;
-  --radius-sm: 4px; --radius-md: 4px; --radius-lg: 4px;
+  --radius-sm: 6px; --radius-md: 8px; --radius-lg: 12px;
 
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
-  --shadow-md: 0 3px 10px rgba(0,0,0,0.4);
-  --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #1e2328 8%, transparent);
+  --shadow-md: 0 4px 14px color-mix(in srgb, #1e2328 10%, transparent);
+  --shadow-lg: 0 16px 40px color-mix(in srgb, #1e2328 16%, transparent);
 }
-html { color-scheme: dark; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #1e2328; --color-surface: #252b32; --color-text: #e9ecef; --color-accent: #dc7439; --color-accent-2: #e8894f;
+    --color-divider: color-mix(in srgb, #e9ecef 16%, transparent); --color-divider-strong: color-mix(in srgb, #e9ecef 34%, transparent);
+    --color-neutral-100: #1b2025; --color-neutral-200: #252b32; --color-neutral-300: #313941; --color-neutral-400: #3f4852; --color-neutral-500: #56606c; --color-neutral-600: #7a8593; --color-neutral-700: #9aa4b0; --color-neutral-800: #c3cad2; --color-neutral-900: #e9ecef;
+    --color-accent-100: #2a2019; --color-accent-200: #3d2a1e; --color-accent-300: #5a3a26; --color-accent-400: #8a532f; --color-accent-500: #dc7439; --color-accent-600: #e48a54; --color-accent-700: #ec9f70; --color-accent-800: #f4bf9a; --color-accent-900: #fbe0cc;
+    --color-accent-2-100: #2a2019; --color-accent-2-200: #3d2a1e; --color-accent-2-300: #5a3a26; --color-accent-2-400: #8a532f; --color-accent-2-500: #e8894f; --color-accent-2-600: #ee9c68; --color-accent-2-700: #f3b184; --color-accent-2-800: #f8cba9; --color-accent-2-900: #fce6d5;
+    --color-good: #7fb27a; --color-good-soft: color-mix(in srgb, #7fb27a 16%, transparent);
+    --color-warn: #d9a441; --color-warn-soft: color-mix(in srgb, #d9a441 16%, transparent);
+    --color-bad: #e0776b; --color-bad-soft: color-mix(in srgb, #e0776b 16%, transparent);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.35); --shadow-md: 0 4px 14px rgba(0,0,0,0.4); --shadow-lg: 0 16px 40px rgba(0,0,0,0.5);
+  }
+}
+:root[data-theme="dark"] {
+  --color-bg: #1e2328; --color-surface: #252b32; --color-text: #e9ecef; --color-accent: #dc7439; --color-accent-2: #e8894f;
+  --color-divider: color-mix(in srgb, #e9ecef 16%, transparent); --color-divider-strong: color-mix(in srgb, #e9ecef 34%, transparent);
+  --color-neutral-100: #1b2025; --color-neutral-200: #252b32; --color-neutral-300: #313941; --color-neutral-400: #3f4852; --color-neutral-500: #56606c; --color-neutral-600: #7a8593; --color-neutral-700: #9aa4b0; --color-neutral-800: #c3cad2; --color-neutral-900: #e9ecef;
+  --color-accent-100: #2a2019; --color-accent-200: #3d2a1e; --color-accent-300: #5a3a26; --color-accent-400: #8a532f; --color-accent-500: #dc7439; --color-accent-600: #e48a54; --color-accent-700: #ec9f70; --color-accent-800: #f4bf9a; --color-accent-900: #fbe0cc;
+  --color-accent-2-100: #2a2019; --color-accent-2-200: #3d2a1e; --color-accent-2-300: #5a3a26; --color-accent-2-400: #8a532f; --color-accent-2-500: #e8894f; --color-accent-2-600: #ee9c68; --color-accent-2-700: #f3b184; --color-accent-2-800: #f8cba9; --color-accent-2-900: #fce6d5;
+  --color-good: #7fb27a; --color-good-soft: color-mix(in srgb, #7fb27a 16%, transparent);
+  --color-warn: #d9a441; --color-warn-soft: color-mix(in srgb, #d9a441 16%, transparent);
+  --color-bad: #e0776b; --color-bad-soft: color-mix(in srgb, #e0776b 16%, transparent);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.35); --shadow-md: 0 4px 14px rgba(0,0,0,0.4); --shadow-lg: 0 16px 40px rgba(0,0,0,0.5);
+}
+html { color-scheme: light dark; }
+:root[data-theme="dark"] { color-scheme: dark; } :root[data-theme="light"] { color-scheme: light; }
 body { background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
 h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); }
 
@@ -72,7 +99,7 @@ h3 { font-size: 25px; }
 h4 { font-size: 20px; }
 h5 { font-size: 16px; }
 h6 { font-size: 13px; }
-h6 { letter-spacing: 0.08em; text-transform: uppercase; }
+h6 { letter-spacing: 0; text-transform: none; font-weight: 500; color: color-mix(in srgb, var(--color-text) 60%, transparent); }
 p { margin: 0 0 var(--space-3); }
 a { color: var(--color-accent); text-underline-offset: 3px; }
 img { display: block; max-width: 100%; }
@@ -88,7 +115,7 @@ figcaption {
 
 /* — rules — */
 .hr {
-  height: 2px; border: 0; margin: var(--space-4) 0;
+  height: 1px; border: 0; margin: var(--space-4) 0;
   background: var(--color-divider);
 }
 
@@ -192,7 +219,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .nav {
   display: flex; align-items: center; gap: var(--space-4);
   padding: var(--space-3) var(--space-4);
-  border-bottom: 2px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
 }
 .nav-brand {
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
@@ -204,9 +231,9 @@ textarea.input { min-height: 90px; resize: vertical; }
 /* — tables — */
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .table th {
-  text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  text-align: left; font-size: 12px; letter-spacing: 0; text-transform: none; font-weight: 500;
   color: color-mix(in srgb, var(--color-text) 60%, transparent);
-  padding: var(--space-2); border-bottom: 2px solid var(--color-divider);
+  padding: var(--space-2); border-bottom: 1px solid var(--color-divider-strong);
 }
 .table td {
   padding: var(--space-2);
@@ -307,3 +334,20 @@ tr.is-hot .cost-dot, tr.is-pin .cost-dot { background: var(--color-accent); }
   .cost-part { position: static; max-width: 560px; }
   .cost-aside { grid-template-columns: 1fr; }
 }
+
+/* Daylight additions */
+.btn-primary { box-shadow: var(--shadow-sm); }
+.btn-secondary { background: var(--color-surface); }
+.check-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; border-top: 1px solid var(--color-divider); }
+.check-row:first-of-type { border-top: 0; }
+.check-mark { width: 16px; height: 16px; border-radius: 4px; flex: none; display: grid; place-items: center; font-size: 11px; font-weight: 700; }
+.check-mark.ok { background: var(--color-good-soft); color: var(--color-good); }
+.check-mark.no { background: var(--color-bad-soft); color: var(--color-bad); }
+.pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-good); animation: cy-pulse 1.4s infinite; }
+@media (prefers-reduced-motion: reduce) { .pulse-dot { animation: none; } }
+.stage-strip { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 12.5px; }
+.stage-strip button { border: 0; background: transparent; color: color-mix(in srgb, var(--color-text) 60%, transparent); cursor: pointer; font: 500 12.5px var(--font-body); padding: 6px 10px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 6px; }
+.stage-strip button:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+.stage-strip button[aria-current="step"] { color: var(--color-text); background: color-mix(in srgb, var(--color-text) 7%, transparent); font-weight: 600; }
+.stage-strip .sep { color: color-mix(in srgb, var(--color-text) 30%, transparent); }
+.stage-strip .done { color: var(--color-good); }

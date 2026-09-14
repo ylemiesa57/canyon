@@ -4,7 +4,12 @@
 (function () {
   const DCLogic = window.DC.DCLogic;
   const MUTED = 'color:color-mix(in srgb,var(--color-text) 55%,transparent)';
-  const ACC = 'color:var(--color-accent-700)';
+  const ACC = 'color:var(--color-good)';
+  const WARN = 'color:var(--color-warn)';
+  const BAD = 'color:var(--color-bad)';
+  const INFO = 'color:var(--color-neutral-600)';
+  const readTheme = () => { try { return localStorage.getItem('canyon-theme') || ''; } catch (e) { return ''; } };
+  const applyTheme = (t) => { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; try { localStorage.setItem('canyon-theme', t); } catch (e) { /* private mode */ } };
   const money = (n) => '$' + n.toFixed(2);
   const num = (v, d) => { const n = parseFloat(v); return Number.isFinite(n) ? n : d; };
 
@@ -44,9 +49,10 @@
       screen: 'dash', tick: 0, filter: 'all',
       qty: '250', needBy: 'Nov 14, 2026',
       applied: {}, dismissed: {}, released: false, awarded: null,
+      releaseDialog: false, theme: readTheme(),
     }, loadProfile());
 
-    componentDidMount() { this.run(); }
+    componentDidMount() { applyTheme(this.state.theme); this.run(); }
     componentDidUpdate(p, s) { if (s.screen !== this.state.screen) this.run(); }
     componentWillUnmount() { clearInterval(this._iv); }
 
@@ -78,7 +84,7 @@
 
     renderVals() {
       const st = this.state, sc = st.screen, t = st.tick, P = st.profile;
-      const tabs = [['home', 'Home'], ['dash', 'Queue'], ['rfq', 'New RFQ'], ['part', 'Part & DFM'], ['neg', 'Negotiation'], ['offers', 'Offers'], ['profile', 'Profile']]
+      const tabs = [['dash', 'Queue'], ['rfq', 'New request'], ['profile', 'Profile']]
         .map(([k, label]) => ({ label, go: this.go(k), sel: k === sc ? 'border-bottom-color:var(--color-accent);color:var(--color-text)' : MUTED }));
 
       /* ── Derived: price, band, findings, mandate, match, gate ── */
@@ -114,8 +120,22 @@
       highOpen.forEach((f) => gateReasons.push('High finding open: ' + f.title + ' (' + f.impact + ')'));
       if (ceiling < bandLoF) gateReasons.push('Your ceiling ' + money(ceiling) + ' is under the band’s low end ' + money(bandLoF));
       if (qualifying.length < sources) gateReasons.push('Only ' + qualifying.length + ' shop' + (qualifying.length === 1 ? '' : 's') + ' qualify; your profile requires ' + sources);
-      const safe = gateReasons.length === 0;
-      const release = () => this.setState({ released: true, screen: 'neg' });
+      const checks = [
+        { label: 'Mandate set in your profile', ok: st.profileSet, detail: st.profileSet ? 'from profile' : 'not set' },
+        { label: 'No High findings open', ok: highOpen.length === 0, detail: highOpen.length ? highOpen.length + ' open' : (openFindings.length ? openFindings.length + ' lower open' : 'all resolved') },
+        { label: 'Ceiling covers the price band', ok: ceiling >= bandLoF, detail: money(ceiling) + ' vs ' + money(bandLoF) + ' low' },
+        { label: 'Enough qualifying shops', ok: qualifying.length >= sources, detail: qualifying.length + ' qualify, ' + sources + ' required' },
+        { label: 'Spec sources agree', ok: true, detail: 'CAD, print, terms sheet' },
+      ].map((c) => Object.assign(c, { cls: c.ok ? 'ok' : 'no', mark: c.ok ? '✓' : '✕' }));
+      const failing = checks.filter((c) => !c.ok);
+      const safe = failing.length === 0;
+      const release = () => this.setState({ released: true, screen: 'neg', releaseDialog: false });
+      const stageDefs = [['rfq', 'Priced'], ['part', 'Part & DFM'], ['neg', 'Negotiation'], ['offers', 'Offers']];
+      const reached = st.awarded ? 4 : st.released ? 3 : 1;
+      const stages = stageDefs.map(([k, l], i) => ({
+        label: l, go: this.go(k), current: k === sc ? 'step' : 'false',
+        mark: i < reached && k !== sc ? '✓' : String(i + 1), markClass: i < reached && k !== sc ? 'done' : '', sep: i < stageDefs.length - 1 ? '›' : ''
+      }));
 
       /* ── Queue ── */
       const rowDefs = [
@@ -133,8 +153,8 @@
         return Object.assign({}, r, {
           stage: stageNames[adv], adv, needs, needsVis: needs ? 'visibility:visible' : 'visibility:hidden',
           open: this.go(adv >= 4 ? 'offers' : adv === 3 ? 'neg' : adv <= 1 ? 'rfq' : 'part'),
-          stageColor: needs ? ACC : adv >= 4 ? ACC : MUTED,
-          pips: [0, 1, 2, 3, 4].map((n) => ({ st: n < adv ? 'background:var(--color-accent)' : 'background:color-mix(in srgb,var(--color-text) 14%,transparent)' })),
+          stageColor: needs ? WARN : adv >= 4 ? ACC : MUTED,
+          pips: [0, 1, 2, 3, 4].map((n) => ({ st: n < adv ? 'background:var(--color-text)' : 'background:color-mix(in srgb,var(--color-text) 14%,transparent)' })),
         });
       });
       const rows = rowsAll.filter((r) => st.filter === 'all' || (st.filter === 'needs' && r.needs) || (st.filter === 'neg' && r.adv === 3) || (st.filter === 'awarded' && r.adv === 5));
@@ -165,9 +185,9 @@
       ];
       const reqFields = [
         { l: 'Quantity', v: st.qty, tag: 'You', tagStyle: MUTED, editable: true, readonly: false, set: (e) => this.setState({ qty: e.target.value }) },
-        { l: 'Material', v: '6061-T6', tag: 'From CAD', tagStyle: ACC, editable: false, readonly: true },
-        { l: 'Finish', v: 'Bead blast + clear ano', tag: 'From print', tagStyle: ACC, editable: false, readonly: true },
-        { l: 'Tolerance class', v: '±0.005 typ.', tag: 'From print', tagStyle: ACC, editable: false, readonly: true },
+        { l: 'Material', v: '6061-T6', tag: 'From CAD', tagStyle: INFO, editable: false, readonly: true },
+        { l: 'Finish', v: 'Bead blast + clear ano', tag: 'From print', tagStyle: INFO, editable: false, readonly: true },
+        { l: 'Tolerance class', v: '±0.005 typ.', tag: 'From print', tagStyle: INFO, editable: false, readonly: true },
         { l: 'Need by', v: st.needBy, tag: 'You', tagStyle: MUTED, editable: true, readonly: false, set: (e) => this.setState({ needBy: e.target.value }) },
         { l: 'Payment terms', v: P.terms + (P.termsHard ? ' · hard' : ''), tag: 'Profile', tagStyle: MUTED, editable: false, readonly: true }
       ];
@@ -249,7 +269,7 @@
           rank: p == null ? '—' : String(r + 1), name: o.name, loc: o.loc, note: o.note, certs: o.certs,
           price: p == null ? '—' : money(p), lead: o.leads[phase], total: p == null ? '—' : '$' + Math.round(p * qtyN).toLocaleString('en-US') + ' total',
           ceilingNote: over ? 'over your ' + money(ceiling) + ' ceiling' : p == null ? '' : 'inside mandate',
-          ceilingStyle: over ? ACC : MUTED,
+          ceilingStyle: over ? BAD : ACC,
           y: 'transform:translateY(' + (r * 138) + 'px)',
           edge: best ? 'border-color:var(--color-accent)' : 'border-color:var(--color-divider)',
           rankColor: best ? 'color:var(--color-accent)' : MUTED,
@@ -273,11 +293,20 @@
         priceVis: pct >= 100 ? 'opacity:1' : 'opacity:.25;pointer-events:none',
         unitPrice: money(likely), bandText: '± $14 · 4–6 weeks' + (savings ? ' · re-priced after ' + Object.keys(st.applied).filter((k) => st.applied[k]).length + ' change' + (savings > 14.9 ? 's' : '') : ''),
         qtyLabel: st.qty + ' ea',
+        // nav
+        inRfq: ['rfq', 'part', 'neg', 'offers'].includes(sc), stages, goHome: this.go('home'),
+        toggleTheme: () => { const next = st.theme === '' ? 'dark' : st.theme === 'dark' ? 'light' : ''; applyTheme(next); this.setState({ theme: next }); },
+        themeLabel: st.theme === 'dark' ? 'Dark' : st.theme === 'light' ? 'Light' : 'Auto theme',
         // gate
-        safe, flagged: !safe, gateReasons, release,
-        releaseLabel: safe ? 'Release to shops' : 'Release anyway',
+        safe, flagged: !safe, gateReasons, release, checks, failing,
+        passCount: String(checks.length - failing.length), checkCount: String(checks.length), failCount: String(failing.length), failPlural: failing.length === 1 ? '' : 's',
+        releaseClass: safe ? 'btn-primary' : 'btn-secondary',
+        releaseClick: safe ? release : () => this.setState({ releaseDialog: true }),
+        releaseDialog: st.releaseDialog, closeDialog: () => this.setState({ releaseDialog: false }),
+        releaseAnyway: release, reviewFirst: () => this.setState({ releaseDialog: false, screen: 'part' }),
+        releaseLabel: safe ? 'Release to shops' : 'Release anyway…',
         releaseStyle: safe ? 'background:var(--color-accent);color:var(--color-bg)' : 'background:transparent;color:var(--color-accent);border:2px solid var(--color-accent)',
-        releaseNote: safe ? qualifying.length + ' verified shops qualify. Your agent negotiates inside your mandate.' : 'Not safe to release yet. You can still release, and the reasons go with the RFQ.',
+        releaseNote: safe ? qualifying.length + ' verified shops qualify. Your agent negotiates inside your mandate.' : failing.length + ' check' + (failing.length === 1 ? '' : 's') + ' failing. You can still release; you will be asked to confirm.',
         // part
         findings, drivers, partMeta, openCount: String(openFindings.length),
         bandPos: 'left:' + b[0] + '%;right:' + b[1] + '%', bandLo: money(b[2] - savings).replace('.00', ''), bandMid: money(likely).replace('.20', ''), bandHi: money(b[3] - savings).replace('.00', ''), bandConf: b[4],

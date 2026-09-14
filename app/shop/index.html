@@ -46,9 +46,9 @@
             <div style="display:flex;gap:var(--space-2)"><button class="btn btn-secondary">Forward email</button><button sc-camel-on-click="{{ goIngest }}" class="btn btn-primary" style="justify-content:flex-start">New RFQ</button></div>
           </div>
           <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
-          <div style="display:flex;flex-wrap:wrap;border-top:2px solid var(--color-divider);border-left:1px solid var(--color-divider);margin-bottom:var(--space-6)">
+          <div style="display:flex;flex-wrap:wrap;border-top:1px solid var(--color-divider);border-left:1px solid var(--color-divider);margin-bottom:var(--space-6)">
             <sc-for list="{{ inboxStats }}" as="s" hint-placeholder-count="4">
-              <div style="flex:1 1 170px;min-width:0;padding:var(--space-3) var(--space-4);border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">{{ s.k }}</div><div class="tnum" style="font:800 22px var(--font-heading);letter-spacing:-0.02em;white-space:nowrap">{{ s.v }}</div><div style="font-size:12px;color:var(--color-neutral-600)">{{ s.sub }}</div></div>
+              <div style="flex:1 1 170px;min-width:0;padding:var(--space-3) var(--space-4);border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)"><div style="font-size:12px;letter-spacing:0;color:var(--color-neutral-600)">{{ s.k }}</div><div class="tnum" style="font:800 22px var(--font-heading);letter-spacing:-0.02em;white-space:nowrap">{{ s.v }}</div><div style="font-size:12px;color:var(--color-neutral-600)">{{ s.sub }}</div></div>
             </sc-for>
           </div>
           <div style="display:flex;gap:var(--space-3);align-items:center;margin-bottom:var(--space-3);flex-wrap:wrap">
@@ -97,7 +97,7 @@
                 </tbody>
               </table>
             </div>
-            <div style="border-top:2px solid var(--color-text)">
+            <div style="border-top:1px solid var(--color-divider-strong)">
               <h5 style="margin:var(--space-3) 0 var(--space-2)">Requirements</h5>
               <sc-for list="{{ reqs }}" as="q" hint-placeholder-count="8">
                 <div style="display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--color-divider);font-size:13px">
@@ -120,9 +120,9 @@
             <div style="display:flex;gap:var(--space-2)"><button class="btn btn-secondary">Open drawing</button><button sc-camel-on-click="{{ goCost }}" class="btn btn-primary">See costing</button></div>
           </div>
           <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
-          <div style="display:flex;flex-wrap:wrap;border-top:2px solid var(--color-divider);border-left:1px solid var(--color-divider);margin-bottom:var(--space-6)">
+          <div style="display:flex;flex-wrap:wrap;border-top:1px solid var(--color-divider);border-left:1px solid var(--color-divider);margin-bottom:var(--space-6)">
             <sc-for list="{{ partStats }}" as="s" hint-placeholder-count="5">
-              <div style="flex:1 1 150px;min-width:0;padding:var(--space-3) var(--space-4);border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">{{ s.k }}</div><div class="tnum" style="font:800 17px var(--font-heading);letter-spacing:-0.01em;margin-top:2px">{{ s.v }}</div></div>
+              <div style="flex:1 1 150px;min-width:0;padding:var(--space-3) var(--space-4);border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)"><div style="font-size:12px;letter-spacing:0;color:var(--color-neutral-600)">{{ s.k }}</div><div class="tnum" style="font:800 17px var(--font-heading);letter-spacing:-0.01em;margin-top:2px">{{ s.v }}</div></div>
             </sc-for>
           </div>
           <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,1fr);gap:var(--space-6);align-items:start">
@@ -280,7 +280,7 @@
               <div class="cost-total"><span>Unit cost · qty 10</span><b class="tnum">{{ unitCost }}</b></div>
 
               <div class="cost-aside">
-                <div style="border-top:2px solid var(--color-text);padding-top:var(--space-3)">
+                <div style="border-top:1px solid var(--color-divider-strong);padding-top:var(--space-3)">
                   <h5 style="margin:0 0 var(--space-2)">Unit cost by quantity</h5>
                   <sc-for list="{{ qtyCurve }}" as="q" hint-placeholder-count="5">
                     <div style="display:grid;grid-template-columns:32px 1fr 70px;gap:10px;align-items:center;font-size:12.5px;padding:5px 0">
@@ -290,7 +290,7 @@
                     </div>
                   </sc-for>
                 </div>
-                <div style="border-top:2px solid var(--color-text);padding-top:var(--space-3)">
+                <div style="border-top:1px solid var(--color-divider-strong);padding-top:var(--space-3)">
                   <h5 style="margin:0 0 var(--space-2)">Levers</h5>
                   <sc-for list="{{ levers }}" as="l" hint-placeholder-count="4">
                     <div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--color-divider);font-size:13px"><span>{{ l.k }}</span><b class="tnum" style="white-space:nowrap">{{ l.v }}</b></div>
@@ -312,9 +312,9 @@
             <div style="display:flex;gap:var(--space-2)"><button sc-camel-on-click="{{ goPdf }}" class="btn btn-secondary">Preview PDF</button><button sc-camel-on-click="{{ goNeg }}" class="btn btn-primary">Send quote</button></div>
           </div>
           <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
-          <div style="display:flex;flex-wrap:wrap;border-top:2px solid var(--color-divider);border-left:1px solid var(--color-divider);margin-bottom:var(--space-6)">
+          <div style="display:flex;flex-wrap:wrap;border-top:1px solid var(--color-divider);border-left:1px solid var(--color-divider);margin-bottom:var(--space-6)">
             <sc-for list="{{ quoteTotals }}" as="t" hint-placeholder-count="4">
-              <div style="flex:1 1 170px;min-width:0;padding:var(--space-3) var(--space-4);border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);background:{{ t.bg }};color:{{ t.fg }}"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.75">{{ t.k }}</div><div class="tnum" style="font:800 22px var(--font-heading);letter-spacing:-0.02em;white-space:nowrap">{{ t.v }}</div><div style="font-size:12px;opacity:.75">{{ t.sub }}</div></div>
+              <div style="flex:1 1 170px;min-width:0;padding:var(--space-3) var(--space-4);border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);background:{{ t.bg }};color:{{ t.fg }}"><div style="font-size:11px;letter-spacing:0;opacity:.75">{{ t.k }}</div><div class="tnum" style="font:800 22px var(--font-heading);letter-spacing:-0.02em;white-space:nowrap">{{ t.v }}</div><div style="font-size:12px;opacity:.75">{{ t.sub }}</div></div>
             </sc-for>
           </div>
           <sc-for list="{{ quoteLines }}" as="q" hint-placeholder-count="2">
@@ -344,7 +344,7 @@
           </sc-if>
           <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:var(--space-6);align-items:start">
             <div>
-              <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);padding-bottom:8px;border-bottom:2px solid var(--color-text)"><span>Buyer agent</span><span>Offer</span><span style="text-align:right">Your agent</span></div>
+              <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;font-size:12px;letter-spacing:0;color:var(--color-neutral-600);padding-bottom:8px;border-bottom:1px solid var(--color-divider-strong)"><span>Buyer agent</span><span>Offer</span><span style="text-align:right">Your agent</span></div>
               <sc-for list="{{ msgs }}" as="m" hint-placeholder-count="6">
                 <div style="display:grid;grid-template-columns:1fr 84px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--color-divider);font-size:13px;align-items:start">
                   <div style="visibility:{{ m.leftVis }};background:var(--color-surface);padding:10px 12px;border-left:2px solid transparent"><div style="font-size:11px;color:var(--color-neutral-600);margin-bottom:4px">{{ m.leftMeta }}</div>{{ m.left }}</div>
@@ -353,7 +353,7 @@
                 </div>
               </sc-for>
             </div>
-            <div style="border-top:2px solid var(--color-text);padding-top:var(--space-3)">
+            <div style="border-top:1px solid var(--color-divider-strong);padding-top:var(--space-3)">
               <h5 style="margin:0 0 var(--space-2)">Your rules</h5>
               <sc-for list="{{ rails }}" as="r" hint-placeholder-count="6">
                 <div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--color-divider);font-size:13px"><span style="color:var(--color-neutral-600)">{{ r.k }}</span><b class="tnum" style="text-align:right">{{ r.v }}</b></div>
@@ -391,7 +391,7 @@
                 <div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--color-divider);font-size:13px;max-width:520px"><span>{{ r.k }}</span><b class="tnum">{{ r.v }}</b></div>
               </sc-for>
             </div>
-            <div style="border-top:2px solid var(--color-text);padding-top:var(--space-3)">
+            <div style="border-top:1px solid var(--color-divider-strong);padding-top:var(--space-3)">
               <h5 style="margin:0 0 var(--space-2)">Verified profile</h5>
               <div style="font-size:12.5px;color:var(--color-neutral-700);margin-bottom:var(--space-3)">This is what buyers filter on and what your agent bids against. Canyon verified it on site.</div>
               <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--space-3)">
@@ -420,13 +420,13 @@
               <div style="text-align:right;font-size:12px;line-height:1.5">Quotation Q-1235<br>Sep 14, 2026 · valid 48 h<br>Bend, OR</div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:16px 0;font-size:12px;line-height:1.5">
-              <div><div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#7d7979">To</div>Halcyon Industrial<br>Grand Rapids, MI<br>RFQ 1235 · Industrial bracket + plate</div>
-              <div><div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#7d7979">Terms</div>Net 30 · Ex Works Bend, OR<br>Lead 8 to 10 business days<br>Material 6061-T6 per AMS-QQ-A-250/11</div>
+              <div><div style="font-size:11.5px;letter-spacing:0;color:#7d7979">To</div>Halcyon Industrial<br>Grand Rapids, MI<br>RFQ 1235 · Industrial bracket + plate</div>
+              <div><div style="font-size:11.5px;letter-spacing:0;color:#7d7979">Terms</div>Net 30 · Ex Works Bend, OR<br>Lead 8 to 10 business days<br>Material 6061-T6 per AMS-QQ-A-250/11</div>
             </div>
             <sc-for list="{{ quoteLines }}" as="q" hint-placeholder-count="2">
               <div style="margin-top:12px"><b style="font-family:var(--font-heading)">{{ q.id }}</b> <span style="color:#605d5d">{{ q.name }} · {{ q.material }}</span></div>
               <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px">
-                <thead><tr style="text-align:left;color:#7d7979;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase"><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Qty</th><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Unit price</th><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Line total</th></tr></thead>
+                <thead><tr style="text-align:left;color:#7d7979;font-size:11.5px;letter-spacing:0;"><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Qty</th><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Unit price</th><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Line total</th></tr></thead>
                 <tbody>
                   <tr sc-each="{{ q.breaks }}" sc-as="b"><td class="tnum" style="padding:6px 0;border-bottom:1px solid #d7d3d3">{{ b.qty }}</td><td class="tnum" style="padding:6px 0;border-bottom:1px solid #d7d3d3">{{ b.price }}</td><td class="tnum" style="padding:6px 0;border-bottom:1px solid #d7d3d3">{{ b.total }}</td></tr>
                 </tbody>
