@@ -48,11 +48,20 @@
     state = Object.assign({
       screen: 'dash', tick: 0, filter: 'all',
       qty: '250', needBy: 'Nov 14, 2026',
-      applied: {}, dismissed: {}, released: false, awarded: null,
+      applied: {}, dismissed: {}, released: false, awarded: null, selectedFinding: null,
       releaseDialog: false, theme: readTheme(),
     }, loadProfile());
 
-    componentDidMount() { applyTheme(this.state.theme); this.run(); }
+    componentDidMount() {
+      applyTheme(this.state.theme);
+      this.run();
+      // The part viewer iframe reports pin clicks; mirror them on the finding cards.
+      window.addEventListener('message', (e) => {
+        const m = e.data || {};
+        if (m.source === 'canyon-viewer' && m.type === 'select') this.setState({ selectedFinding: m.id || null });
+      });
+    }
+    viewer() { const f = document.querySelector('iframe[title="Part viewer"]'); return f && f.contentWindow; }
     componentDidUpdate(p, s) { if (s.screen !== this.state.screen) this.run(); }
     componentWillUnmount() { clearInterval(this._iv); }
 
@@ -104,6 +113,9 @@
           rule: applied ? 'border-left-color:var(--color-accent-700)' : dismissed ? 'border-left-color:var(--color-divider)' : '',
           open: !applied && !dismissed, applied, dismissed,
           status: applied ? 'Applied · re-priced' : dismissed ? 'Dismissed' : '',
+          selSt: st.selectedFinding === 'f' + (i + 1) ? 'box-shadow:0 0 0 2px var(--color-accent)' : '',
+          pick: () => { const id = st.selectedFinding === 'f' + (i + 1) ? null : 'f' + (i + 1); this.setState({ selectedFinding: id }); const v = this.viewer(); if (v) v.postMessage({ type: 'select', id }, '*'); },
+          noop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
           apply: () => this.setState({ applied: Object.assign({}, st.applied, { [i]: true }), dismissed: Object.assign({}, st.dismissed, { [i]: false }) }),
           dismiss: () => this.setState({ dismissed: Object.assign({}, st.dismissed, { [i]: true }) }),
           undo: () => this.setState({ applied: Object.assign({}, st.applied, { [i]: false }), dismissed: Object.assign({}, st.dismissed, { [i]: false }) }),
