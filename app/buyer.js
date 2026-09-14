@@ -1,108 +1,7 @@
-// Canyon customer UI.
-// The markup in <template id="dc"> is the Claude Design mockup, verbatim apart from colour tokens.
-// Below is a small renderer for its template syntax ({{ path }}, <sc-if>, <sc-for>, sc-camel-on-click),
-// a DOM morph so CSS transitions survive re-renders, and the mockup's own screen logic (Component).
-
+// Buyer-side screens: the design mockup's logic, data synced with the shop side.
 (function () {
-  "use strict";
+  const DCLogic = window.DC.DCLogic;
 
-  const root = document.getElementById("root");
-  const tpl = document.getElementById("dc").content;
-
-  const strip = (s) => (s || "").replace(/^\s*\{\{\s*|\s*\}\}\s*$/g, "").trim();
-  const get = (scope, path) => {
-    if (path === "true") return true;
-    if (path === "false") return false;
-    return path.split(".").reduce((o, k) => (o == null ? undefined : o[k]), scope);
-  };
-  const interp = (str, scope) => str.replace(/\{\{\s*([\w.$]+)\s*\}\}/g, (_, p) => {
-    const v = get(scope, p);
-    return v == null ? "" : String(v);
-  });
-
-  function renderNodes(nodes, scope, out) {
-    for (const n of nodes) {
-      if (n.nodeType === 3) { if (n.data.trim() || n.data.includes(" ")) out.appendChild(document.createTextNode(interp(n.data, scope))); continue; }
-      if (n.nodeType !== 1) continue;
-      const tag = n.tagName.toLowerCase();
-      if (tag === "sc-if") { if (get(scope, strip(n.getAttribute("value")))) renderNodes(n.childNodes, scope, out); continue; }
-      if (tag === "sc-for") {
-        const list = get(scope, strip(n.getAttribute("list"))) || [];
-        const as = n.getAttribute("as") || "item";
-        list.forEach((item, i) => renderNodes(n.childNodes, Object.assign({}, scope, { [as]: item, $index: i }), out));
-        continue;
-      }
-      const el = document.createElement(tag);
-      for (const a of Array.from(n.attributes)) {
-        if (a.name === "sc-camel-on-click") { const fn = get(scope, strip(a.value)); if (typeof fn === "function") el.__click = fn; continue; }
-        if (a.name.startsWith("hint-")) continue;
-        if (a.name === "style-hover") { el.dataset.hover = a.value; continue; }
-        el.setAttribute(a.name, interp(a.value, scope));
-      }
-      renderNodes(n.childNodes, scope, el);
-      out.appendChild(el);
-    }
-  }
-
-  // Morph: copy the new tree onto the old one in place so transitions on style changes play.
-  function morph(oldN, newN) {
-    if (oldN.nodeType !== newN.nodeType || (oldN.nodeType === 1 && oldN.tagName !== newN.tagName)) { oldN.replaceWith(newN); return; }
-    if (oldN.nodeType === 3) { if (oldN.data !== newN.data) oldN.data = newN.data; return; }
-    for (const a of Array.from(oldN.attributes)) if (!newN.hasAttribute(a.name)) oldN.removeAttribute(a.name);
-    for (const a of Array.from(newN.attributes)) if (oldN.getAttribute(a.name) !== a.value) oldN.setAttribute(a.name, a.value);
-    oldN.__click = newN.__click;
-    morphChildren(oldN, newN);
-  }
-  function morphChildren(oldN, newN) {
-    const oc = Array.from(oldN.childNodes), nc = Array.from(newN.childNodes);
-    const len = Math.max(oc.length, nc.length);
-    for (let i = 0; i < len; i++) {
-      if (!oc[i]) oldN.appendChild(nc[i]);
-      else if (!nc[i]) oc[i].remove();
-      else morph(oc[i], nc[i]);
-    }
-  }
-
-  root.addEventListener("click", (e) => {
-    let t = e.target;
-    while (t && t !== root) { if (t.__click) { t.__click(e); return; } t = t.parentNode; }
-  });
-  root.addEventListener("mouseover", (e) => {
-    const t = e.target.closest && e.target.closest("[data-hover]");
-    if (t && !t.__hoverBase) { t.__hoverBase = t.getAttribute("style") || ""; t.setAttribute("style", t.__hoverBase + ";" + t.dataset.hover); }
-  });
-  root.addEventListener("mouseout", (e) => {
-    const t = e.target.closest && e.target.closest("[data-hover]");
-    if (t && t.__hoverBase != null && !t.contains(e.relatedTarget)) { t.setAttribute("style", t.__hoverBase); t.__hoverBase = null; }
-  });
-
-  let app = null, lastScreen = null;
-  function render() {
-    const vals = app.renderVals();
-    const frag = document.createDocumentFragment();
-    renderNodes(tpl.childNodes, vals, frag);
-    const fresh = document.createElement("div");
-    fresh.append(frag);
-    if (!root.firstChild || lastScreen !== app.state.screen) { root.replaceChildren(...Array.from(fresh.childNodes)); }
-    else { morphChildren(root, fresh); }
-    lastScreen = app.state.screen;
-  }
-
-  // Minimal stand-in for the design runtime's component base.
-  class DCLogic {
-    constructor() { this.state = {}; this.props = {}; }
-    setState(u) {
-      const prev = Object.assign({}, this.state);
-      const next = typeof u === "function" ? u(this.state) : u;
-      this.state = Object.assign({}, this.state, next);
-      render();
-      if (this.componentDidUpdate) this.componentDidUpdate(this.props, prev);
-    }
-  }
-
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  /* ── Screen logic from the design, unchanged apart from colour literals ── */
   const MUTED = 'color:color-mix(in srgb,var(--color-text) 55%,transparent)';
 
 class Component extends DCLogic {
@@ -139,10 +38,11 @@ class Component extends DCLogic {
     // ── dashboard ──
     const rowDefs = [
       { id: 'RFQ-4417', ago: '2 h ago', part: 'Actuator Housing', sub: 'Rev C · 3 setups · ±.0005 bore', qty: '250', mat: '6061-T6', base: 3, band: '$88 – $104', need: 'Nov 14' },
+      { id: 'RFQ-1235', ago: '3 h ago', part: 'Industrial bracket + plate', sub: 'Rev A vs Rev B conflict · Cascade CNC quoting', qty: '10', mat: '6061-T6', base: 3, band: '$448 – $471', need: 'Nov 3' },
       { id: 'RFQ-4402', ago: '1 d ago', part: 'Manifold Block', sub: 'Rev A · cross-drilled · deburr critical', qty: '120', mat: 'Ti-6Al-4V', base: 4, band: '$412 – $487', need: 'Dec 02' },
       { id: 'RFQ-4396', ago: '3 d ago', part: 'Sensor Bracket', sub: 'Rev F · repeat order, 4th release', qty: '1,000', mat: '304 SS', base: 5, band: '$11.40 firm', need: 'Oct 28' },
       { id: 'RFQ-4388', ago: '4 d ago', part: 'Isogrid Panel', sub: 'Rev B · thin wall .090 ribs', qty: '25', mat: '6061-T6', base: 2, band: 'pricing…', need: 'Dec 19' },
-      { id: 'RFQ-4371', ago: '9 d ago', part: 'Valve Body', sub: 'Rev B · awarded to Cascade Machine', qty: '500', mat: '17-4 PH', base: 5, band: '$61.80 firm', need: 'Oct 02' }
+      { id: 'RFQ-4371', ago: '9 d ago', part: 'Valve Body', sub: 'Rev B · awarded to Cascade CNC', qty: '500', mat: '17-4 PH', base: 5, band: '$61.80 firm', need: 'Oct 02' }
     ];
     const stageNames = ['Uploaded', 'Priced', 'Matched', 'Negotiating', 'Offers ready', 'Awarded'];
     const rows = rowDefs.map((r, i) => {
@@ -156,7 +56,7 @@ class Component extends DCLogic {
       };
     });
     const kpis = [
-      { l: 'Open requests', v: '12', s: '4 awaiting your decision' },
+      { l: 'Open requests', v: '13', s: '4 awaiting your decision' },
       { l: 'In negotiation', v: '5', s: 'agents active now' },
       { l: 'Avg. time to price', v: '84 s', s: 'was 3.4 days' },
       { l: 'Savings YTD', v: '$214k', s: 'vs. 2025 award prices' }
@@ -230,7 +130,7 @@ class Component extends DCLogic {
     const shopPrices = [
       { name: 'Ridgeline Tool Works', at: 3, prices: ['$97.80', '$97.80', '$94.90', '$94.90'] },
       { name: 'Midstate Precision', at: 1, prices: ['$104.20', '$96.40', '$96.40', '$96.40'] },
-      { name: 'Cascade Machine Co.', at: 4, prices: ['$99.10'] },
+      { name: 'Cascade CNC', at: 4, prices: ['$99.10'] },
       { name: 'Delta Contract Mfg', at: 99, prices: [] }
     ];
     const shopStates = shopPrices.map(s => {
@@ -250,7 +150,7 @@ class Component extends DCLogic {
     const offerDefs = [
       { key: 'r', name: 'Ridgeline Tool Works', loc: 'Elkhart, IN', note: '12 prior jobs with Halcyon', certs: ['ISO 9001', 'AS9100D'], prices: ['$97.80', '$94.90', '$94.90'], leads: ['4 weeks', '4 weeks', '4 weeks'], ranks: [1, 0, 0], bars: [['On-time', 97], ['Quality', 99], ['Response', 92]] },
       { key: 'm', name: 'Midstate Precision', loc: 'Dayton, OH', note: 'Holds 400-pc ceiling at price', certs: ['ISO 9001'], prices: ['$104.20', '$96.40', '$96.40'], leads: ['5 weeks', '4.5 weeks', '4.5 weeks'], ranks: [2, 1, 1], bars: [['On-time', 94], ['Quality', 96], ['Response', 88]] },
-      { key: 'c', name: 'Cascade Machine Co.', loc: 'Portland, OR', note: 'New to your supplier list', certs: ['ISO 9001'], prices: ['$99.10', '$99.10', '$99.10'], leads: ['6 weeks', '6 weeks', '6 weeks'], ranks: [0, 2, 2], bars: [['On-time', 91], ['Quality', 93], ['Response', 97]] },
+      { key: 'c', name: 'Cascade CNC', loc: 'Bend, OR', note: 'New to your supplier list', certs: ['ISO 9001'], prices: ['$99.10', '$99.10', '$99.10'], leads: ['6 weeks', '6 weeks', '6 weeks'], ranks: [0, 2, 2], bars: [['On-time', 91], ['Quality', 93], ['Response', 97]] },
       { key: 'd', name: 'Delta Contract Mfg', loc: 'Mesa, AZ', note: 'No bid — 5-axis cell booked through Nov', certs: ['AS9100D'], prices: ['—', '—', '—'], leads: ['—', '—', '—'], ranks: [3, 3, 3], bars: [['On-time', 89], ['Quality', 95], ['Response', 60]] }
     ];
     const offers = offerDefs.map(o => {
@@ -269,6 +169,7 @@ class Component extends DCLogic {
     });
 
     return {
+      shopLink: 'shop/index.html',
       tabs, isHome: sc === 'home', isDash: sc === 'dash', isRfq: sc === 'rfq', isPart: sc === 'part', isNeg: sc === 'neg', isOffers: sc === 'offers',
       goRfq: this.go('rfq'), goPart: this.go('part'), goNeg: this.go('neg'), goOffers: this.go('offers'),
       rows, kpis,
@@ -303,12 +204,5 @@ class Component extends DCLogic {
   }
 }
 
-  app = new Component();
-  render();
-  if (reduceMotion) {
-    // Jump every screen to its finished state instead of playing the sequence.
-    const max = { dash: 9, rfq: 14, part: 8, neg: 9, offers: 4, home: 4 };
-    app.run = function () { clearInterval(this._iv); this.setState({ tick: max[this.state.screen] || 8 }); };
-  }
-  if (app.componentDidMount) app.componentDidMount();
+  window.DC.mount(Component, { dash: 9, rfq: 14, part: 8, neg: 9, offers: 4, home: 4 });
 })();
