@@ -52,6 +52,7 @@ window.DC = (function () {
         if (a.name === "sc-when") continue;
         if (a.name === "sc-camel-on-click") { const fn = get(scope, strip(a.value)); if (typeof fn === "function") el.__click = fn; continue; }
         if (a.name === "sc-on-input") { const fn = get(scope, strip(a.value)); if (typeof fn === "function") el.__input = fn; continue; }
+        if (a.name.startsWith("sc-on-")) { const fn = get(scope, strip(a.value)); if (typeof fn === "function") { el.__on = el.__on || {}; el.__on[a.name.slice(6)] = fn; } continue; }
         if (a.name === "sc-camel-on-mouse-enter") { const fn = get(scope, strip(a.value)); if (typeof fn === "function") el.__enter = fn; continue; }
         if (a.name === "sc-camel-on-mouse-leave") { const fn = get(scope, strip(a.value)); if (typeof fn === "function") el.__leave = fn; continue; }
         if (a.name.startsWith("hint-")) continue;
@@ -75,6 +76,7 @@ window.DC = (function () {
     }
     oldN.__click = newN.__click;
     oldN.__input = newN.__input;
+    oldN.__on = newN.__on;
     oldN.__enter = newN.__enter; oldN.__leave = newN.__leave;
     morphChildren(oldN, newN);
   }
@@ -92,6 +94,12 @@ window.DC = (function () {
     let t = e.target;
     while (t && t !== root) { if (t.__click) { t.__click(e); return; } t = t.parentNode; }
   });
+  for (const evt of ["change", "drop", "dragover", "dragleave", "dragenter"]) {
+    root.addEventListener(evt, (e) => {
+      let t = e.target;
+      while (t && t !== root) { if (t.__on && t.__on[evt]) { t.__on[evt](e); return; } t = t.parentNode; }
+    });
+  }
   root.addEventListener("input", (e) => {
     let t = e.target;
     while (t && t !== root) { if (t.__input) { t.__input(e); return; } t = t.parentNode; }

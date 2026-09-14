@@ -64,6 +64,14 @@ async function load(file, reducedMotion) {
   check(!!b.btnStarts("Release anyway"), "release is flagged on the example part");
   check(!b.has("correct anything Canyon got wrong"), "spec screen does not ask to correct Canyon");
   check(b.root.querySelectorAll("input.input").length >= 2, "quantity and need-by are inputs");
+  const picker = b.root.querySelector('input[type="file"]');
+  check(!!picker, "Browse files is a real file input");
+  if (picker) {
+    Object.defineProperty(picker, "files", { value: [new b.w.File(["solid x endsolid x"], "my-part.stl", { type: "model/stl" }), new b.w.File(["%PDF"], "my-part.pdf")], configurable: true });
+    picker.dispatchEvent(new b.w.Event("change", { bubbles: true })); await wait(200);
+    check(b.has("my-part.stl") && b.has("2 files from your machine"), "picked files replace the example list");
+    check(b.has("Your agent") && b.has("Reading my-part.stl"), "agent narrates the read from the buyer's file name");
+  }
   await b.click(b.btnHas("Part & DFM")); // a global tab on main, a stage-strip step after the daylight pass
   const apply = Array.from(b.root.querySelectorAll("button")).find((x) => x.textContent.includes("Apply change"));
   check(!!apply, "findings have an apply action");
