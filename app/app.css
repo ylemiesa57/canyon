@@ -357,3 +357,5 @@ tr.is-hot .cost-dot, tr.is-pin .cost-dot { background: var(--color-accent); }
 
 .kpi-tile + .kpi-tile { padding-left: 24px !important; }
 .kpi-tile:last-child { border-right: 0 !important; }
+
+.check-mark.na { background: color-mix(in srgb, var(--color-text) 8%, transparent); color: color-mix(in srgb, var(--color-text) 45%, transparent); }

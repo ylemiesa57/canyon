@@ -29,13 +29,13 @@
 
   /* ── Verified shops the match step filters ── */
   const SHOPS = [
-    { key: 'r', name: 'Ridgeline Tool Works', loc: 'Elkhart, IN', certs: ['ISO 9001', 'AS9100D'], domestic: true, queue: 'queue 54%', lead: '4 wk', note: '12 prior jobs with Halcyon' },
-    { key: 'm', name: 'Midstate Precision', loc: 'Dayton, OH', certs: ['ISO 9001'], domestic: true, queue: 'queue 67%', lead: '4.5 wk', note: 'Holds 400-pc ceiling at price' },
-    { key: 'c', name: 'Cascade CNC', loc: 'Bend, OR', certs: ['ISO 9001', 'AS9100D'], domestic: true, queue: 'queue 58%', lead: '6 wk', note: 'New to your supplier list' },
-    { key: 'd', name: 'Delta Contract Mfg', loc: 'Mesa, AZ', certs: ['AS9100D'], domestic: true, queue: 'queue 96%', lead: '9 wk', note: '5-axis cell booked through Nov' },
-    { key: 'h', name: 'Halvorsen Machine', loc: 'Duluth, MN', certs: ['ISO 9001'], domestic: true, queue: 'queue 71%', lead: '7 wk', note: 'Lead time past need-by' },
-    { key: 'i', name: 'Ironwood Tool and Die', loc: 'Erie, PA', certs: [], domestic: true, queue: 'queue 66%', lead: '5 wk', note: 'No ISO 9001 on file' },
-  ];
+    { key: 'r', name: 'Ridgeline Tool Works', loc: 'Elkhart, IN', certs: ['ISO 9001', 'AS9100D'], domestic: true, queuePct: 54, leadWk: 4, bio: '14 people, six 3-axis VMCs and two 5-axis. Aluminum housings and brackets for ag and off-road OEMs. 12 prior jobs with Halcyon.' },
+    { key: 'm', name: 'Midstate Precision', loc: 'Dayton, OH', certs: ['ISO 9001'], domestic: true, queuePct: 67, leadWk: 4.5, bio: '22 people, high-mix prototype to 500-piece runs. Holds a 400-piece price ceiling on repeat parts.' },
+    { key: 'c', name: 'Cascade CNC', loc: 'Bend, OR', certs: ['ISO 9001', 'AS9100D'], domestic: true, queuePct: 58, leadWk: 6, bio: '9 people, Haas VF-2SS and a DMU 50 5-axis, in-house CMM. Aerospace brackets and manifolds. New to your supplier list.' },
+    { key: 'd', name: 'Delta Contract Mfg', loc: 'Mesa, AZ', certs: ['AS9100D'], domestic: true, queuePct: 96, leadWk: 9, bio: '40 people, 5-axis production cell. Booked through November on a defense program.' },
+    { key: 'h', name: 'Halvorsen Machine', loc: 'Duluth, MN', certs: ['ISO 9001'], domestic: true, queuePct: 71, leadWk: 10, bio: '11 people, large-envelope 3-axis up to 1,020 mm and in-house anodize. Strong on plates and weldments.' },
+    { key: 'i', name: 'Ironwood Tool and Die', loc: 'Erie, PA', certs: [], domestic: true, queuePct: 66, leadWk: 5, bio: '7 people, tool and die shop taking on production machining. No quality certification on file yet.' },
+  ].map((s) => Object.assign(s, { queue: 'queue ' + s.queuePct + '%', lead: s.leadWk + ' wk' }));
 
   /* ── Findings on the current part ── */
   const FINDINGS = [
@@ -152,10 +152,29 @@
       });
       const openFindings = findings.filter((f) => f.open);
       const highOpen = openFindings.filter((f) => f.sev === 'High');
-      const qualifying = SHOPS.filter((s) => P.certsRequired.every((c) => s.certs.includes(c)) && (!P.domestic || s.domestic) && !['h', 'i'].includes(s.key));
-      const excluded = SHOPS.filter((s) => !qualifying.includes(s)).map((s) => ({
-        name: s.name, why: !P.certsRequired.every((c) => s.certs.includes(c)) ? 'missing ' + P.certsRequired.filter((c) => !s.certs.includes(c)).join(', ') : s.note.toLowerCase()
-      }));
+      // Every shop is judged on the same mandate criteria; the cards on Negotiation show the verdicts.
+      const weeksToNeedBy = 8.7; // Nov 14 from the request date
+      const leadLimit = weeksToNeedBy - num(P.bufferDays, 7) / 7;
+      const judge = (s) => {
+        const crit = [];
+        P.certsRequired.forEach((c) => crit.push({ label: c + ' required', ok: s.certs.includes(c), hard: true, detail: s.certs.includes(c) ? 'verified' : 'not on file' }));
+        P.certsPreferred.forEach((c) => crit.push({ label: c + ' preferred', ok: s.certs.includes(c), hard: false, detail: s.certs.includes(c) ? 'verified' : 'no' }));
+        if (P.domestic) crit.push({ label: 'Domestic (DFARS)', ok: s.domestic, hard: true, detail: s.loc.split(', ')[1] || '' });
+        crit.push({ label: 'Lead time before need-by', ok: s.leadWk <= leadLimit, hard: true, detail: s.leadWk + ' wk vs ' + leadLimit.toFixed(1) + ' wk' });
+        crit.push({ label: 'Queue has room', ok: s.queuePct < 90, hard: true, detail: s.queuePct + '% loaded' });
+        return crit;
+      };
+      const considered = SHOPS.map((s) => {
+        const criteria = judge(s);
+        const matched = criteria.every((c) => c.ok || !c.hard);
+        return { name: s.name, loc: s.loc, bio: s.bio, matched,
+          badge: matched ? 'Matched' : 'Excluded', badgeSt: matched ? 'background:var(--color-good-soft);color:var(--color-good)' : 'background:color-mix(in srgb,var(--color-text) 8%,transparent)',
+          cardSt: matched ? '' : 'opacity:.72',
+          criteria: criteria.map((c) => ({ label: c.label, detail: c.detail, cls: c.ok ? 'ok' : c.hard ? 'no' : 'na', mark: c.ok ? '✓' : c.hard ? '✕' : '–' })),
+          queueText: s.queuePct + '% loaded', queueW: 'width:' + s.queuePct + '%', queueColor: s.queuePct >= 85 ? 'var(--color-bad)' : s.queuePct >= 65 ? 'var(--color-warn)' : 'var(--color-good)', _s: s };
+      });
+      const qualifying = considered.filter((c) => c.matched).map((c) => c._s);
+      const excluded = considered.filter((c) => !c.matched).map((c) => ({ name: c.name, why: c.criteria.filter((x) => x.cls === 'no').map((x) => x.label.toLowerCase()).join(', ') }));
       const gateReasons = [];
       if (!st.profileSet) gateReasons.push('Your mandate is not set. Set it once in Profile.');
       highOpen.forEach((f) => gateReasons.push('High finding open: ' + f.title + ' (' + f.impact + ')'));
@@ -384,7 +403,7 @@
         findings, drivers, partMeta, openCount: String(openFindings.length),
         bandPos: 'left:' + b[0] + '%;right:' + b[1] + '%', bandLo: money(b[2] - savings).replace('.00', ''), bandMid: money(likely).replace('.20', ''), bandHi: money(b[3] - savings).replace('.00', ''), bandConf: b[4],
         // negotiation
-        msgs, mandate, shopStates, matched, excluded, matchedCount: String(qualifying.length), excludedCount: String(excluded.length),
+        msgs, mandate, shopStates, matched, excluded, considered, consideredCount: String(SHOPS.length), matchedCount: String(qualifying.length), excludedCount: String(excluded.length),
         roundNo: String(Math.min(3, Math.ceil(msgShown / 3))),
         typingVis: nextMsg ? 'opacity:1' : 'opacity:0',
         typingWho: nextMsg ? nextMsg.who + ' is responding…' : 'Round closed',

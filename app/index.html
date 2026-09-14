@@ -403,14 +403,27 @@
 <sc-if value="{{ isNeg }}" hint-placeholder-val="{{ false }}">
 <div style="max-width:1440px;margin:0 auto;padding:22px 28px 60px">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
-    <h2 style="margin:0;font-size:26px;letter-spacing:-0.025em">RFQ-4417 · negotiation</h2>
+    <div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">Negotiation</h2><div style="font-size:13px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">RFQ-4417 · Actuator Housing · Rev C · {{ qtyLabel }}</div></div>
     <span style="display:flex;align-items:center;gap:6px;font-size:12px;letter-spacing:0;font-weight:500;color:var(--color-good)"><span class="pulse-dot"></span>Round {{ roundNo }} of 3 · live</span>
   </div>
-  <div style="display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:12px 14px;border:1px solid var(--color-divider);margin-bottom:18px;font-size:12.5px">
-    <span style="font-size:11.5px;letter-spacing:0;font-weight:700">Matched {{ matchedCount }} of 6</span>
-    <sc-for list="{{ matched }}" as="m" hint-placeholder-count="4"><span><b>{{ m.name }}</b> <span style="color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ m.why }}</span></span></sc-for>
-    <span style="font-size:11.5px;letter-spacing:0;font-weight:700;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-left:auto">Excluded {{ excludedCount }}</span>
-    <sc-for list="{{ excluded }}" as="x" hint-placeholder-count="2"><span style="color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ x.name }}: {{ x.why }}</span></sc-for>
+  <div style="margin-bottom:20px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      <span style="font-size:13px;font-weight:600">Shops considered</span>
+      <span style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ matchedCount }} matched of {{ consideredCount }} · criteria from your mandate · <a href="#" sc-camel-on-click="{{ goProfile }}" style="color:inherit">edit in profile</a></span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">
+      <sc-for list="{{ considered }}" as="s" hint-placeholder-count="6">
+        <div style="border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface);padding:12px 14px;{{ s.cardSt }}">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:14px">{{ s.name }}</b><span class="tag" style="{{ s.badgeSt }}">{{ s.badge }}</span></div>
+          <div style="font-size:12px;line-height:1.45;margin:3px 0 10px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ s.loc }} · {{ s.bio }}</div>
+          <sc-for list="{{ s.criteria }}" as="c" hint-placeholder-count="5">
+            <div style="display:flex;gap:8px;align-items:center;font-size:12px;padding:2px 0"><span class="check-mark {{ c.cls }}" style="width:14px;height:14px;font-size:10px">{{ c.mark }}</span><span style="flex:1">{{ c.label }}</span><span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ c.detail }}</span></div>
+          </sc-for>
+          <div style="margin-top:10px;font-size:11.5px;display:flex;justify-content:space-between;color:color-mix(in srgb,var(--color-text) 55%,transparent)"><span>Public queue, next 2 weeks</span><span class="tnum">{{ s.queueText }}</span></div>
+          <div style="height:5px;background:color-mix(in srgb,var(--color-text) 10%,transparent);margin-top:4px;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ s.queueW }};background:{{ s.queueColor }}"></div></div>
+        </div>
+      </sc-for>
+    </div>
   </div>
   <div style="display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr) minmax(0,250px);gap:0;border-top:1px solid var(--color-divider-strong)">
     <div style="border-right:1px solid var(--color-divider);padding:18px 22px 18px 0">
