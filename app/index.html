@@ -27,7 +27,7 @@
     <div style="width:1px;height:20px;background:var(--color-divider)"></div>
     <div style="display:flex;gap:2px;flex:1;min-width:0;overflow:hidden">
       <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
-        <button sc-camel-on-click="{{ t.go }}" style="border:0;background:transparent;cursor:pointer;font-family:var(--font-heading);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:6px 11px;color:inherit;white-space:nowrap;border-bottom:2px solid transparent;{{ t.sel }}">{{ t.label }}</button>
+        <button sc-camel-on-click="{{ t.go }}" data-tab="{{ t.key }}" style="border:0;background:transparent;cursor:pointer;font-family:var(--font-heading);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:6px 11px;color:inherit;white-space:nowrap;border-bottom:2px solid transparent;position:relative;{{ t.sel }}">{{ t.label }}<span class="tab-badge {{ t.badgeCls }}">{{ t.badge }}</span></button>
       </sc-for>
     </div>
     <div style="display:flex;align-items:center;gap:14px">
@@ -156,7 +156,7 @@
       <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Halcyon Industrial · Grand Rapids, MI</div>
       <h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">Request queue</h2>
     </div>
-    <button sc-camel-on-click="{{ goRfq }}" class="btn btn-primary" style="padding:10px 18px">New RFQ</button>
+    <button sc-camel-on-click="{{ goRfq }}" class="btn btn-secondary" style="padding:10px 18px">New RFQ</button>
   </div>
   <sc-if value="{{ profileMissing }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:1px solid var(--color-warn);background:var(--color-warn-soft);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:20px">
@@ -166,13 +166,25 @@
     </div>
   </sc-if>
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:1px solid var(--color-divider-strong);border-bottom:1px solid var(--color-divider);margin-bottom:22px">
+  <div class="agent-band">
+    <div class="agent-band-lead">
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600"><span class="pulse-dot"></span>Your agent</div>
+      <div style="font-family:var(--font-heading);font-weight:700;font-size:20px;line-height:1.25;margin-top:8px;letter-spacing:-0.01em">{{ agentStatus }}</div>
+      <div style="font-size:12.5px;margin-top:6px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ agentSub }}</div>
+    </div>
+    <div class="agent-band-feed">
+      <sc-for list="{{ feed }}" as="a" hint-placeholder-count="3">
+        <div style="display:grid;grid-template-columns:56px 1fr;gap:10px;padding:7px 0;border-top:1px solid var(--color-divider);font-size:12.5px;line-height:1.4"><span style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ a.when }}</span><span>{{ a.text }}</span></div>
+      </sc-for>
+    </div>
+    <div class="agent-band-cta">
+      <sc-if value="{{ needsAny }}" hint-placeholder-val="{{ true }}"><button sc-camel-on-click="{{ filterNeeds }}" class="btn btn-primary" style="padding:12px 18px;font-size:14px">Approve {{ needsCount }} offer{{ needsPlural }}</button><div style="font-size:11.5px;margin-top:8px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">The only thing waiting on you.</div></sc-if>
+      <sc-if value="{{ needsNone }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-good);font-weight:600">Nothing waiting on you.</div></sc-if>
+    </div>
+  </div>
+  <div class="kpi-row">
     <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
-      <div class="kpi-tile" style="padding:20px 24px 22px 0;border-right:1px solid var(--color-divider)">
-        <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:10px">{{ k.l }}</div>
-        <div style="font-family:var(--font-heading);font-weight:700;font-size:28px;line-height:1.1;margin-bottom:8px;font-variant-numeric:tabular-nums">{{ k.v }}</div>
-        <div style="font-size:12px;line-height:1.4;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ k.s }}</div>
-      </div>
+      <div class="kpi-tile"><span class="kpi-v">{{ k.v }}</span><span class="kpi-l">{{ k.l }}</span><span class="kpi-s">{{ k.s }}</span></div>
     </sc-for>
   </div>
 
@@ -193,30 +205,29 @@
       <div>
         <div style="font-size:14px;font-weight:600">{{ r.part }}</div>
         <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ r.sub }}</div>
+        <div style="font-size:11.5px;margin-top:3px;display:flex;gap:6px;align-items:center;color:color-mix(in srgb,var(--color-text) 55%,transparent)"><span style="width:6px;height:6px;border-radius:50%;background:var(--color-good);flex:none"></span>{{ r.agentLine }}</div>
       </div>
       <div style="font-size:13.5px;font-variant-numeric:tabular-nums">{{ r.qty }}</div>
       <div style="font-size:12.5px">{{ r.mat }}</div>
       <div>
-        <div style="display:flex;gap:3px;margin-bottom:5px">
-          <sc-for list="{{ r.pips }}" as="p" hint-placeholder-count="5">
-            <div style="height:6px;flex:1;transition:background .6s ease;{{ p.st }}"></div>
-          </sc-for>
-        </div>
-        <div style="font-size:12px;letter-spacing:0;font-weight:500;{{ r.stageColor }}">{{ r.stage }} <span style="{{ r.needsVis }}">· needs you</span></div>
+        <sc-if value="{{ r.inProgress }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:3px;margin-bottom:6px">
+            <sc-for list="{{ r.pips }}" as="p" hint-placeholder-count="5">
+              <div style="height:5px;flex:1;border-radius:2px;transition:background .6s ease;{{ p.st }}"></div>
+            </sc-for>
+          </div>
+          <div style="font-size:12px;letter-spacing:0;{{ r.stageColor }}">{{ r.stage }}</div>
+        </sc-if>
+        <sc-if value="{{ r.isAwarded }}" hint-placeholder-val="{{ false }}">
+          <span class="done-chip">✓ Awarded · {{ r.awardedTo }}</span>
+          <div style="margin-top:4px"><a href="#" sc-camel-on-click="{{ r.viewQuote }}" style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Quote PDF</a></div>
+        </sc-if>
       </div>
       <div style="font-size:13.5px;font-variant-numeric:tabular-nums;font-weight:600">{{ r.band }}</div>
       <div style="font-size:12.5px;font-variant-numeric:tabular-nums">{{ r.need }}</div>
     </div>
   </sc-for>
-  <div style="margin-top:28px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start">
-    <div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px"><span class="pulse-dot"></span>Your agent, last 24 hours</div>
-      <sc-for list="{{ feed }}" as="a" hint-placeholder-count="6">
-        <div style="display:grid;grid-template-columns:72px 1fr;gap:12px;padding:9px 0;border-top:1px solid var(--color-divider);font-size:13px"><span style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent);font-variant-numeric:tabular-nums">{{ a.when }}</span><span>{{ a.text }}</span></div>
-      </sc-for>
-    </div>
-    <div style="font-size:12.5px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 55%,transparent);padding-top:26px">Stages advance on their own. Your agent reads, prices, matches, and negotiates inside your mandate, and only stops for the three decisions that are yours: release, a design change, and the award.</div>
-  </div>
+  <div style="margin-top:16px;font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">The rail is your agent's progress. It ends at Offers ready, where the decision is yours.</div>
 </div>
 </sc-if>
 
@@ -508,7 +519,7 @@
   <div style="position:relative;{{ stackH }}">
     <sc-for list="{{ offers }}" as="o" hint-placeholder-count="4">
       <div style="position:absolute;left:0;right:0;top:0;transition:transform .85s cubic-bezier(.2,.8,.2,1);{{ o.y }}">
-        <div style="border:1px solid;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);background:var(--color-surface);display:grid;grid-template-columns:44px minmax(0,1.4fr) minmax(0,150px) minmax(0,1fr) minmax(0,150px);gap:18px;align-items:center;padding:16px 18px;{{ o.edge }}">
+        <div data-offer="{{ o.key }}" style="border:1px solid;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);background:var(--color-surface);display:grid;grid-template-columns:44px minmax(0,1.4fr) minmax(0,150px) minmax(0,1fr) minmax(0,150px);gap:18px;align-items:center;padding:16px 18px;{{ o.edge }}">
           <div style="font-family:var(--font-heading);font-weight:700;font-size:24px;font-variant-numeric:tabular-nums;{{ o.rankColor }}">{{ o.rank }}</div>
           <div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -535,13 +546,14 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <button sc-camel-on-click="{{ o.award }}" class="btn" style="padding:9px 14px;justify-content:flex-start;{{ o.ctaStyle }}">{{ o.cta }}</button>
+            <sc-if value="{{ o.hasQuote }}" hint-placeholder-val="{{ true }}"><button sc-camel-on-click="{{ o.viewQuote }}" class="btn btn-ghost" style="justify-content:flex-start;font-size:12px">View quote</button></sc-if>
             <sc-if value="{{ o.hasProfile }}" hint-placeholder-val="{{ false }}"><a href="{{ o.profileHref }}" class="btn btn-ghost" style="justify-content:flex-start;font-size:12px">Shop profile</a></sc-if>
           </div>
         </div>
       </div>
     </sc-for>
   </div>
-  <div style="border:1px solid var(--color-divider-strong);padding:16px 18px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+  <div data-reco style="border:1px solid var(--color-divider-strong);border-radius:var(--radius-md);padding:16px 18px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap">
     <div style="max-width:62ch">
       <div style="font-family:var(--font-heading);font-weight:700;font-size:15px;margin-bottom:4px">Canyon recommends a 60/40 split award</div>
       <div style="font-size:13px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ splitText }}</div>
@@ -550,6 +562,34 @@
   </div>
 </div>
 </sc-if>
+<!-- ══ QUOTE PDF ══ -->
+<sc-if value="{{ isQuote }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1440px;margin:0 auto;padding:26px 28px 60px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:6px">
+    <div><div style="font-size:12px;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Quote PDF</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">{{ quote.no }}.pdf</h2></div>
+    <div style="display:flex;gap:8px"><button sc-camel-on-click="{{ quoteBack }}" class="btn btn-secondary">Back</button><button class="btn btn-primary">Download</button></div>
+  </div>
+  <div class="hr" style="margin:16px 0"></div>
+  <div style="max-width:760px;background:#f3f2f2;color:#201e1d;padding:40px 44px;box-shadow:var(--shadow-lg);font-size:13px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:2px solid #201e1d;padding-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;font:700 18px var(--font-heading)"><span style="width:16px;height:16px;background:var(--color-accent);display:inline-block"></span>{{ quote.shop }}</div>
+      <div style="text-align:right;font-size:12px;line-height:1.5">Quotation {{ quote.no }}<br>Sep 14, 2026 · valid 90 days<br>{{ quote.loc }}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:16px 0;font-size:12px;line-height:1.5">
+      <div><div style="font-size:11.5px;color:#7d7979">To</div>Halcyon Industrial<br>Grand Rapids, MI<br>RFQ-4417 · Actuator Housing · Rev C</div>
+      <div><div style="font-size:11.5px;color:#7d7979">Terms</div>{{ quote.terms }} · Ex Works {{ quote.loc }}<br>Lead {{ quote.lead }}<br>Material 6061-T6 per AMS-QQ-A-250/11 · bead blast + clear anodize</div>
+    </div>
+    <div style="margin-top:12px"><b style="font-family:var(--font-heading)">HAL-4417</b> <span style="color:#605d5d">Actuator Housing · 6061-T6</span></div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px">
+      <thead><tr style="text-align:left;color:#7d7979;font-size:11.5px"><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Qty</th><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Unit price</th><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Line total</th></tr></thead>
+      <tbody><tr sc-each="{{ quote.lines }}" sc-as="l"><td class="tnum" style="padding:6px 0;border-bottom:1px solid #d7d3d3">{{ l.qty }}</td><td class="tnum" style="padding:6px 0;border-bottom:1px solid #d7d3d3">{{ l.price }}</td><td class="tnum" style="padding:6px 0;border-bottom:1px solid #d7d3d3">{{ l.total }}</td></tr></tbody>
+    </table>
+    <div style="display:flex;justify-content:flex-end;margin-top:20px"><div style="min-width:260px;border-top:2px solid #201e1d;padding-top:10px;font-size:12px"><div style="display:flex;justify-content:space-between;padding:4px 0"><span>First article inspection</span><b class="tnum">included</b></div><div style="display:flex;justify-content:space-between;padding:4px 0"><span>Certs to Halcyon QA</span><b class="tnum">included</b></div><div style="display:flex;justify-content:space-between;padding:8px 0 0;font:700 16px var(--font-heading)"><span>Quote total, qty {{ quote.qty }}</span><span class="tnum">{{ quote.total }}</span></div></div></div>
+    <div style="margin-top:28px;font-size:11px;color:#7d7979;line-height:1.5">Prices in USD, exclusive of taxes and freight. Negotiated by Canyon inside the buyer's mandate; {{ quote.note }} Generated by Canyon for {{ quote.shop }}.</div>
+  </div>
+</div>
+</sc-if>
+
 <!-- ══ PROFILE ══ -->
 <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
 <div style="max-width:1440px;margin:0 auto;padding:26px 28px 60px">
@@ -562,6 +602,19 @@
     <div style="display:flex;gap:8px"><button sc-camel-on-click="{{ resetProfile }}" class="btn btn-secondary" style="padding:10px 16px">Reset to defaults</button><button sc-camel-on-click="{{ saveProfile }}" class="btn btn-primary" style="padding:10px 18px">Save mandate</button></div>
   </div>
   <div class="hr" style="margin:16px 0 22px"></div>
+  <sc-if value="{{ awardsAny }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-bottom:28px">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px"><span style="font-size:13px;font-weight:600">Awards</span><span class="tab-badge on" style="position:static;transform:none">{{ awardsCount }}</span></div>
+      <sc-for list="{{ awards }}" as="w" hint-placeholder-count="2">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:16px;align-items:center;padding:12px 14px;border:1px solid var(--color-good);background:var(--color-good-soft);border-radius:var(--radius-md);margin-bottom:8px;font-size:13px">
+          <span><b>{{ w.shop }}</b> <span style="color:color-mix(in srgb,var(--color-text) 55%,transparent)">· {{ w.rfq }} · {{ w.part }}</span></span>
+          <span class="tnum">{{ w.qty }} ea at {{ w.price }}</span>
+          <span style="color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ w.lead }} · {{ w.when }}</span>
+          <button sc-camel-on-click="{{ w.viewQuote }}" class="btn btn-secondary" style="padding:6px 12px;font-size:12px">Quote PDF</button>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;align-items:start">
     <div>
       <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--color-divider-strong)">Price and delivery</div>
