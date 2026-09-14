@@ -49,6 +49,7 @@ window.DC = (function () {
       for (const a of Array.from(n.attributes)) {
         if (a.name === "sc-when") continue;
         if (a.name === "sc-camel-on-click") { const fn = get(scope, strip(a.value)); if (typeof fn === "function") el.__click = fn; continue; }
+        if (a.name === "sc-on-input") { const fn = get(scope, strip(a.value)); if (typeof fn === "function") el.__input = fn; continue; }
         if (a.name.startsWith("hint-")) continue;
         if (a.name === "style-hover") { el.dataset.hover = a.value; continue; }
         el.setAttribute(a.name, interp(a.value, scope));
@@ -63,8 +64,13 @@ window.DC = (function () {
     if (oldN.nodeType !== newN.nodeType || (oldN.nodeType === 1 && oldN.tagName !== newN.tagName)) { oldN.replaceWith(newN); return; }
     if (oldN.nodeType === 3) { if (oldN.data !== newN.data) oldN.data = newN.data; return; }
     for (const a of Array.from(oldN.attributes)) if (!newN.hasAttribute(a.name)) oldN.removeAttribute(a.name);
-    for (const a of Array.from(newN.attributes)) if (oldN.getAttribute(a.name) !== a.value) oldN.setAttribute(a.name, a.value);
+    const editing = oldN === document.activeElement && (oldN.tagName === "INPUT" || oldN.tagName === "TEXTAREA");
+    for (const a of Array.from(newN.attributes)) {
+      if (editing && a.name === "value") continue; // never clobber what the user is typing
+      if (oldN.getAttribute(a.name) !== a.value) oldN.setAttribute(a.name, a.value);
+    }
     oldN.__click = newN.__click;
+    oldN.__input = newN.__input;
     morphChildren(oldN, newN);
   }
   function morphChildren(oldN, newN) {
@@ -80,6 +86,10 @@ window.DC = (function () {
   root.addEventListener("click", (e) => {
     let t = e.target;
     while (t && t !== root) { if (t.__click) { t.__click(e); return; } t = t.parentNode; }
+  });
+  root.addEventListener("input", (e) => {
+    let t = e.target;
+    while (t && t !== root) { if (t.__input) { t.__input(e); return; } t = t.parentNode; }
   });
   root.addEventListener("mouseover", (e) => {
     const t = e.target.closest && e.target.closest("[data-hover]");

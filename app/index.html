@@ -146,6 +146,13 @@
     </div>
     <button sc-camel-on-click="{{ goRfq }}" class="btn btn-primary" style="padding:10px 18px">New RFQ</button>
   </div>
+  <sc-if value="{{ profileMissing }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:2px solid var(--color-accent);padding:12px 16px;margin-bottom:20px">
+      <span style="width:10px;height:10px;background:var(--color-accent)"></span>
+      <span style="font-size:13.5px;flex:1;min-width:240px"><b>Set your mandate first.</b> Ceiling, delivery buffer, terms, certifications, sources. Every request inherits it, and releases stay flagged until it is set.</span>
+      <button sc-camel-on-click="{{ goProfile }}" class="btn btn-primary" style="padding:9px 16px">Set up mandate</button>
+    </div>
+  </sc-if>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:2px solid var(--color-text);border-bottom:2px solid var(--color-divider);margin-bottom:22px">
     <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
@@ -157,6 +164,11 @@
     </sc-for>
   </div>
 
+  <div style="display:flex;gap:2px;margin-bottom:14px">
+    <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+      <button sc-camel-on-click="{{ f.go }}" style="border:1px solid var(--color-divider);background:transparent;color:inherit;cursor:pointer;font:600 12px var(--font-body);padding:6px 12px;{{ f.on }}">{{ f.label }}</button>
+    </sc-for>
+  </div>
   <div style="display:grid;grid-template-columns:minmax(0,150px) minmax(0,1.5fr) 74px minmax(0,110px) minmax(0,190px) minmax(0,130px) minmax(0,110px);gap:14px;padding:0 0 8px;border-bottom:2px solid var(--color-text);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">
     <span>RFQ</span><span>Part</span><span>Qty</span><span>Material</span><span>Stage</span><span>Unit band</span><span>Need by</span>
   </div>
@@ -178,7 +190,7 @@
             <div style="height:6px;flex:1;transition:background .6s ease;{{ p.st }}"></div>
           </sc-for>
         </div>
-        <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;{{ r.stageColor }}">{{ r.stage }}</div>
+        <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;{{ r.stageColor }}">{{ r.stage }} <span style="{{ r.needsVis }}">· needs you</span></div>
       </div>
       <div style="font-size:13.5px;font-variant-numeric:tabular-nums;font-weight:600">{{ r.band }}</div>
       <div style="font-size:12.5px;font-variant-numeric:tabular-nums">{{ r.need }}</div>
@@ -219,10 +231,15 @@
           <sc-for list="{{ reqFields }}" as="q" hint-placeholder-count="6">
             <div class="field">
               <label>{{ q.l }}</label>
-              <div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px">
-                <span>{{ q.v }}</span>
-                <span style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;{{ q.tagStyle }}">{{ q.tag }}</span>
-              </div>
+              <sc-if value="{{ q.editable }}" hint-placeholder-val="{{ false }}">
+                <div style="position:relative"><input class="input" sc-on-input="{{ q.set }}" value="{{ q.v }}" style="font-size:13.5px;padding-right:60px;border-color:var(--color-accent)"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;{{ q.tagStyle }}">{{ q.tag }}</span></div>
+              </sc-if>
+              <sc-if value="{{ q.readonly }}" hint-placeholder-val="{{ true }}">
+                <div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px;background:transparent">
+                  <span>{{ q.v }}</span>
+                  <span style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;{{ q.tagStyle }}">{{ q.tag }}</span>
+                </div>
+              </sc-if>
             </div>
           </sc-for>
         </div>
@@ -251,13 +268,22 @@
         </sc-for>
       </div>
       <div style="padding:14px 16px;border-top:2px solid var(--color-text);transition:opacity .6s ease;{{ priceVis }}">
-        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:8px">Estimated unit price · 250 ea</div>
+        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:8px">Estimated unit price · {{ qtyLabel }}</div>
         <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px">
-          <span style="font-family:var(--font-heading);font-weight:800;font-size:30px;font-variant-numeric:tabular-nums">$96.20</span>
-          <span style="font-size:12.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">± $14 · 4–6 weeks</span>
+          <span style="font-family:var(--font-heading);font-weight:800;font-size:30px;font-variant-numeric:tabular-nums">{{ unitPrice }}</span>
+          <span style="font-size:12.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ bandText }}</span>
         </div>
-        <button sc-camel-on-click="{{ goNeg }}" class="btn btn-primary btn-block" style="padding:11px 16px">Release to shops</button>
+        <sc-if value="{{ flagged }}" hint-placeholder-val="{{ true }}">
+          <div style="border:2px solid var(--color-accent);padding:10px 12px;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--color-accent-700);margin-bottom:6px"><span style="width:8px;height:8px;background:var(--color-accent)"></span>Not safe to release</div>
+            <sc-for list="{{ gateReasons }}" as="g" hint-placeholder-count="2">
+              <div style="font-size:12.5px;line-height:1.45;padding:3px 0;border-top:1px solid var(--color-divider)">{{ g }}</div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <button sc-camel-on-click="{{ release }}" class="btn btn-block" style="padding:11px 16px;{{ releaseStyle }}">{{ releaseLabel }}</button>
         <button sc-camel-on-click="{{ goPart }}" class="btn btn-secondary btn-block" style="padding:11px 16px">Review manufacturability first</button>
+        <div style="margin-top:10px;font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ releaseNote }}</div>
       </div>
     </div>
   </div>
@@ -273,7 +299,7 @@
       <div style="flex:1;min-width:220px">
         <div style="display:flex;align-items:center;gap:10px">
           <span style="font-family:var(--font-heading);font-weight:800;font-size:21px;letter-spacing:.01em">HAL-4417</span>
-          <span class="tag" style="background:var(--color-accent-200);color:var(--color-accent-800)">3 findings</span>
+          <span class="tag" style="background:var(--color-accent-200);color:var(--color-accent-800)">{{ openCount }} findings open</span>
         </div>
         <div style="font-size:13.5px;color:color-mix(in srgb,var(--color-text) 62%,transparent)">Actuator Housing · Rev C</div>
       </div>
@@ -330,7 +356,7 @@
       </div>
       <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Manufacturability findings</div>
       <sc-for list="{{ findings }}" as="f" hint-placeholder-count="3">
-        <div style="border:1px solid var(--color-divider);border-left:4px solid var(--color-accent);background:var(--color-surface);padding:14px 16px;margin-bottom:14px;transition:opacity .5s ease,transform .5s ease;{{ f.vis }}">
+        <div style="border:1px solid var(--color-divider);border-left:4px solid var(--color-accent);background:var(--color-surface);padding:14px 16px;margin-bottom:14px;transition:opacity .5s ease,transform .5s ease;{{ f.vis }};{{ f.rule }}">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
             <span style="width:19px;height:19px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-size:10px;font-weight:800">{{ f.n }}</span>
             <span class="tag" style="{{ f.sevStyle }}">{{ f.sev }}</span>
@@ -345,9 +371,17 @@
             <div><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">If changed</div><div style="font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;color:var(--color-accent-700)">{{ f.saving }}</div></div>
           </div>
           <div style="background:color-mix(in srgb,var(--color-text) 5%,transparent);padding:10px 12px;font-size:12.5px;line-height:1.45">{{ f.fix }}</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+            <sc-if value="{{ f.open }}" hint-placeholder-val="{{ true }}">
+              <button sc-camel-on-click="{{ f.apply }}" class="btn btn-primary" style="padding:7px 12px;font-size:12px">Apply change and re-price</button>
+              <button sc-camel-on-click="{{ f.dismiss }}" class="btn btn-secondary" style="padding:7px 12px;font-size:12px">Dismiss</button>
+            </sc-if>
+            <sc-if value="{{ f.applied }}" hint-placeholder-val="{{ false }}"><span class="tag" style="background:var(--color-accent-200);color:var(--color-accent-800)">{{ f.status }}</span><button sc-camel-on-click="{{ f.undo }}" class="btn btn-ghost" style="padding:4px 8px;font-size:12px">Undo</button></sc-if>
+            <sc-if value="{{ f.dismissed }}" hint-placeholder-val="{{ false }}"><span class="tag" style="background:color-mix(in srgb,var(--color-text) 10%,transparent)">{{ f.status }}</span><button sc-camel-on-click="{{ f.undo }}" class="btn btn-ghost" style="padding:4px 8px;font-size:12px">Undo</button></sc-if>
+          </div>
         </div>
       </sc-for>
-      <button sc-camel-on-click="{{ goNeg }}" class="btn btn-primary" style="padding:11px 18px">Release to shops as-is</button>
+      <sc-if value="{{ flagged }}" hint-placeholder-val="{{ true }}"><div style="border:2px solid var(--color-accent);padding:10px 12px;margin-bottom:10px"><div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--color-accent-700);margin-bottom:6px">Not safe to release</div><sc-for list="{{ gateReasons }}" as="g" hint-placeholder-count="2"><div style="font-size:12.5px;line-height:1.45;padding:3px 0;border-top:1px solid var(--color-divider)">{{ g }}</div></sc-for></div></sc-if><button sc-camel-on-click="{{ release }}" class="btn btn-block" style="padding:11px 16px;{{ releaseStyle }}">{{ releaseLabel }}</button>
     </div>
   </div>
 </div>
@@ -360,6 +394,12 @@
     <h2 style="margin:0;font-size:26px;letter-spacing:-0.025em">RFQ-4417 · negotiation</h2>
     <span style="display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--color-accent-700)"><span style="width:7px;height:7px;background:var(--color-accent);animation:cy-pulse 1.4s infinite"></span>Round {{ roundNo }} of 3 · live</span>
   </div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:12px 14px;border:1px solid var(--color-divider);margin-bottom:18px;font-size:12.5px">
+    <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700">Matched {{ matchedCount }} of 6</span>
+    <sc-for list="{{ matched }}" as="m" hint-placeholder-count="4"><span><b>{{ m.name }}</b> <span style="color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ m.why }}</span></span></sc-for>
+    <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-left:auto">Excluded {{ excludedCount }}</span>
+    <sc-for list="{{ excluded }}" as="x" hint-placeholder-count="2"><span style="color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ x.name }}: {{ x.why }}</span></sc-for>
+  </div>
   <div style="display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr) minmax(0,250px);gap:0;border-top:2px solid var(--color-text)">
     <div style="border-right:2px solid var(--color-divider);padding:18px 22px 18px 0">
       <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Your mandate</div>
@@ -369,8 +409,8 @@
           <div style="font-size:13.5px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums">{{ m.v }}</div>
         </div>
       </sc-for>
-      <button class="btn btn-secondary btn-block" style="margin-top:14px;padding:9px 14px">Edit mandate</button>
-      <div style="margin-top:14px;font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 58%,transparent)">Canyon will not accept outside these bounds. Set once in your profile, applied to every request.</div>
+      <button sc-camel-on-click="{{ goProfile }}" class="btn btn-secondary btn-block" style="margin-top:14px;padding:9px 14px">Edit in profile</button>
+      <div style="margin-top:14px;font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 58%,transparent)">From your profile. Canyon will not accept outside these bounds and does not pause to ask you. Escalations happen on the shop side.</div>
     </div>
 
     <div style="padding:18px 22px">
@@ -425,8 +465,8 @@
 <div style="max-width:1440px;margin:0 auto;padding:22px 28px 60px">
   <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:6px">
     <div>
-      <h2 style="margin:0 0 4px;font-size:29px;letter-spacing:-0.025em">4 shops responded</h2>
-      <p style="margin:0;font-size:14px;color:color-mix(in srgb,var(--color-text) 65%,transparent)">Ranked by Canyon on your mandate: unit price 50% · on-time record 25% · lead time 15% · terms 10%.</p>
+      <h2 style="margin:0 0 4px;font-size:29px;letter-spacing:-0.025em">{{ respondedCount }} shops responded</h2>
+      <p style="margin:0;font-size:14px;color:color-mix(in srgb,var(--color-text) 65%,transparent)">Ranked by Canyon on your mandate: {{ weightsLine }}.</p>
     </div>
     <div style="text-align:right">
       <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">vs. your last award</div>
@@ -434,6 +474,12 @@
     </div>
   </div>
   <div class="hr" style="margin:16px 0"></div>
+  <sc-if value="{{ awarded }}" hint-placeholder-val="{{ false }}">
+    <div style="border:2px solid var(--color-accent);padding:12px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span style="width:10px;height:10px;background:var(--color-accent)"></span><b>Awarded.</b> <span>{{ awardedText }}</span><button sc-camel-on-click="{{ goDash }}" class="btn btn-secondary" style="margin-left:auto;padding:7px 12px">Back to queue</button></div>
+  </sc-if>
+  <sc-if value="{{ noneInside }}" hint-placeholder-val="{{ false }}">
+    <div style="border:2px solid var(--color-text);padding:12px 16px;margin-bottom:16px;font-size:13.5px"><b>None of the offers is inside your mandate</b> (ceiling {{ ceilingText }}). The round is closed. Award anyway, or decline all and revise the part or your mandate.</div>
+  </sc-if>
   <div style="position:relative;{{ stackH }}">
     <sc-for list="{{ offers }}" as="o" hint-placeholder-count="4">
       <div style="position:absolute;left:0;right:0;top:0;transition:transform .85s cubic-bezier(.2,.8,.2,1);{{ o.y }}">
@@ -451,6 +497,7 @@
           <div>
             <div style="font-family:var(--font-heading);font-weight:800;font-size:23px;font-variant-numeric:tabular-nums;transition:color .5s">{{ o.price }}</div>
             <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ o.total }} · {{ o.lead }}</div>
+            <div style="font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-top:2px;{{ o.ceilingStyle }}">{{ o.ceilingNote }}</div>
           </div>
           <div>
             <sc-for list="{{ o.bars }}" as="b" hint-placeholder-count="3">
@@ -462,8 +509,8 @@
             </sc-for>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
-            <button class="btn" style="padding:9px 14px;justify-content:flex-start;{{ o.ctaStyle }}">{{ o.cta }}</button>
-            <button class="btn btn-ghost" style="justify-content:flex-start;font-size:12px">Shop profile</button>
+            <button sc-camel-on-click="{{ o.award }}" class="btn" style="padding:9px 14px;justify-content:flex-start;{{ o.ctaStyle }}">{{ o.cta }}</button>
+            <sc-if value="{{ o.hasProfile }}" hint-placeholder-val="{{ false }}"><a href="{{ o.profileHref }}" class="btn btn-ghost" style="justify-content:flex-start;font-size:12px">Shop profile</a></sc-if>
           </div>
         </div>
       </div>
@@ -472,12 +519,60 @@
   <div style="border:2px solid var(--color-text);padding:16px 18px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap">
     <div style="max-width:62ch">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:4px">Canyon recommends a 60/40 split award</div>
-      <div style="font-size:13px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 70%,transparent)">150 ea to Ridgeline at $94.90 and 100 ea to Midstate at $96.40. Both hold Net 45. Dual-sourcing costs $225 total and removes single-shop schedule risk on a part you reorder quarterly.</div>
+      <div style="font-size:13px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ splitText }}</div>
     </div>
-    <button class="btn btn-primary" style="padding:12px 20px">Accept recommendation</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button sc-camel-on-click="{{ declineAll }}" class="btn btn-secondary" style="padding:12px 16px">Decline all</button><button sc-camel-on-click="{{ acceptSplit }}" class="btn btn-primary" style="padding:12px 20px">Accept recommendation</button></div>
   </div>
 </div>
 </sc-if>
+<!-- ══ PROFILE ══ -->
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1440px;margin:0 auto;padding:26px 28px 60px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:6px">
+    <div>
+      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Halcyon Industrial · Grand Rapids, MI</div>
+      <h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">Your mandate</h2>
+      <p style="margin:6px 0 0;font-size:14px;color:color-mix(in srgb,var(--color-text) 65%,transparent);max-width:60ch">Set once. Every request inherits it, your agent negotiates inside it, and Canyon never pauses to ask you. {{ profileSavedText }}</p>
+    </div>
+    <div style="display:flex;gap:8px"><button sc-camel-on-click="{{ resetProfile }}" class="btn btn-secondary" style="padding:10px 16px">Reset to defaults</button><button sc-camel-on-click="{{ saveProfile }}" class="btn btn-primary" style="padding:10px 18px">Save mandate</button></div>
+  </div>
+  <div class="hr" style="margin:16px 0 22px"></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;align-items:start">
+    <div>
+      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--color-text)">Price and delivery</div>
+      <div class="field" style="margin-bottom:12px"><label>Ceiling, % over Canyon's likely price</label><input class="input" type="number" step="1" sc-on-input="{{ setCeilingPct }}" value="{{ profile.ceilingPct }}"></div>
+      <div class="field" style="margin-bottom:12px"><label>Delivery buffer before need-by, days</label><input class="input" type="number" step="1" sc-on-input="{{ setBufferDays }}" value="{{ profile.bufferDays }}"></div>
+      <div class="field" style="margin-bottom:12px"><label>Payment terms</label><div style="display:flex;gap:8px"><input class="input" sc-on-input="{{ setTerms }}" value="{{ profile.terms }}" style="flex:1"><button sc-camel-on-click="{{ toggleTermsHard }}" class="btn btn-secondary" style="padding:6px 12px;font-size:12px;{{ termsHardSt }}">Hard requirement</button></div></div>
+      <div style="margin-top:14px;padding:10px 12px;background:color-mix(in srgb,var(--color-text) 5%,transparent);font-size:12.5px;line-height:1.5">{{ ceilingPreview }}</div>
+    </div>
+    <div>
+      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--color-text)">Who may bid</div>
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px 8px;align-items:center;font-size:13px">
+        <span style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Certification</span><span style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Required</span><span style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Preferred</span>
+        <sc-for list="{{ certOptions }}" as="c" hint-placeholder-count="4">
+          <span>{{ c.label }}</span>
+          <button sc-camel-on-click="{{ c.toggleReq }}" style="border:1px solid var(--color-divider);background:transparent;color:inherit;cursor:pointer;font:600 11px var(--font-body);padding:5px 10px;{{ c.reqSt }}">Required</button>
+          <button sc-camel-on-click="{{ c.togglePref }}" style="border:1px solid var(--color-divider);background:transparent;color:inherit;cursor:pointer;font:600 11px var(--font-body);padding:5px 10px;{{ c.prefSt }}">Preferred</button>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+        <button sc-camel-on-click="{{ toggleDomestic }}" class="btn btn-secondary" style="padding:6px 12px;font-size:12px;{{ domesticSt }}">Domestic only (DFARS)</button>
+        <button sc-camel-on-click="{{ toggleAutoAccept }}" class="btn btn-secondary" style="padding:6px 12px;font-size:12px;{{ autoAcceptSt }}">Auto-accept inside bounds</button>
+      </div>
+      <div class="field" style="margin-top:14px;max-width:220px"><label>Qualified sources required</label><input class="input" type="number" step="1" min="1" sc-on-input="{{ setSources }}" value="{{ profile.sources }}"></div>
+    </div>
+    <div>
+      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--color-text)">How offers are ranked</div>
+      <div class="field" style="margin-bottom:10px"><label>Unit price, %</label><input class="input" type="number" sc-on-input="{{ setWPrice }}" value="{{ profile.wPrice }}"></div>
+      <div class="field" style="margin-bottom:10px"><label>On-time record, %</label><input class="input" type="number" sc-on-input="{{ setWOntime }}" value="{{ profile.wOntime }}"></div>
+      <div class="field" style="margin-bottom:10px"><label>Lead time, %</label><input class="input" type="number" sc-on-input="{{ setWLead }}" value="{{ profile.wLead }}"></div>
+      <div class="field" style="margin-bottom:10px"><label>Terms, %</label><input class="input" type="number" sc-on-input="{{ setWTerms }}" value="{{ profile.wTerms }}"></div>
+      <div style="font-size:12.5px;color:color-mix(in srgb,var(--color-text) 65%,transparent)">Total {{ weightSum }}%<sc-if value="{{ weightsOk }}" hint-placeholder-val="{{ true }}"> · adds up</sc-if></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
 
 </div>
 </x-dc>
