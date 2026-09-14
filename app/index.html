@@ -8,80 +8,479 @@
   <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,300..800;1,62..125,300..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&display=swap">
   <link rel="stylesheet" href="app.css">
 </head>
-<body data-screen="home" class="app">
+<body>
+<div id="root"></div>
 
-<header class="nav">
-  <div class="wrap">
-    <a class="brand" href="index.html" aria-label="Canyon home">
-      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M1 9h7v5h4v5h3v4h2v-4h3v-5h4v-5h7"/><path d="M8 3v2M24 3v2" stroke-width="1.5"/><path d="M9.5 4h13" stroke-width="1.5"/><path d="M9.5 4l2-1.2v2.4zM22.5 4l-2-1.2v2.4z" fill="currentColor" stroke="none"/><path d="M6 29h20" stroke-width="1.5" opacity=".55"/></svg>
-      Canyon
-    </a>
-    <ul class="tabs">
-      <li><a href="index.html" aria-current="page">Home</a></li>
-      <li><a href="queue.html">Queue</a></li>
-      <li><a href="new.html">New RFQ</a></li>
-      <li><a href="part.html">Part and DFM</a></li>
-      <li><a href="negotiation.html">Negotiation</a></li>
-      <li><a href="offers.html">Offers</a></li>
-    </ul>
-    <div class="account"><span>Halcyon Industrial, Buyer</span><span class="avatar">DM</span></div>
+<!-- Design mockup markup (Claude Design), rendered by app.js. -->
+<template id="dc">
+<div style="min-height:100vh;background:var(--color-bg)">
+
+<div style="position:sticky;top:0;z-index:40;background:var(--color-bg);border-bottom:2px solid var(--color-divider)">
+  <div style="max-width:1440px;margin:0 auto;padding:0 28px;display:flex;align-items:center;gap:28px;height:56px">
+    <div style="display:flex;align-items:center;gap:9px">
+      <div style="width:16px;height:16px;background:var(--color-accent)"></div>
+      <span style="font-family:var(--font-heading);font-weight:800;font-size:17px;letter-spacing:-0.02em">CANYON</span>
+    </div>
+    <div style="width:1px;height:20px;background:var(--color-divider)"></div>
+    <div style="display:flex;gap:2px;flex:1;min-width:0;overflow:hidden">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
+        <button sc-camel-on-click="{{ t.go }}" style="border:0;background:transparent;cursor:pointer;font-family:var(--font-heading);font-weight:800;font-size:12.5px;letter-spacing:.02em;padding:6px 11px;color:inherit;white-space:nowrap;border-bottom:2px solid transparent;{{ t.sel }}">{{ t.label }}</button>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Halcyon Industrial · Buyer</span>
+      <div style="width:28px;height:28px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-family:var(--font-heading);font-weight:800;font-size:11px">DM</div>
+    </div>
   </div>
-</header>
+</div>
 
-<main class="app-main">
-  <div class="wrap">
-
-    <section class="home-hero">
+<!-- ══ MARKETING ══ -->
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="max-width:1440px;margin:0 auto;padding:0 28px">
+    <div style="display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:56px;padding:84px 0 72px;align-items:start">
       <div>
-        <p class="eyebrow-line">Sourcing agent for machined parts</p>
-        <h1>Quote it like the shop would.</h1>
-        <p class="lead">Upload a STEP file. Canyon reads the geometry the way a senior estimator does, prices it, then negotiates with verified shops on the terms you set, while you do something else.</p>
-        <div class="actions">
-          <a class="btn btn-primary btn-lg" href="new.html">Upload a part</a>
-          <a class="btn btn-secondary btn-lg" href="negotiation.html">See a live quote</a>
+        <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--color-accent-700);margin-bottom:22px">Sourcing agent for machined parts</div>
+        <h1 style="font-size:clamp(42px,5.2vw,74px);line-height:.98;letter-spacing:-0.03em;margin:0 0 22px;max-width:14ch">Quote it like the shop would.</h1>
+        <p style="font-size:18px;line-height:1.5;max-width:46ch;margin:0 0 28px;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Upload a STEP file. Canyon reads the geometry the way a senior estimator does, prices it, then negotiates with verified shops on the terms you set — while you do something else.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button sc-camel-on-click="{{ goRfq }}" class="btn btn-primary" style="padding:12px 20px;font-size:14px">Upload a part</button>
+          <button sc-camel-on-click="{{ goOffers }}" class="btn btn-secondary" style="padding:12px 20px;font-size:14px">See a live quote</button>
         </div>
-        <div class="metrics">
-          <div><div class="v">90 sec</div><div class="l">To a priced band</div></div>
-          <div><div class="v">1,240</div><div class="l">Verified shops</div></div>
-          <div><div class="v">±6%</div><div class="l">Band vs. awarded</div></div>
+        <div style="display:flex;gap:32px;margin-top:44px;padding-top:22px;border-top:2px solid var(--color-divider);flex-wrap:wrap">
+          <div><div style="font-family:var(--font-heading);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums">90 sec</div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-top:3px">To a priced band</div></div>
+          <div><div style="font-family:var(--font-heading);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums">1,240</div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-top:3px">Verified shops</div></div>
+          <div><div style="font-family:var(--font-heading);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums">±6%</div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-top:3px">Band vs. awarded</div></div>
         </div>
       </div>
-      <div class="card card-deep live">
-        <div class="head"><span>Live: RFQ-4417, Actuator Housing</span><span class="pill">Negotiating</span></div>
-        <div class="meta">STEP AP214, 3 setups, 34 holes</div>
-        <div class="muted" style="font-size:.85rem">Unit price band, 250 ea</div>
-        <div class="price" id="live-price">$99.10</div>
-        <div class="range"><span>$78</span><span>4 shops bidding</span><span>$132</span></div>
+      <div style="border:2px solid var(--color-text);background:var(--color-surface)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:2px solid var(--color-text)">
+          <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Live — RFQ-4417 · Actuator Housing</span>
+          <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--color-accent-700)"><span style="width:7px;height:7px;background:var(--color-accent);animation:cy-pulse 1.4s infinite"></span>Negotiating</span>
+        </div>
+        <div style="position:relative;height:186px;overflow:hidden;background:repeating-linear-gradient(90deg,transparent 0 23px,color-mix(in srgb,var(--color-text) 8%,transparent) 23px 24px),repeating-linear-gradient(0deg,transparent 0 23px,color-mix(in srgb,var(--color-text) 8%,transparent) 23px 24px)">
+          <div style="position:absolute;inset:0;display:grid;place-items:center">
+            <div style="width:58%;height:74px;background:color-mix(in srgb,var(--color-text) 12%,transparent);border:2px solid color-mix(in srgb,var(--color-text) 45%,transparent);position:relative">
+              <div style="position:absolute;left:14%;top:22%;width:18%;height:56%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 35%,transparent)"></div>
+              <div style="position:absolute;left:41%;top:22%;width:18%;height:56%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 35%,transparent)"></div>
+              <div style="position:absolute;left:68%;top:22%;width:18%;height:56%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 35%,transparent)"></div>
+            </div>
+          </div>
+          <div style="position:absolute;left:0;right:0;top:0;height:2px;background:var(--color-accent);animation:cy-scan 3.4s linear infinite"></div>
+          <div style="position:absolute;left:12px;bottom:10px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">STEP AP214 · 3 setups · 34 holes</div>
+        </div>
+        <div style="padding:16px 14px;border-top:2px solid var(--color-text)">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px">
+            <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Unit price band · 250 ea</span>
+            <span style="font-family:var(--font-heading);font-weight:800;font-size:20px;font-variant-numeric:tabular-nums">$94.90</span>
+          </div>
+          <div style="position:relative;height:10px;background:color-mix(in srgb,var(--color-text) 12%,transparent)">
+            <div style="position:absolute;top:0;bottom:0;background:var(--color-accent);animation:cy-band 3.8s cubic-bezier(.2,.8,.2,1) infinite alternate"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:7px;font-size:11px;font-variant-numeric:tabular-nums;color:color-mix(in srgb,var(--color-text) 60%,transparent)"><span>$78</span><span>4 shops bidding</span><span>$132</span></div>
+        </div>
       </div>
-    </section>
+    </div>
 
-    <section class="pillars" id="pillars"></section>
+    <div style="border-top:2px solid var(--color-divider);display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
+      <sc-for list="{{ pillars }}" as="p" hint-placeholder-count="3">
+        <div style="padding:36px 30px 40px 0;border-right:2px solid var(--color-divider)">
+          <div style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent);margin-bottom:14px">{{ p.n }}</div>
+          <h3 style="font-size:21px;letter-spacing:-0.02em;margin:0 0 10px;max-width:18ch">{{ p.title }}</h3>
+          <p style="margin:0;font-size:14.5px;line-height:1.55;max-width:36ch;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ p.body }}</p>
+        </div>
+      </sc-for>
+    </div>
 
-    <section class="section-block">
-      <h2>What happens after you drop the file</h2>
-      <ol class="steps-4" id="steps" style="padding:0"></ol>
-    </section>
-
-    <section class="section-block">
-      <div class="market" id="market"></div>
-    </section>
-
-    <section class="closing section-block">
-      <h2>Stop emailing PDFs to eight shops.</h2>
-      <a class="btn btn-primary btn-lg" href="new.html">Upload your first part</a>
-    </section>
-
-    <footer class="app-foot">
-      <span>Canyon, sourcing agent for machined parts</span>
-      <span>ITAR-registered. SOC 2 Type II in progress.</span>
-    </footer>
-
+    <div style="border-top:2px solid var(--color-divider);padding:44px 0 8px">
+      <h2 style="font-size:30px;letter-spacing:-0.025em;margin:0 0 28px">What happens after you drop the file</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+          <div style="padding:0 26px 34px 0">
+            <div style="height:4px;background:var(--color-accent);width:38px;margin-bottom:14px"></div>
+            <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:8px">Step {{ s.n }} · {{ s.time }}</div>
+            <div style="font-family:var(--font-heading);font-weight:800;font-size:17px;margin-bottom:7px">{{ s.title }}</div>
+            <p style="margin:0;font-size:13.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ s.body }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
   </div>
-</main>
+
+  <div style="background:var(--color-text);color:var(--color-bg);margin-top:20px">
+    <div style="max-width:1440px;margin:0 auto;padding:52px 28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:28px">
+      <sc-for list="{{ marketStats }}" as="m" hint-placeholder-count="4">
+        <div>
+          <div style="font-family:var(--font-heading);font-weight:800;font-size:38px;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">{{ m.v }}</div>
+          <div style="font-size:12px;line-height:1.45;margin-top:8px;max-width:26ch;color:color-mix(in srgb,#f3f2f2 70%,transparent)">{{ m.l }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="background:var(--color-accent);color:var(--color-bg)">
+    <div style="max-width:1440px;margin:0 auto;padding:66px 28px">
+      <h2 style="font-size:clamp(34px,4.6vw,60px);line-height:1;letter-spacing:-0.03em;margin:0 0 24px;max-width:20ch;color:var(--color-bg)">Stop emailing PDFs to eight shops.</h2>
+      <button sc-camel-on-click="{{ goRfq }}" class="btn" style="background:var(--color-surface);color:var(--color-accent);padding:13px 22px;font-size:14px">Upload your first part</button>
+    </div>
+  </div>
+
+  <div style="max-width:1440px;margin:0 auto;padding:26px 28px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">
+    <span>Canyon — sourcing agent for machined parts</span>
+    <span>ITAR-registered · SOC 2 Type II in progress</span>
+  </div>
+</div>
+</sc-if>
+
+<!-- ══ DASHBOARD ══ -->
+<sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+<div style="max-width:1440px;margin:0 auto;padding:26px 28px 60px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:20px">
+    <div>
+      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Halcyon Industrial · Grand Rapids, MI</div>
+      <h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">Request queue</h2>
+    </div>
+    <button sc-camel-on-click="{{ goRfq }}" class="btn btn-primary" style="padding:10px 18px">New RFQ</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:2px solid var(--color-text);border-bottom:2px solid var(--color-divider);margin-bottom:22px">
+    <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+      <div style="padding:16px 20px 18px 0;border-right:2px solid var(--color-divider)">
+        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ k.l }}</div>
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:25px;margin-top:5px;font-variant-numeric:tabular-nums">{{ k.v }}</div>
+        <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ k.s }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,150px) minmax(0,1.5fr) 74px minmax(0,110px) minmax(0,190px) minmax(0,130px) minmax(0,110px);gap:14px;padding:0 0 8px;border-bottom:2px solid var(--color-text);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">
+    <span>RFQ</span><span>Part</span><span>Qty</span><span>Material</span><span>Stage</span><span>Unit band</span><span>Need by</span>
+  </div>
+  <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+    <div sc-camel-on-click="{{ r.open }}" style="display:grid;grid-template-columns:minmax(0,150px) minmax(0,1.5fr) 74px minmax(0,110px) minmax(0,190px) minmax(0,130px) minmax(0,110px);gap:14px;padding:15px 0;border-bottom:1px solid var(--color-divider);cursor:pointer;align-items:center" style-hover="background:color-mix(in srgb,var(--color-text) 5%,transparent)">
+      <div>
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums">{{ r.id }}</div>
+        <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ r.ago }}</div>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:600">{{ r.part }}</div>
+        <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ r.sub }}</div>
+      </div>
+      <div style="font-size:13.5px;font-variant-numeric:tabular-nums">{{ r.qty }}</div>
+      <div style="font-size:12.5px">{{ r.mat }}</div>
+      <div>
+        <div style="display:flex;gap:3px;margin-bottom:5px">
+          <sc-for list="{{ r.pips }}" as="p" hint-placeholder-count="5">
+            <div style="height:6px;flex:1;transition:background .6s ease;{{ p.st }}"></div>
+          </sc-for>
+        </div>
+        <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;{{ r.stageColor }}">{{ r.stage }}</div>
+      </div>
+      <div style="font-size:13.5px;font-variant-numeric:tabular-nums;font-weight:600">{{ r.band }}</div>
+      <div style="font-size:12.5px;font-variant-numeric:tabular-nums">{{ r.need }}</div>
+    </div>
+  </sc-for>
+  <div style="margin-top:16px;font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Stages advance automatically — Canyon only interrupts you when a decision is required.</div>
+</div>
+</sc-if>
+
+<!-- ══ NEW RFQ ══ -->
+<sc-if value="{{ isRfq }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1440px;margin:0 auto;padding:26px 28px 60px">
+  <h2 style="margin:0 0 4px;font-size:29px;letter-spacing:-0.025em">New request</h2>
+  <p style="margin:0 0 22px;font-size:14px;color:color-mix(in srgb,var(--color-text) 65%,transparent)">Drop the CAD. Everything below fills itself in; correct anything Canyon got wrong.</p>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:26px;align-items:start">
+    <div>
+      <div style="border:2px dashed color-mix(in srgb,var(--color-text) 40%,transparent);padding:38px 26px;background:color-mix(in srgb,var(--color-text) 3%,transparent)">
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:19px;margin-bottom:6px">Drop STEP, IGES, SLDPRT, X_T — or a folder</div>
+        <div style="font-size:13px;color:color-mix(in srgb,var(--color-text) 62%,transparent);margin-bottom:16px">Drawings and PDFs are read too: Canyon pulls tolerances, finish callouts and notes off the print.</div>
+        <button class="btn btn-secondary" style="padding:9px 16px">Browse files</button>
+      </div>
+      <div style="margin-top:18px;border-top:2px solid var(--color-text)">
+        <sc-for list="{{ files }}" as="f" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--color-divider)">
+            <div style="width:30px;height:30px;border:2px solid var(--color-text);display:grid;place-items:center;font-size:9px;font-weight:800;letter-spacing:.04em">{{ f.ext }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13.5px;font-weight:600">{{ f.name }}</div>
+              <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ f.meta }}</div>
+            </div>
+            <span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--color-accent-700)">{{ f.state }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top:26px">
+        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Commercial requirements</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px">
+          <sc-for list="{{ reqFields }}" as="q" hint-placeholder-count="6">
+            <div class="field">
+              <label>{{ q.l }}</label>
+              <div class="input" style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px">
+                <span>{{ q.v }}</span>
+                <span style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;{{ q.tagStyle }}">{{ q.tag }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:16px">
+          <sc-for list="{{ certs }}" as="c" hint-placeholder-count="4">
+            <span class="tag" style="{{ c.st }}">{{ c.l }}</span>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="border:2px solid var(--color-text);background:var(--color-surface);position:sticky;top:74px">
+      <div style="padding:12px 16px;border-bottom:2px solid var(--color-text);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Feature extraction</span>
+        <span style="font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--color-accent-700)">{{ extractPct }}%</span>
+      </div>
+      <div style="height:5px;background:color-mix(in srgb,var(--color-text) 12%,transparent)">
+        <div style="height:100%;background:var(--color-accent);transition:width .5s linear;{{ extractW }}"></div>
+      </div>
+      <div style="padding:6px 16px 14px">
+        <sc-for list="{{ feats }}" as="f" hint-placeholder-count="8">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--color-divider);transition:opacity .45s ease,transform .45s ease;{{ f.vis }}">
+            <span style="font-size:12.5px;color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ f.l }}</span>
+            <span style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right">{{ f.v }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:14px 16px;border-top:2px solid var(--color-text);transition:opacity .6s ease;{{ priceVis }}">
+        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:8px">Estimated unit price · 250 ea</div>
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px">
+          <span style="font-family:var(--font-heading);font-weight:800;font-size:30px;font-variant-numeric:tabular-nums">$96.20</span>
+          <span style="font-size:12.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">± $14 · 4–6 weeks</span>
+        </div>
+        <button sc-camel-on-click="{{ goNeg }}" class="btn btn-primary btn-block" style="padding:11px 16px">Release to shops</button>
+        <button sc-camel-on-click="{{ goPart }}" class="btn btn-secondary btn-block" style="padding:11px 16px">Review manufacturability first</button>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ══ PART / DFM ══ -->
+<sc-if value="{{ isPart }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="max-width:1440px;margin:0 auto;padding:20px 28px 16px;border-bottom:2px solid var(--color-text)">
+    <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+      <div style="width:34px;height:34px;border:2px solid var(--color-text);display:grid;place-items:center"><div style="width:12px;height:12px;background:var(--color-accent)"></div></div>
+      <div style="flex:1;min-width:220px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-family:var(--font-heading);font-weight:800;font-size:21px;letter-spacing:.01em">HAL-4417</span>
+          <span class="tag" style="background:var(--color-accent-200);color:var(--color-accent-800)">3 findings</span>
+        </div>
+        <div style="font-size:13.5px;color:color-mix(in srgb,var(--color-text) 62%,transparent)">Actuator Housing · Rev C</div>
+      </div>
+      <div style="display:flex;gap:30px;flex-wrap:wrap">
+        <sc-for list="{{ partMeta }}" as="m" hint-placeholder-count="5">
+          <div><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ m.l }}</div><div style="font-size:13px;font-variant-numeric:tabular-nums;margin-top:2px">{{ m.v }}</div></div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  <div style="max-width:1440px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+    <div style="border-right:2px solid var(--color-text);padding:16px 28px 40px">
+      <div class="seg" style="display:inline-flex;margin-bottom:14px">
+        <button class="seg-opt" style="border:1px solid var(--color-divider);background:var(--color-text);color:var(--color-bg);padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">CAD</button>
+        <button class="seg-opt" style="border:1px solid var(--color-divider);border-left:0;background:transparent;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;color:inherit">Drawing</button>
+      </div>
+      <div style="position:relative;aspect-ratio:4/3;border:2px solid var(--color-text);background:repeating-linear-gradient(135deg,transparent 0 9px,color-mix(in srgb,var(--color-text) 7%,transparent) 9px 10px)">
+        <div style="position:absolute;inset:0;display:grid;place-items:center">
+          <div style="width:62%;height:44%;background:color-mix(in srgb,var(--color-text) 14%,transparent);border:2px solid color-mix(in srgb,var(--color-text) 50%,transparent);position:relative">
+            <div style="position:absolute;left:10%;top:20%;width:20%;height:60%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 40%,transparent)"></div>
+            <div style="position:absolute;left:40%;top:20%;width:20%;height:60%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 40%,transparent)"></div>
+            <div style="position:absolute;left:70%;top:20%;width:20%;height:60%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 40%,transparent)"></div>
+            <div style="position:absolute;left:-2px;right:-2px;top:50%;height:2px;background:var(--color-accent);opacity:.55"></div>
+          </div>
+        </div>
+        <div style="position:absolute;left:12px;bottom:12px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">CAD viewport — drop STEP render here</div>
+        <div style="position:absolute;right:12px;top:12px;width:46px;height:46px;border:2px solid color-mix(in srgb,var(--color-text) 45%,transparent);display:grid;place-items:center;font-size:9px;letter-spacing:.1em;font-weight:700">ISO</div>
+      </div>
+      <div style="margin-top:18px;border-top:2px solid var(--color-divider);padding-top:14px">
+        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:10px">Cost drivers</div>
+        <sc-for list="{{ drivers }}" as="d" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:minmax(0,140px) minmax(0,1fr) 58px;gap:12px;align-items:center;padding:7px 0">
+            <span style="font-size:12.5px">{{ d.l }}</span>
+            <div style="height:8px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:100%;background:var(--color-text);transition:width .9s cubic-bezier(.2,.8,.2,1);{{ d.w }}"></div></div>
+            <span style="font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right;font-weight:600">{{ d.v }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="padding:16px 28px 40px">
+      <div style="border:2px solid var(--color-text);padding:14px 16px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+          <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Price band converging · 250 ea</span>
+          <span style="font-size:11px;font-weight:600;color:var(--color-accent-700)">{{ bandConf }}</span>
+        </div>
+        <div style="position:relative;height:14px;background:color-mix(in srgb,var(--color-text) 10%,transparent)">
+          <div style="position:absolute;top:0;bottom:0;background:var(--color-accent);transition:left 1.1s cubic-bezier(.2,.8,.2,1),right 1.1s cubic-bezier(.2,.8,.2,1);{{ bandPos }}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;font-variant-numeric:tabular-nums">
+          <span>{{ bandLo }}</span>
+          <span style="font-weight:800">{{ bandMid }} likely</span>
+          <span>{{ bandHi }}</span>
+        </div>
+      </div>
+      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Manufacturability findings</div>
+      <sc-for list="{{ findings }}" as="f" hint-placeholder-count="3">
+        <div style="border:1px solid var(--color-divider);border-left:4px solid var(--color-accent);background:var(--color-surface);padding:14px 16px;margin-bottom:14px;transition:opacity .5s ease,transform .5s ease;{{ f.vis }}">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+            <span style="width:19px;height:19px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-size:10px;font-weight:800">{{ f.n }}</span>
+            <span class="tag" style="{{ f.sevStyle }}">{{ f.sev }}</span>
+            <sc-for list="{{ f.tags }}" as="t" hint-placeholder-count="2">
+              <span style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 50%,transparent)">{{ t }}</span>
+            </sc-for>
+          </div>
+          <div style="font-family:var(--font-heading);font-weight:800;font-size:15.5px;margin-bottom:6px">{{ f.title }}</div>
+          <p style="margin:0 0 12px;font-size:13px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ f.body }}</p>
+          <div style="display:flex;gap:26px;padding:10px 0;border-top:1px solid var(--color-divider);flex-wrap:wrap">
+            <div><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Cost impact</div><div style="font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px">{{ f.impact }}</div></div>
+            <div><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">If changed</div><div style="font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;color:var(--color-accent-700)">{{ f.saving }}</div></div>
+          </div>
+          <div style="background:color-mix(in srgb,var(--color-text) 5%,transparent);padding:10px 12px;font-size:12.5px;line-height:1.45">{{ f.fix }}</div>
+        </div>
+      </sc-for>
+      <button sc-camel-on-click="{{ goNeg }}" class="btn btn-primary" style="padding:11px 18px">Release to shops as-is</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ══ NEGOTIATION ══ -->
+<sc-if value="{{ isNeg }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1440px;margin:0 auto;padding:22px 28px 60px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+    <h2 style="margin:0;font-size:26px;letter-spacing:-0.025em">RFQ-4417 · negotiation</h2>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--color-accent-700)"><span style="width:7px;height:7px;background:var(--color-accent);animation:cy-pulse 1.4s infinite"></span>Round {{ roundNo }} of 3 · live</span>
+  </div>
+  <div style="display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr) minmax(0,250px);gap:0;border-top:2px solid var(--color-text)">
+    <div style="border-right:2px solid var(--color-divider);padding:18px 22px 18px 0">
+      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Your mandate</div>
+      <sc-for list="{{ mandate }}" as="m" hint-placeholder-count="6">
+        <div style="padding:10px 0;border-bottom:1px solid var(--color-divider)">
+          <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ m.l }}</div>
+          <div style="font-size:13.5px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums">{{ m.v }}</div>
+        </div>
+      </sc-for>
+      <button class="btn btn-secondary btn-block" style="margin-top:14px;padding:9px 14px">Edit mandate</button>
+      <div style="margin-top:14px;font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 58%,transparent)">Canyon will not accept outside these bounds. It will pause and ask you if a shop is close but outside.</div>
+    </div>
+
+    <div style="padding:18px 22px">
+      <sc-for list="{{ msgs }}" as="m" hint-placeholder-count="5">
+        <div style="display:flex;gap:12px;padding:0 0 18px;transition:opacity .5s ease,transform .5s ease;{{ m.vis }}">
+          <div style="width:30px;height:30px;flex:none;display:grid;place-items:center;font-size:10px;font-weight:800;{{ m.avatar }}">{{ m.ini }}</div>
+          <div style="flex:1;min-width:0;border-left:2px solid;padding-left:12px;{{ m.rule }}">
+            <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:4px">
+              <span style="font-family:var(--font-heading);font-weight:800;font-size:13.5px">{{ m.who }}</span>
+              <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 50%,transparent);font-variant-numeric:tabular-nums">{{ m.t }}</span>
+            </div>
+            <div style="font-size:13.5px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 82%,transparent)">{{ m.body }}</div>
+            <sc-if value="{{ m.hasTerms }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:10px;padding:9px 12px;background:color-mix(in srgb,var(--color-text) 5%,transparent)">
+                <sc-for list="{{ m.terms }}" as="k" hint-placeholder-count="3">
+                  <div><div style="font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ k.l }}</div><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">{{ k.v }}</div></div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+      <div style="display:flex;align-items:center;gap:9px;font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent);transition:opacity .4s;{{ typingVis }}">
+        <span style="width:6px;height:6px;background:var(--color-accent);animation:cy-pulse 1s infinite"></span>{{ typingWho }}
+      </div>
+    </div>
+
+    <div style="border-left:2px solid var(--color-divider);padding:18px 0 18px 22px">
+      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Position</div>
+      <div style="border:2px solid var(--color-text);padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 58%,transparent)">Best live offer</div>
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:27px;font-variant-numeric:tabular-nums;transition:color .4s">{{ bestPrice }}</div>
+        <div style="font-size:12px;margin-top:2px">{{ bestWho }}</div>
+      </div>
+      <sc-for list="{{ shopStates }}" as="s" hint-placeholder-count="4">
+        <div style="padding:11px 0;border-bottom:1px solid var(--color-divider)">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline">
+            <span style="font-size:12.5px;font-weight:600">{{ s.name }}</span>
+            <span style="font-size:12.5px;font-variant-numeric:tabular-nums;font-weight:700;transition:opacity .4s;{{ s.vis }}">{{ s.price }}</span>
+          </div>
+          <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin-top:3px;{{ s.stColor }}">{{ s.st }}</div>
+        </div>
+      </sc-for>
+      <button sc-camel-on-click="{{ goOffers }}" class="btn btn-primary btn-block" style="margin-top:16px;padding:10px 14px">Go to offers</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ══ OFFERS ══ -->
+<sc-if value="{{ isOffers }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1440px;margin:0 auto;padding:22px 28px 60px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:6px">
+    <div>
+      <h2 style="margin:0 0 4px;font-size:29px;letter-spacing:-0.025em">4 shops responded</h2>
+      <p style="margin:0;font-size:14px;color:color-mix(in srgb,var(--color-text) 65%,transparent)">Ranked by Canyon on your mandate: unit price 50% · on-time record 25% · lead time 15% · terms 10%.</p>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">vs. your last award</div>
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:24px;color:var(--color-accent-700);font-variant-numeric:tabular-nums">−11.4%</div>
+    </div>
+  </div>
+  <div class="hr" style="margin:16px 0"></div>
+  <div style="position:relative;{{ stackH }}">
+    <sc-for list="{{ offers }}" as="o" hint-placeholder-count="4">
+      <div style="position:absolute;left:0;right:0;top:0;transition:transform .85s cubic-bezier(.2,.8,.2,1);{{ o.y }}">
+        <div style="border:2px solid;background:var(--color-surface);display:grid;grid-template-columns:44px minmax(0,1.4fr) minmax(0,150px) minmax(0,1fr) minmax(0,150px);gap:18px;align-items:center;padding:16px 18px;{{ o.edge }}">
+          <div style="font-family:var(--font-heading);font-weight:800;font-size:24px;font-variant-numeric:tabular-nums;{{ o.rankColor }}">{{ o.rank }}</div>
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-family:var(--font-heading);font-weight:800;font-size:16.5px">{{ o.name }}</span>
+              <sc-for list="{{ o.certs }}" as="c" hint-placeholder-count="2">
+                <span style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;border:1px solid var(--color-divider);padding:2px 6px">{{ c }}</span>
+              </sc-for>
+            </div>
+            <div style="font-size:12px;color:color-mix(in srgb,var(--color-text) 58%,transparent);margin-top:3px">{{ o.loc }} · {{ o.note }}</div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-heading);font-weight:800;font-size:23px;font-variant-numeric:tabular-nums;transition:color .5s">{{ o.price }}</div>
+            <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 58%,transparent)">{{ o.total }} · {{ o.lead }}</div>
+          </div>
+          <div>
+            <sc-for list="{{ o.bars }}" as="b" hint-placeholder-count="3">
+              <div style="display:grid;grid-template-columns:82px minmax(0,1fr) 40px;gap:8px;align-items:center;padding:2px 0">
+                <span style="font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ b.l }}</span>
+                <div style="height:6px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:100%;background:var(--color-text);transition:width .8s;{{ b.w }}"></div></div>
+                <span style="font-size:11px;font-variant-numeric:tabular-nums;text-align:right">{{ b.v }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn" style="padding:9px 14px;justify-content:flex-start;{{ o.ctaStyle }}">{{ o.cta }}</button>
+            <button class="btn btn-ghost" style="justify-content:flex-start;font-size:12px">Shop profile</button>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="border:2px solid var(--color-text);padding:16px 18px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+    <div style="max-width:62ch">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:4px">Canyon recommends a 60/40 split award</div>
+      <div style="font-size:13px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 70%,transparent)">150 ea to Ridgeline at $94.90 and 100 ea to Midstate at $96.40. Both hold Net 45. Dual-sourcing costs $225 total and removes single-shop schedule risk on a part you reorder quarterly.</div>
+    </div>
+    <button class="btn btn-primary" style="padding:12px 20px">Accept recommendation</button>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+</template>
 
 <script src="app.js"></script>
 </body>
