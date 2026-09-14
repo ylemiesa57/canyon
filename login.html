@@ -13,7 +13,7 @@
     .login-page { min-height: 100svh; display: grid; place-items: center; padding: var(--gutter); }
     .login-card { width: min(420px, 100%); display: grid; gap: 22px; }
     .login-card .brand { font-size: 1.4rem; }
-    .login-card .brand svg { width: 34px; height: 34px; }
+    .login-card .brand-mark { width: 22px; height: 22px; }
     .login-card h1 { font-size: 1.75rem; font-stretch: 112%; }
     .login-foot { color: var(--muted); font-size: 0.9rem; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .login-foot a { color: var(--text); }
@@ -23,13 +23,7 @@
 <main class="login-page">
   <div class="login-card">
     <a class="brand" href="index.html" aria-label="Canyon home">
-      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">
-        <path d="M1 9h7v5h4v5h3v4h2v-4h3v-5h4v-5h7"/>
-        <path d="M8 3v2M24 3v2" stroke-width="1.5"/>
-        <path d="M9.5 4h13" stroke-width="1.5"/>
-        <path d="M9.5 4l2-1.2v2.4zM22.5 4l-2-1.2v2.4z" fill="currentColor" stroke="none"/>
-        <path d="M6 29h20" stroke-width="1.5" opacity=".55"/>
-      </svg>
+      <span class="brand-mark" aria-hidden="true"></span>
       Canyon
     </a>
     <h1>Log in</h1>
