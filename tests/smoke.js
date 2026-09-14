@@ -87,7 +87,7 @@ async function load(file, reducedMotion) {
 
   console.log("Shop app");
   const s = await load(path.join(dir, "shop.html"), false);
-  check(s.root.querySelectorAll("tbody tr").length >= 8, "inbox lists the RFQs");
+  check((s.text().match(/RFQ \d{4}/g) || []).length >= 8, "inbox lists the RFQs");
   check(s.has("Halcyon Industrial") && !s.has("US$"), "cast and currency are synced with the buyer side");
   await s.click(s.btn("Parts"), 60);
   const strip = () => Array.from(s.root.querySelectorAll(".stage-strip button"));
@@ -105,10 +105,11 @@ async function load(file, reducedMotion) {
     await s.click(s.btn(tab), 60);
     check(s.text().length > 600 && !s.root.querySelector(".stage-strip"), "tab renders without the strip: " + tab);
   }
-  await s.click(s.btn("Close"));
-  check(!s.root.querySelector("aside"), "agent panel closes");
+  check(!s.root.querySelector("aside"), "agent drawer starts closed");
   await s.click(s.btn("Agent"));
-  check(!!s.root.querySelector("aside"), "agent panel reopens");
+  check(!!s.root.querySelector("aside"), "agent drawer opens");
+  await s.click(s.btn("Close"));
+  check(!s.root.querySelector("aside"), "agent drawer closes");
   check(s.errors.length === 0, "no runtime errors (" + s.errors.join("; ") + ")");
   s.w.close();
 

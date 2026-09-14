@@ -56,7 +56,7 @@
     ]
   };
 class Component extends DCLogic {
-  state = { screen: 'inbox', stage: 'ingest', agent: true, filter: 'all', hot: null, pin: null, closed: {}, lpi: false, theme: readTheme(), selectedFinding: null, view: '3d' };
+  state = { screen: 'inbox', stage: 'ingest', agent: false, filter: 'all', hot: null, pin: null, closed: {}, lpi: false, theme: readTheme(), selectedFinding: null, view: '3d' };
   // Three tabs like the buyer console; the RFQ's six stages sit in a strip under Parts.
   static TABS = [['inbox', 'Inbox'], ['parts', 'Parts'], ['shop', 'My shop']];
   static STAGES = [['ingest', 'Ingest'], ['part', 'Part'], ['cost', 'Costing'], ['quote', 'Quote'], ['neg', 'Negotiation'], ['pdf', 'Quote PDF']];
@@ -157,7 +157,7 @@ class Component extends DCLogic {
     ];
     const bubble=(side,text,meta,offer)=>({left:side==='L'?text:'',leftMeta:side==='L'?meta:'',leftVis:side==='L'?'visible':'hidden',right:side==='R'?text:'',rightMeta:side==='R'?meta:'',rightVis:side==='R'?'visible':'hidden',offer});
     return {
-      tabs, stages, inParts, escalated, agentOpen: agent,
+      tabs, stages, inParts, escalated, agentOpen: agent, agentBtnSt: agent ? 'background:var(--color-text);color:var(--color-bg);border-color:var(--color-text)' : '',
       toggleTheme: () => { const next = theme === '' ? 'dark' : theme === 'dark' ? 'light' : ''; applyTheme(next); const v = this.viewer(); if (v) v.postMessage({ type: 'theme', value: next }, '*'); this.setState({ theme: next }); },
       themeLabel: theme === 'dark' ? 'Dark' : theme === 'light' ? 'Light' : 'Auto theme',
       viewCad: () => { postView('3d'); this.setState({ view: '3d' }); }, viewDrawing: () => { if (screen !== 'part') this.setState({ screen: 'part', stage: 'part', view: 'pdf' }); else { postView('pdf'); this.setState({ view: 'pdf' }); } },
@@ -180,7 +180,13 @@ class Component extends DCLogic {
         {id:'RFQ 1231',name:'Sensor mount ×3',buyer:'Redline Motorsport',source:'Marketplace',parts:'3',files:'5',due:'Sep 20',value:'$4,170',status:'Agent negotiating',group:'neg',tagClass:'tag-neutral',open:this.go('neg')},
         {id:'RFQ 1229',name:'Fixture plate',buyer:'Halcyon Industrial',source:'Email',parts:'1',files:'2',due:'Sep 14',value:'$1,240',status:'Quoted',group:'quoted',tagClass:'tag-outline',open:this.go('quote')},
         {id:'RFQ 1227',name:'Gear cover',buyer:'Meridian Robotics',source:'Upload',parts:'1',files:'3',due:'Sep 12',value:'$2,860',status:'Won',group:'quoted',tagClass:'tag-outline',open:this.go('quote')}
-      ].filter(r => filter === 'all' || r.group === filter),
+      ].map(r => {
+        const STAGE = { 'Escalated to you': [4, 'Negotiating', true], 'Rev conflict': [1, 'Ingested', true], 'Agent negotiating': [4, 'Negotiating', false], 'Quoted': [3, 'Quoted', false], 'Won': [5, 'Won', false] };
+        const [adv, stage, needs] = STAGE[r.status];
+        return { ...r, stage, needsVis: needs ? 'visibility:visible' : 'visibility:hidden',
+          stageColor: needs ? 'color:var(--color-warn)' : adv >= 5 ? 'color:var(--color-good)' : MUTED,
+          pips: [0, 1, 2, 3, 4].map(n => ({ st: n < adv ? 'background:var(--color-text)' : 'background:color-mix(in srgb,var(--color-text) 14%,transparent)' })) };
+      }).filter(r => filter === 'all' || r.group === filter),
       files:[
         {name:'BRKT-001.step',size:'CAD · 16.4 MB',kind:'STEP',extracted:'155×85×42 mm · 14 pockets · 6 bores · min wall 1.8 mm · 0.61 kg',linked:'BRKT-001'},
         {name:'BRKT-001-RevA.pdf',size:'Drawing · 2.8 MB · 3 sheets',kind:'PDF drawing',extracted:'9 notes · 12 tolerances · TP Ø0.1 on bores · LPI 100% · chamfer 0.5',linked:'BRKT-001'},
