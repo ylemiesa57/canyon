@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Request queue</title>
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,300..800;1,62..125,300..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body data-screen="queue" class="app">
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="Canyon home">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M1 9h7v5h4v5h3v4h2v-4h3v-5h4v-5h7"/><path d="M8 3v2M24 3v2" stroke-width="1.5"/><path d="M9.5 4h13" stroke-width="1.5"/><path d="M9.5 4l2-1.2v2.4zM22.5 4l-2-1.2v2.4z" fill="currentColor" stroke="none"/><path d="M6 29h20" stroke-width="1.5" opacity=".55"/></svg>
+      Canyon
+    </a>
+    <ul class="tabs">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="queue.html" aria-current="page">Queue</a></li>
+      <li><a href="new.html">New RFQ</a></li>
+      <li><a href="part.html">Part and DFM</a></li>
+      <li><a href="negotiation.html">Negotiation</a></li>
+      <li><a href="offers.html">Offers</a></li>
+    </ul>
+    <div class="account"><span>Halcyon Industrial, Buyer</span><span class="avatar">DM</span></div>
+  </div>
+</header>
+
+<main class="app-main">
+  <div class="wrap">
+    <div class="page-head">
+      <div>
+        <p class="eyebrow-line">Halcyon Industrial, Grand Rapids, MI</p>
+        <h2>Request queue</h2>
+      </div>
+      <a class="btn btn-primary" href="new.html">New RFQ</a>
+    </div>
+
+    <div class="grid grid-4" id="kpis"></div>
+
+    <div class="card" style="margin-top:20px;padding:0 4px">
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>RFQ</th><th>Part</th><th>Qty</th><th>Material</th><th>Stage</th><th>Unit band</th><th>Need by</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="table-note">Stages advance automatically. Canyon only interrupts you when a decision is required.</p>
+  </div>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

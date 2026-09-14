@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canyon for buyers</title>
+  <meta name="description" content="Canyon, the sourcing agent for machined parts. Upload a STEP file, get a price band, let your agent negotiate with verified shops.">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,300..800;1,62..125,300..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body data-screen="home" class="app">
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="Canyon home">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M1 9h7v5h4v5h3v4h2v-4h3v-5h4v-5h7"/><path d="M8 3v2M24 3v2" stroke-width="1.5"/><path d="M9.5 4h13" stroke-width="1.5"/><path d="M9.5 4l2-1.2v2.4zM22.5 4l-2-1.2v2.4z" fill="currentColor" stroke="none"/><path d="M6 29h20" stroke-width="1.5" opacity=".55"/></svg>
+      Canyon
+    </a>
+    <ul class="tabs">
+      <li><a href="index.html" aria-current="page">Home</a></li>
+      <li><a href="queue.html">Queue</a></li>
+      <li><a href="new.html">New RFQ</a></li>
+      <li><a href="part.html">Part and DFM</a></li>
+      <li><a href="negotiation.html">Negotiation</a></li>
+      <li><a href="offers.html">Offers</a></li>
+    </ul>
+    <div class="account"><span>Halcyon Industrial, Buyer</span><span class="avatar">DM</span></div>
+  </div>
+</header>
+
+<main class="app-main">
+  <div class="wrap">
+
+    <section class="home-hero">
+      <div>
+        <p class="eyebrow-line">Sourcing agent for machined parts</p>
+        <h1>Quote it like the shop would.</h1>
+        <p class="lead">Upload a STEP file. Canyon reads the geometry the way a senior estimator does, prices it, then negotiates with verified shops on the terms you set, while you do something else.</p>
+        <div class="actions">
+          <a class="btn btn-primary btn-lg" href="new.html">Upload a part</a>
+          <a class="btn btn-secondary btn-lg" href="negotiation.html">See a live quote</a>
+        </div>
+        <div class="metrics">
+          <div><div class="v">90 sec</div><div class="l">To a priced band</div></div>
+          <div><div class="v">1,240</div><div class="l">Verified shops</div></div>
+          <div><div class="v">±6%</div><div class="l">Band vs. awarded</div></div>
+        </div>
+      </div>
+      <div class="card card-deep live">
+        <div class="head"><span>Live: RFQ-4417, Actuator Housing</span><span class="pill">Negotiating</span></div>
+        <div class="meta">STEP AP214, 3 setups, 34 holes</div>
+        <div class="muted" style="font-size:.85rem">Unit price band, 250 ea</div>
+        <div class="price" id="live-price">$99.10</div>
+        <div class="range"><span>$78</span><span>4 shops bidding</span><span>$132</span></div>
+      </div>
+    </section>
+
+    <section class="pillars" id="pillars"></section>
+
+    <section class="section-block">
+      <h2>What happens after you drop the file</h2>
+      <ol class="steps-4" id="steps" style="padding:0"></ol>
+    </section>
+
+    <section class="section-block">
+      <div class="market" id="market"></div>
+    </section>
+
+    <section class="closing section-block">
+      <h2>Stop emailing PDFs to eight shops.</h2>
+      <a class="btn btn-primary btn-lg" href="new.html">Upload your first part</a>
+    </section>
+
+    <footer class="app-foot">
+      <span>Canyon, sourcing agent for machined parts</span>
+      <span>ITAR-registered. SOC 2 Type II in progress.</span>
+    </footer>
+
+  </div>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
