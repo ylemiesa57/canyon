@@ -17,44 +17,67 @@
 <!-- Merchant mockup markup. The Inbox screen and agent panel are the export, verbatim apart from colour
      tokens; the other tabs are built from the mockup's own data in the same component vocabulary. -->
 <template id="dc">
-<div style="min-height:100vh;display:flex;flex-direction:column">
-  <header class="nav" style="gap:var(--space-4);padding:0 var(--space-4);height:56px;position:sticky;top:0;background:var(--color-bg);z-index:5">
-    <div class="nav-brand" style="display:flex;align-items:center;gap:10px;margin-right:0">
-      <span style="width:16px;height:16px;background:var(--color-accent);display:inline-block"></span>
-      Canyon <span style="font-weight:400;color:var(--color-neutral-600);font-size:14px;margin-left:4px">Shop</span>
+<div style="min-height:100vh;display:flex;flex-direction:column;background:var(--color-bg)">
+  <!-- Header: the buyer console's bar, with the shop's Agent toggle in the right cluster. -->
+  <div style="position:sticky;top:0;z-index:40;background:var(--color-bg);border-bottom:1px solid var(--color-divider)">
+    <div style="max-width:1440px;margin:0 auto;padding:0 28px;display:flex;align-items:center;gap:28px;height:56px">
+      <div sc-camel-on-click="{{ goInbox }}" style="display:flex;align-items:center;gap:9px;cursor:pointer">
+        <div style="width:16px;height:16px;background:var(--color-accent);border-radius:3px"></div>
+        <span style="font-family:var(--font-heading);font-weight:700;font-size:17px;letter-spacing:-0.02em">CANYON</span>
+        <span style="font-size:12px;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-left:2px">Shop</span>
+      </div>
+      <div style="width:1px;height:20px;background:var(--color-divider)"></div>
+      <div style="display:flex;gap:2px;flex:1;min-width:0;overflow:hidden">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+          <button sc-camel-on-click="{{ t.go }}" style="border:0;background:transparent;cursor:pointer;font-family:var(--font-heading);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:6px 11px;color:inherit;white-space:nowrap;border-bottom:2px solid transparent;{{ t.sel }}">{{ t.label }}</button>
+        </sc-for>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <button sc-camel-on-click="{{ toggleTheme }}" class="btn btn-ghost" style="font-size:12px;padding:4px 8px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ themeLabel }}</button>
+        <a href="{{ buyerLink }}" style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent);text-decoration:none;white-space:nowrap">Buyer side</a>
+        <span style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);white-space:nowrap">Cascade CNC · Shop</span>
+        <button sc-camel-on-click="{{ toggleAgent }}" class="btn btn-secondary" style="padding:5px 10px;font-size:12px;gap:8px"><span style="width:8px;height:8px;background:var(--color-accent)"></span>Agent</button>
+        <div style="width:28px;height:28px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-family:var(--font-heading);font-weight:700;font-size:11px">CC</div>
+      </div>
     </div>
-    <nav style="display:flex;gap:2px;height:100%;align-self:stretch;margin-left:var(--space-4);overflow-x:auto">
-      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="8">
-        <button sc-camel-on-click="{{ t.go }}" style="border:0;border-bottom:2px solid {{ t.line }};background:none;cursor:pointer;font:600 13px var(--font-body);padding:0 12px;height:100%;white-space:nowrap;color:{{ t.color }};margin-bottom:-2px">{{ t.label }}</button>
-      </sc-for>
-    </nav>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:var(--space-3);font-size:13px">
-      <a href="{{ buyerLink }}" style="color:var(--color-neutral-600);text-decoration:none;white-space:nowrap;font-size:12px">Buyer side</a>
-      <span style="color:var(--color-neutral-700);white-space:nowrap">Cascade CNC</span>
-      <button sc-camel-on-click="{{ toggleAgent }}" class="btn btn-secondary" style="justify-content:flex-start;gap:8px"><span style="width:8px;height:8px;background:var(--color-accent)"></span>Agent</button>
-    </div>
-  </header>
+  </div>
 
-  <div style="display:flex;flex:1 1 0%;min-height:0">
-    <main style="flex:1 1 0%;min-width:0;padding:var(--space-6) var(--space-6) 64px">
+  <!-- Stage strip: shown while working an RFQ under the Parts tab. -->
+  <sc-if value="{{ inParts }}" hint-placeholder-val="{{ false }}">
+    <div style="border-bottom:1px solid var(--color-divider);background:var(--color-surface)">
+      <div style="max-width:1440px;margin:0 auto;padding:6px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+        <span style="font-weight:600;font-size:13px;font-variant-numeric:tabular-nums">RFQ 1235 <span style="font-weight:400;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Industrial bracket + plate · Halcyon Industrial</span></span>
+        <div class="stage-strip">
+          <sc-for list="{{ stages }}" as="s" hint-placeholder-count="6"><button sc-camel-on-click="{{ s.go }}" aria-current="{{ s.current }}"><span class="{{ s.markClass }}">{{ s.mark }}</span>{{ s.label }}</button><span class="sep">{{ s.sep }}</span></sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="display:flex;flex:1 1 0%;min-height:0;max-width:1440px;margin:0 auto;width:100%">
+    <main style="flex:1 1 0%;min-width:0;padding:26px 28px 60px">
 
       <!-- ══ INBOX (from the export) ══ -->
       <sc-if value="{{ isInbox }}" hint-placeholder-val="{{ true }}">
         <div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
-            <div><h6 style="color:var(--color-accent);margin:0 0 6px">Inbox</h6><h2 style="margin:0;white-space:nowrap">RFQs <span class="tnum" style="color:var(--color-neutral-500);font-weight:400">{{ rfqCount }}</span></h2></div>
+            <div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Cascade CNC · Bend, OR</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">RFQs <span class="tnum" style="color:color-mix(in srgb,var(--color-text) 55%,transparent);font-weight:400">{{ rfqCount }}</span></h2></div>
             <div style="display:flex;gap:var(--space-2)"><button class="btn btn-secondary">Forward email</button><button sc-camel-on-click="{{ goIngest }}" class="btn btn-primary" style="justify-content:flex-start">New RFQ</button></div>
           </div>
-          <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
-          <div style="display:flex;flex-wrap:wrap;border-top:1px solid var(--color-divider);border-left:1px solid var(--color-divider);margin-bottom:var(--space-6)">
+          <div style="height:1px;background:var(--color-divider);margin:18px 0 16px"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:1px solid var(--color-divider-strong);border-bottom:1px solid var(--color-divider);margin-bottom:22px">
             <sc-for list="{{ inboxStats }}" as="s" hint-placeholder-count="4">
-              <div style="flex:1 1 170px;min-width:0;padding:var(--space-3) var(--space-4);border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)"><div style="font-size:12px;letter-spacing:0;color:var(--color-neutral-600)">{{ s.k }}</div><div class="tnum" style="font:800 22px var(--font-heading);letter-spacing:-0.02em;white-space:nowrap">{{ s.v }}</div><div style="font-size:12px;color:var(--color-neutral-600)">{{ s.sub }}</div></div>
+              <div style="padding:16px 20px 18px 0;border-right:1px solid var(--color-divider)">
+                <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ s.k }}</div>
+                <div style="font-family:var(--font-heading);font-weight:700;font-size:25px;margin-top:5px;font-variant-numeric:tabular-nums">{{ s.v }}</div>
+                <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ s.sub }}</div>
+              </div>
             </sc-for>
           </div>
           <div style="display:flex;gap:var(--space-3);align-items:center;margin-bottom:var(--space-3);flex-wrap:wrap">
-            <div class="seg">
+            <div style="display:flex;gap:2px">
               <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
-                <button sc-camel-on-click="{{ f.go }}" class="seg-opt" style="border:0;font:inherit;color:inherit;background:transparent;{{ f.on }}">{{ f.label }}</button>
+                <button sc-camel-on-click="{{ f.go }}" style="border:1px solid var(--color-divider);background:transparent;color:inherit;cursor:pointer;font:600 12px var(--font-body);padding:6px 12px;{{ f.on }}">{{ f.label }}</button>
               </sc-for>
             </div>
             <input class="input" placeholder="Search RFQs, buyers, part numbers" style="max-width:320px;margin-left:auto">
@@ -78,10 +101,10 @@
       <sc-if value="{{ isIngest }}" hint-placeholder-val="{{ false }}">
         <div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
-            <div><h6 style="color:var(--color-accent);margin:0 0 6px">Ingest</h6><h2 style="margin:0">RFQ 1235 <span style="color:var(--color-neutral-500);font-weight:400">Industrial bracket + plate</span></h2><div style="font-size:13px;color:var(--color-neutral-600);margin-top:4px">Halcyon Industrial · Email · 7 files read in 41 s</div></div>
+            <div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Ingest</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">RFQ 1235 <span style="color:color-mix(in srgb,var(--color-text) 55%,transparent);font-weight:400">Industrial bracket + plate</span></h2><div style="font-size:13px;color:var(--color-neutral-600);margin-top:4px">Halcyon Industrial · Email · 7 files read in 41 s</div></div>
             <div style="display:flex;gap:var(--space-2)"><button class="btn btn-secondary">Ask buyer about Rev B</button><button sc-camel-on-click="{{ goPart }}" class="btn btn-primary">Continue to part</button></div>
           </div>
-          <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
+          <div style="height:1px;background:var(--color-divider);margin:18px 0 16px"></div>
           <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:var(--space-6);align-items:start">
             <div>
               <h5 style="margin:0 0 var(--space-2)">Files</h5>
@@ -112,40 +135,60 @@
         </div>
       </sc-if>
 
-      <!-- ══ PART ══ -->
+      <!-- ══ PART ══ (layout mirrors the buyer's Part & DFM; findings drive pins in the 3D viewer) -->
       <sc-if value="{{ isPart }}" hint-placeholder-val="{{ false }}">
         <div>
-          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
-            <div><h6 style="color:var(--color-accent);margin:0 0 6px">Part</h6><h2 style="margin:0">BRKT-001 <span style="color:var(--color-neutral-500);font-weight:400">Industrial Bracket, Rev A</span></h2></div>
-            <div style="display:flex;gap:var(--space-2)"><button class="btn btn-secondary">Open drawing</button><button sc-camel-on-click="{{ goCost }}" class="btn btn-primary">See costing</button></div>
-          </div>
-          <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
-          <div style="display:flex;flex-wrap:wrap;border-top:1px solid var(--color-divider);border-left:1px solid var(--color-divider);margin-bottom:var(--space-6)">
-            <sc-for list="{{ partStats }}" as="s" hint-placeholder-count="5">
-              <div style="flex:1 1 150px;min-width:0;padding:var(--space-3) var(--space-4);border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)"><div style="font-size:12px;letter-spacing:0;color:var(--color-neutral-600)">{{ s.k }}</div><div class="tnum" style="font:800 17px var(--font-heading);letter-spacing:-0.01em;margin-top:2px">{{ s.v }}</div></div>
-            </sc-for>
-          </div>
-          <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,1fr);gap:var(--space-6);align-items:start">
-            <div>
-              <div style="aspect-ratio:16/10;border:1px solid var(--color-divider);background:repeating-linear-gradient(0deg,transparent 0 31px,color-mix(in srgb,var(--color-text) 6%,transparent) 31px 32px),repeating-linear-gradient(90deg,transparent 0 31px,color-mix(in srgb,var(--color-text) 6%,transparent) 31px 32px),var(--color-surface);display:grid;place-items:center;color:var(--color-neutral-600);font-size:12px;position:relative">CAD viewport · drop the STEP render here<span style="position:absolute;left:12px;bottom:10px;font-size:11px;letter-spacing:.08em">ISO</span></div>
-              <h5 style="margin:var(--space-4) 0 var(--space-2)">Setups</h5>
-              <sc-for list="{{ setups }}" as="s" hint-placeholder-count="3">
-                <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;padding:10px 0;border-top:1px solid var(--color-divider);font-size:13px">
-                  <span style="font:800 13px var(--font-heading);color:var(--color-accent)">{{ s.op }}</span>
-                  <span><b>{{ s.name }}</b><div style="color:var(--color-neutral-600);font-size:12px">{{ s.detail }}</div></span>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--color-divider-strong)">
+            <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;flex:1;min-width:280px">
+              <div style="width:34px;height:34px;border:1px solid var(--color-divider-strong);display:grid;place-items:center"><div style="width:12px;height:12px;background:var(--color-accent)"></div></div>
+              <div style="flex:1;min-width:220px">
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <span style="font-family:var(--font-heading);font-weight:700;font-size:21px;letter-spacing:.01em">BRKT-001</span>
+                  <span class="tag" style="background:var(--color-accent-200);color:var(--color-accent-800)">{{ findingCount }} findings</span>
                 </div>
-              </sc-for>
+                <div style="font-size:13.5px;color:color-mix(in srgb,var(--color-text) 62%,transparent)">Industrial Bracket · Rev A · Halcyon Industrial</div>
+              </div>
+              <div style="display:flex;gap:30px;flex-wrap:wrap">
+                <sc-for list="{{ partStats }}" as="m" hint-placeholder-count="5">
+                  <div><div style="font-size:11.5px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ m.k }}</div><div style="font-size:13px;font-variant-numeric:tabular-nums;margin-top:2px">{{ m.v }}</div></div>
+                </sc-for>
+              </div>
             </div>
-            <div>
-              <h5 style="margin:0 0 var(--space-2)">Findings <span style="color:var(--color-neutral-500);font-weight:400">4</span></h5>
+            <div style="display:flex;gap:var(--space-2)"><button sc-camel-on-click="{{ viewDrawing }}" class="btn btn-secondary">Open drawing</button><button sc-camel-on-click="{{ goCost }}" class="btn btn-primary">See costing</button></div>
+          </div>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0;align-items:start">
+            <div style="border-right:2px solid var(--color-text);padding:16px 28px 40px 0">
+              <div class="seg" style="display:inline-flex;margin-bottom:14px">
+                <button sc-camel-on-click="{{ viewCad }}" class="seg-opt" style="border:1px solid var(--color-divider);padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;{{ segCad }}">CAD</button>
+                <button sc-camel-on-click="{{ viewDrawing }}" class="seg-opt" style="border:1px solid var(--color-divider);border-left:0;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;{{ segDrawing }}">Drawing</button>
+              </div>
+              <iframe src="/app/viewer.html" title="Part viewer" style="display:block;width:100%;aspect-ratio:4/3;border:1px solid var(--color-divider-strong);background:var(--color-surface)"></iframe>
+              <div style="margin-top:6px;font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Stand-in mesh until the BRKT-001 STEP is converted. Findings are anchored by feature so they carry over.</div>
+              <div style="margin-top:18px;border-top:1px solid var(--color-divider);padding-top:14px">
+                <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Setups</div>
+                <sc-for list="{{ setups }}" as="s" hint-placeholder-count="3">
+                  <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;padding:9px 0;border-top:1px solid var(--color-divider);font-size:13px">
+                    <span style="font-family:var(--font-heading);font-weight:700;font-size:13px;color:var(--color-accent-700)">{{ s.op }}</span>
+                    <span><b>{{ s.name }}</b><div style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ s.detail }}</div></span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="padding:16px 0 40px 28px">
+              <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:12px">Manufacturability findings</div>
               <sc-for list="{{ findings }}" as="f" hint-placeholder-count="4">
-                <div style="border:1px solid var(--color-divider);border-left:3px solid {{ f.rule }};padding:12px 14px;margin-bottom:10px;background:var(--color-surface)">
-                  <div style="display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:6px"><span style="color:var(--color-neutral-500)">{{ f.n }}</span><span class="tag {{ f.tagClass }}">{{ f.sev }}</span><span style="color:var(--color-neutral-600)">{{ f.tags }}</span><span class="tnum" style="margin-left:auto;font-weight:700">{{ f.cost }}</span></div>
-                  <div style="font:700 14px var(--font-heading);margin-bottom:4px">{{ f.title }}</div>
-                  <div style="font-size:12.5px;color:var(--color-neutral-700);margin-bottom:8px">{{ f.body }}</div>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;border-top:1px solid var(--color-divider);padding-top:8px">
-                    <span><span style="color:var(--color-neutral-600)">{{ f.k1 }}</span><br><b class="tnum">{{ f.v1 }}</b></span>
-                    <span><span style="color:var(--color-neutral-600)">{{ f.k2 }}</span><br><b class="tnum">{{ f.v2 }}</b></span>
+                <div sc-camel-on-click="{{ f.pick }}" style="border:1px solid var(--color-divider);border-left:3px solid {{ f.rule }};background:var(--color-surface);padding:14px 16px;margin-bottom:14px;cursor:pointer;transition:box-shadow .2s ease;{{ f.selSt }}">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+                    <span style="width:19px;height:19px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-size:11.5px;font-weight:700">{{ f.n }}</span>
+                    <span class="tag" style="{{ f.sevStyle }}">{{ f.sev }}</span>
+                    <span style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 50%,transparent)">{{ f.tags }}</span>
+                    <span class="tnum" style="margin-left:auto;font-size:13px;font-weight:700">{{ f.cost }}</span>
+                  </div>
+                  <div style="font-family:var(--font-heading);font-weight:700;font-size:15.5px;margin-bottom:6px">{{ f.title }}</div>
+                  <p style="margin:0 0 12px;font-size:13px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ f.body }}</p>
+                  <div style="display:flex;gap:26px;padding:10px 0 0;border-top:1px solid var(--color-divider);flex-wrap:wrap">
+                    <div><div style="font-size:11.5px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ f.k1 }}</div><div style="font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px">{{ f.v1 }}</div></div>
+                    <div><div style="font-size:11.5px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ f.k2 }}</div><div style="font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px">{{ f.v2 }}</div></div>
                   </div>
                 </div>
               </sc-for>
@@ -158,10 +201,10 @@
       <sc-if value="{{ isCost }}" hint-placeholder-val="{{ false }}">
         <div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
-            <div><h6 style="color:var(--color-accent);margin:0 0 6px">Costing</h6><h2 style="margin:0">BRKT-001 <span class="tnum" style="color:var(--color-neutral-500);font-weight:400">{{ unitCost }} at qty 10</span></h2></div>
+            <div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Costing</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">BRKT-001 <span class="tnum" style="color:color-mix(in srgb,var(--color-text) 55%,transparent);font-weight:400">{{ unitCost }} at qty 10</span></h2></div>
             <button sc-camel-on-click="{{ goQuote }}" class="btn btn-primary">Build quote</button>
           </div>
-          <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
+          <div style="height:1px;background:var(--color-divider);margin:18px 0 16px"></div>
           <div class="cost-wrap">
           <div class="cost-grid">
 
@@ -308,13 +351,17 @@
       <sc-if value="{{ isQuote }}" hint-placeholder-val="{{ false }}">
         <div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
-            <div><h6 style="color:var(--color-accent);margin:0 0 6px">Quote</h6><h2 style="margin:0">Q-1235 <span style="color:var(--color-neutral-500);font-weight:400">Halcyon Industrial</span></h2></div>
+            <div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Quote</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">Q-1235 <span style="color:color-mix(in srgb,var(--color-text) 55%,transparent);font-weight:400">Halcyon Industrial</span></h2></div>
             <div style="display:flex;gap:var(--space-2)"><button sc-camel-on-click="{{ goPdf }}" class="btn btn-secondary">Preview PDF</button><button sc-camel-on-click="{{ goNeg }}" class="btn btn-primary">Send quote</button></div>
           </div>
-          <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
-          <div style="display:flex;flex-wrap:wrap;border-top:1px solid var(--color-divider);border-left:1px solid var(--color-divider);margin-bottom:var(--space-6)">
+          <div style="height:1px;background:var(--color-divider);margin:18px 0 16px"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:1px solid var(--color-divider-strong);border-bottom:1px solid var(--color-divider);margin-bottom:22px">
             <sc-for list="{{ quoteTotals }}" as="t" hint-placeholder-count="4">
-              <div style="flex:1 1 170px;min-width:0;padding:var(--space-3) var(--space-4);border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);background:{{ t.bg }};color:{{ t.fg }}"><div style="font-size:11px;letter-spacing:0;opacity:.75">{{ t.k }}</div><div class="tnum" style="font:800 22px var(--font-heading);letter-spacing:-0.02em;white-space:nowrap">{{ t.v }}</div><div style="font-size:12px;opacity:.75">{{ t.sub }}</div></div>
+              <div style="padding:16px 20px 18px {{ t.pad }};border-right:1px solid var(--color-divider);background:{{ t.bg }};color:{{ t.fg }}">
+                <div style="font-size:12px;letter-spacing:0;font-weight:500;opacity:.7">{{ t.k }}</div>
+                <div style="font-family:var(--font-heading);font-weight:700;font-size:25px;margin-top:5px;font-variant-numeric:tabular-nums;white-space:nowrap">{{ t.v }}</div>
+                <div style="font-size:11.5px;opacity:.7">{{ t.sub }}</div>
+              </div>
             </sc-for>
           </div>
           <sc-for list="{{ quoteLines }}" as="q" hint-placeholder-count="2">
@@ -335,10 +382,10 @@
       <sc-if value="{{ isNeg }}" hint-placeholder-val="{{ false }}">
         <div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
-            <div><h6 style="color:var(--color-accent);margin:0 0 6px">Negotiation</h6><h2 style="margin:0">RFQ 1235 <span style="color:var(--color-neutral-500);font-weight:400">Halcyon Industrial · round 3 of 3</span></h2></div>
+            <div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Negotiation</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">RFQ 1235 <span style="color:color-mix(in srgb,var(--color-text) 55%,transparent);font-weight:400">Halcyon Industrial · round 3 of 3</span></h2></div>
             <div style="display:flex;gap:var(--space-2)"><button class="btn btn-secondary">Hold</button><button class="btn btn-secondary">Counter $4,540</button><button class="btn btn-primary">Accept $4,480</button></div>
           </div>
-          <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
+          <div style="height:1px;background:var(--color-divider);margin:18px 0 16px"></div>
           <sc-if value="{{ escalated }}" hint-placeholder-val="{{ true }}">
             <div style="display:flex;gap:12px;align-items:center;padding:12px 14px;background:var(--color-accent-100);border-left:3px solid var(--color-accent);margin-bottom:var(--space-4);font-size:13px"><span class="tag tag-accent">Escalated</span><span>The buyer's final of <b class="tnum">$4,480</b> is under your 15% floor ($4,500). Your agent paused and is waiting for you.</span></div>
           </sc-if>
@@ -369,13 +416,13 @@
       <sc-if value="{{ isShop }}" hint-placeholder-val="{{ false }}">
         <div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
-            <div><h6 style="color:var(--color-accent);margin:0 0 6px">My shop</h6><h2 style="margin:0">{{ profile.name }} <span style="color:var(--color-neutral-500);font-weight:400">{{ profile.loc }}</span></h2></div>
+            <div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">My shop</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">{{ profile.name }} <span style="color:color-mix(in srgb,var(--color-text) 55%,transparent);font-weight:400">{{ profile.loc }}</span></h2></div>
             <div style="display:flex;gap:var(--space-2)"><button class="btn btn-secondary">Edit rates</button><button class="btn btn-primary">Add machine</button></div>
           </div>
-          <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
+          <div style="height:1px;background:var(--color-divider);margin:18px 0 16px"></div>
           <div style="display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,1fr);gap:var(--space-6);align-items:start">
             <div>
-              <h5 style="margin:0 0 var(--space-2)">Machines <span style="color:var(--color-neutral-500);font-weight:400">verified Aug 2026</span></h5>
+              <h5 style="margin:0 0 var(--space-2)">Machines <span style="color:color-mix(in srgb,var(--color-text) 55%,transparent);font-weight:400">verified Aug 2026</span></h5>
               <table class="table">
                 <thead><tr><th>Machine</th><th>Type</th><th>Envelope (mm)</th><th>Rate</th><th>Setup</th><th style="width:150px">Booked, 2 wk</th></tr></thead>
                 <tbody>
@@ -410,10 +457,10 @@
       <sc-if value="{{ isPdf }}" hint-placeholder-val="{{ false }}">
         <div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
-            <div><h6 style="color:var(--color-accent);margin:0 0 6px">Quote PDF</h6><h2 style="margin:0">Q-1235.pdf</h2></div>
+            <div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Quote PDF</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">Q-1235.pdf</h2></div>
             <div style="display:flex;gap:var(--space-2)"><button sc-camel-on-click="{{ goQuote }}" class="btn btn-secondary">Back to quote</button><button class="btn btn-primary">Download</button></div>
           </div>
-          <div class="hr" style="margin:var(--space-4) 0 var(--space-3)"></div>
+          <div style="height:1px;background:var(--color-divider);margin:18px 0 16px"></div>
           <div style="max-width:760px;background:#f3f2f2;color:#201e1d;padding:40px 44px;box-shadow:var(--shadow-lg);font-size:13px">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:2px solid #201e1d;padding-bottom:16px">
               <div style="display:flex;align-items:center;gap:10px;font:800 18px var(--font-heading)"><span style="width:16px;height:16px;background:var(--color-accent);display:inline-block"></span>Cascade CNC</div>
@@ -443,7 +490,7 @@
     <!-- ══ SHOP AGENT PANEL (from the export) ══ -->
     <sc-if value="{{ agentOpen }}" hint-placeholder-val="{{ true }}">
       <aside style="width:clamp(260px,30vw,340px);flex:0 0 auto;border-left:2px solid var(--color-divider);display:flex;flex-direction:column;position:sticky;top:56px;height:calc(100vh - 56px)">
-        <div style="display:flex;align-items:center;gap:8px;padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-divider)"><span style="width:8px;height:8px;background:var(--color-accent)"></span><b style="font-family:var(--font-heading)">Shop agent</b><span style="font-size:12px;color:var(--color-neutral-600)">on RFQ 1235</span><button sc-camel-on-click="{{ toggleAgent }}" class="btn btn-ghost" style="margin-left:auto;padding:2px 6px">Close</button></div>
+        <div style="display:flex;align-items:center;gap:8px;padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-divider)"><span style="width:8px;height:8px;background:var(--color-accent)"></span><b style="font-family:var(--font-heading);font-size:13.5px">Shop agent</b><span style="font-size:12px;color:var(--color-neutral-600)">on RFQ 1235</span><button sc-camel-on-click="{{ toggleAgent }}" class="btn btn-ghost" style="margin-left:auto;padding:2px 6px">Close</button></div>
         <div style="flex:1 1 0%;overflow:auto;padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);font-size:13px">
           <sc-for list="{{ chat }}" as="c" hint-placeholder-count="5">
             <div style="align-self:{{ c.align }};max-width:92%;background:{{ c.bg }};padding:10px 12px;border-left:2px solid {{ c.rule }}"><div style="font-size:11px;color:var(--color-neutral-600);margin-bottom:4px">{{ c.who }} · {{ c.time }}</div>{{ c.text }}</div>

@@ -34,13 +34,53 @@
   // Hovering the drawing itself: region → the row it belongs to.
   const REGION_ROW = { stock:'billet', topFace:'op10-setup', backFace:'op20-setup', profile:'profile', pocketsA:'pocketsA', pocketsB:'pocketsB', ribs:'ribs', bores:'bores', cbores:'cbores', backPocket:'backPocket', chamfers:'chamfers', datum:'cmm-run' };
   const money = (v) => '$' + v.toFixed(2);
+
+  const MUTED = 'color:color-mix(in srgb,var(--color-text) 55%,transparent)';
+  const SEV_STYLE = { High: 'background:var(--color-accent);color:var(--color-bg)', Medium: 'background:var(--color-accent-200);color:var(--color-accent-800)', Low: 'background:color-mix(in srgb,var(--color-text) 10%,transparent)' };
+  // Theme is shared with the buyer side through the same storage key.
+  const readTheme = () => { try { return localStorage.getItem('canyon-theme') || ''; } catch (e) { return ''; } };
+  const applyTheme = (t) => { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; try { localStorage.setItem('canyon-theme', t); } catch (e) { /* private mode */ } };
+
+  // What the 3D viewer loads on the Part stage. The repo has no BRKT-001 STL yet, so the actuator-housing
+  // stand-in (a 180 × 110 × 25 plate with three pockets) carries the bracket's findings. Anchors are
+  // bounding-box fractions, so they land on the equivalent features when the real mesh replaces the file.
+  const PART_MODEL = {
+    name: 'BRKT-001 Industrial Bracket (stand-in mesh)',
+    stl: '/assets/parts/actuator-housing.stl',
+    pdf: '/assets/parts/actuator-housing.pdf',
+    findings: [
+      { id: 'f1', n: '1', sev: 'High', title: 'From solid, 71% becomes chips', regions: [{ at: [40 / 180, 0.5, 0.85], type: 'box', size: [30, 64, 18] }, { at: [90 / 180, 0.5, 0.85], type: 'box', size: [30, 64, 18] }, { at: [140 / 180, 0.5, 0.85], type: 'box', size: [30, 64, 18] }] },
+      { id: 'f2', n: '2', sev: 'High', title: '1.8 mm ribs between pockets', regions: [{ at: [65 / 180, 0.5, 0.85], type: 'box', size: [8, 64, 18] }, { at: [115 / 180, 0.5, 0.85], type: 'box', size: [8, 64, 18] }] },
+      { id: 'f3', n: '3', sev: 'Medium', title: 'Ø8 H7 bores, true position Ø0.1', regions: [{ at: [35 / 180, 12 / 110, 1], type: 'sphere', radius: 9 }, { at: [145 / 180, 98 / 110, 1], type: 'sphere', radius: 9 }] },
+      { id: 'f4', n: '4', sev: 'Medium', title: '100% liquid penetrant, all surfaces', regions: [{ at: [0.5, 0.5, 0.5], type: 'box', size: [182, 112, 27] }] }
+    ]
+  };
 class Component extends DCLogic {
-  state = { screen: 'inbox', agent: true, filter: 'all', hot: null, pin: null, closed: {}, lpi: false };
-  static TABS = [['inbox','Inbox'],['ingest','Ingest'],['part','Part'],['cost','Costing'],['quote','Quote'],['neg','Negotiation'],['shop','My shop'],['pdf','Quote PDF']];
-  // The tab lives in the URL hash (/app/shop/#cost) so a screen can be linked to directly.
-  constructor() { super(); const h = location.hash.slice(1); if (Component.TABS.some(([k]) => k === h)) this.state.screen = h; }
+  state = { screen: 'inbox', stage: 'ingest', agent: true, filter: 'all', hot: null, pin: null, closed: {}, lpi: false, theme: readTheme(), selectedFinding: null, view: '3d' };
+  // Three tabs like the buyer console; the RFQ's six stages sit in a strip under Parts.
+  static TABS = [['inbox', 'Inbox'], ['parts', 'Parts'], ['shop', 'My shop']];
+  static STAGES = [['ingest', 'Ingest'], ['part', 'Part'], ['cost', 'Costing'], ['quote', 'Quote'], ['neg', 'Negotiation'], ['pdf', 'Quote PDF']];
+  static isStage(k) { return Component.STAGES.some(([s]) => s === k); }
+  // The screen lives in the URL hash (/app/shop/#cost) so any stage can be linked to directly.
+  constructor() {
+    super();
+    const h = location.hash.slice(1);
+    if (h === 'inbox' || h === 'shop') this.state.screen = h;
+    else if (Component.isStage(h)) { this.state.screen = h; this.state.stage = h; }
+  }
+  componentDidMount() {
+    applyTheme(this.state.theme);
+    // The part viewer iframe asks for its model when ready and reports pin clicks; mirror those on the cards.
+    window.addEventListener('message', (e) => {
+      const m = e.data || {};
+      if (m.source !== 'canyon-viewer') return;
+      if (m.type === 'ready') { const v = this.viewer(); if (v) { v.postMessage({ type: 'load', model: PART_MODEL }, '*'); v.postMessage({ type: 'theme', value: this.state.theme }, '*'); } }
+      if (m.type === 'select') this.setState({ selectedFinding: m.id || null });
+    });
+  }
   componentDidUpdate(p, prev) { if (prev.screen !== this.state.screen) history.replaceState(null, '', '#' + this.state.screen); }
-  go(s) { return () => this.setState({ screen: s }); }
+  viewer() { const f = document.querySelector('iframe[title="Part viewer"]'); return f && f.contentWindow; }
+  go(s) { return () => this.setState(Component.isStage(s) ? { screen: s, stage: s } : { screen: s }); }
 
   // Builds the Costing tab's view: step rows with their feature sub-rows, material lines,
   // subtotals, the highlight state of every drawing region, and the caption.
@@ -95,9 +135,18 @@ class Component extends DCLogic {
     return { steps, materials, stepsSub: money(stepsSub), matSub: money(matSub), unitCost: money(stepsSub + matSub), stepCount: steps.length + ' steps', lineCount: materials.length + ' lines', ft, dwg, cap, capCls: active ? 'is-on' : '' };
   }
   renderVals() {
-    const { screen, agent, filter } = this.state;
+    const { screen, stage, agent, filter, theme, selectedFinding, view } = this.state;
     const escalated = this.props.escalated ?? true;
-    const tabs = Component.TABS.map(([k,label]) => ({ label, go: this.go(k), color: screen===k ? 'var(--color-accent)' : 'var(--color-neutral-700)', line: screen===k ? 'var(--color-accent)' : 'transparent' }));
+    const inParts = Component.isStage(screen);
+    const activeTab = inParts ? 'parts' : screen;
+    const tabs = Component.TABS.map(([k, label]) => ({ label, go: k === 'parts' ? this.go(stage) : this.go(k), sel: k === activeTab ? 'border-bottom-color:var(--color-accent);color:var(--color-text)' : MUTED }));
+    // Story: round 3 of the negotiation, escalated. Everything before it is done.
+    const reached = Component.STAGES.findIndex(([k]) => k === 'neg');
+    const stages = Component.STAGES.map(([k, l], i) => ({
+      label: l, go: this.go(k), current: k === screen ? 'step' : 'false',
+      mark: i < reached && k !== screen ? '✓' : String(i + 1), markClass: i < reached && k !== screen ? 'done' : '', sep: i < Component.STAGES.length - 1 ? '›' : ''
+    }));
+    const postView = (id) => { const v = this.viewer(); if (v) v.postMessage({ type: 'view', id }, '*'); };
     const red='var(--color-accent)', amber='var(--color-accent-2-600)', ink='var(--color-text)';
     const cost = this.costView();
     const mk=(qty,cost,mkp)=>{const p=cost*(1+mkp/100);return{qty,cost:'$'+cost.toFixed(2),mk:mkp+' %',price:'$'+p.toFixed(2),total:'$'+(p*qty).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),margin:(100-100/(1+mkp/100)).toFixed(1)+'%'}};
@@ -108,9 +157,14 @@ class Component extends DCLogic {
     ];
     const bubble=(side,text,meta,offer)=>({left:side==='L'?text:'',leftMeta:side==='L'?meta:'',leftVis:side==='L'?'visible':'hidden',right:side==='R'?text:'',rightMeta:side==='R'?meta:'',rightVis:side==='R'?'visible':'hidden',offer});
     return {
-      tabs, escalated, agentOpen: agent,
+      tabs, stages, inParts, escalated, agentOpen: agent,
+      toggleTheme: () => { const next = theme === '' ? 'dark' : theme === 'dark' ? 'light' : ''; applyTheme(next); const v = this.viewer(); if (v) v.postMessage({ type: 'theme', value: next }, '*'); this.setState({ theme: next }); },
+      themeLabel: theme === 'dark' ? 'Dark' : theme === 'light' ? 'Light' : 'Auto theme',
+      viewCad: () => { postView('3d'); this.setState({ view: '3d' }); }, viewDrawing: () => { if (screen !== 'part') this.setState({ screen: 'part', stage: 'part', view: 'pdf' }); else { postView('pdf'); this.setState({ view: 'pdf' }); } },
+      segCad: view === '3d' ? 'background:var(--color-text);color:var(--color-bg)' : 'background:transparent;color:inherit', segDrawing: view === 'pdf' ? 'background:var(--color-text);color:var(--color-bg)' : 'background:transparent;color:inherit',
+      findingCount: '4',
       filter, setFilter: (f) => () => this.setState({ filter: f }),
-      filters: [['all','All'],['needs','Needs you'],['neg','Agent negotiating'],['quoted','Quoted']].map(([k,l]) => ({ label: l, go: () => this.setState({ filter: k }), on: filter === k ? 'background:var(--color-accent);color:var(--color-bg)' : '' })),
+      filters: [['all','All'],['needs','Needs you'],['neg','Agent negotiating'],['quoted','Quoted']].map(([k,l]) => ({ label: l, go: () => this.setState({ filter: k }), on: filter === k ? 'background:var(--color-text);color:var(--color-bg);border-color:var(--color-text)' : '' })),
       rfqCount: '8', buyerLink: '/app',
       profile: { name: 'Cascade CNC', loc: 'Bend, OR', certs: ['ISO 9001', 'AS9100D'], onTime: '91%', quality: '93%', response: '97%', wOnTime: 'width:91%', wQuality: 'width:93%', wResponse: 'width:97%' }, toggleAgent: () => this.setState(s=>({agent:!s.agent})),
       goInbox:this.go('inbox'), goIngest:this.go('ingest'), goPart:this.go('part'), goCost:this.go('cost'), goQuote:this.go('quote'), goNeg:this.go('neg'), goPdf:this.go('pdf'),
@@ -141,16 +195,17 @@ class Component extends DCLogic {
       ],
       partStats:[{k:'Material',v:'6061-T6 · AMS-QQ-A-250/11'},{k:'Envelope',v:'155 × 85 × 42 mm'},{k:'Setups',v:'2 + saw'},{k:'Cycle est.',v:'0.43 hr / part'},{k:'Unit cost',v:'$54.32 @ 10'}],
       setups:[{op:'Op10',name:'Top · vise',detail:'Rough pockets, profile · 0.18 hr'},{op:'Op20',name:'Back · soft jaws',detail:'Finish ribs, back pocket · 0.14 hr'},{op:'Op30',name:'Bores · 5-axis',detail:'Ream Ø8 H7, c-bores · 0.06 hr'}],
-      findings:[
+      findings:(() => { const list = [
         {n:'1',sev:'High',tags:'Material · Cycle',title:'From solid — 71% of the billet becomes chips',body:'Deep pockets on both faces drive rough time and stock cost together. Consider a near-net extrusion at qty 50+.',k1:'Stock',v1:'165 × 95 × 52 mm',k2:'Cost impact',v2:'$24.70 / part',cost:'$24.70',rule:red,tagClass:'tag-accent'},
         {n:'2',sev:'High',tags:'Distortion · Thin wall',title:'1.8 mm ribs between pocket set A',body:'Chatter-limited finishing. Leave skins thick until Op20 and use climb passes; expect a light re-flatten.',k1:'Min wall',v1:'1.8 mm',k2:'Scrap risk',v2:'4%',cost:'$6.40',rule:red,tagClass:'tag-accent'},
         {n:'3',sev:'Medium',tags:'Tolerance · GD&T',title:'Ø8 H7 bores, true position Ø0.1',body:'Ream in one setup on the DMU to hold position to datum A. CMM program from a similar bracket exists.',k1:'Tol band',v1:'+0.015 / 0',k2:'Op',v2:'Op30 · 5-axis',cost:'$9.20',rule:amber,tagClass:'tag-accent-2'},
         {n:'4',sev:'Medium',tags:'Inspection · Outside op',title:'100% liquid penetrant, no indications',body:'Drawing note 7. Adds a 2-day outside step at Sable NDT; agent has added it to lead time.',k1:'Vendor',v1:'Sable NDT · 2 d',k2:'Cost',v2:'$18 / part',cost:'$18.00',rule:amber,tagClass:'tag-accent-2'}
-      ],
+      ]; return list.map((f, i) => { const id = 'f' + (i + 1); return { ...f, id, sevStyle: SEV_STYLE[f.sev], selSt: selectedFinding === id ? 'box-shadow:0 0 0 2px var(--color-accent)' : '',
+        pick: () => { const next = selectedFinding === id ? null : id; this.setState({ selectedFinding: next }); const v = this.viewer(); if (v) v.postMessage({ type: 'select', id: next }, '*'); } }; }); })(),
       ...cost,
       qtyCurve:[{qty:'1',w:'100%',cost:'$54.32'},{qty:'5',w:'83%',cost:'$45.26'},{qty:'10',w:'79%',cost:'$43.18'},{qty:'25',w:'75%',cost:'$40.79'},{qty:'50',w:'72%',cost:'$39.21'}],
       levers:[{k:'Near-net extrusion at qty 50',v:'−$6.10'},{k:'Relax rib to 2.5 mm (ask buyer)',v:'−$3.20'},{k:'Run Op30 on VF-2SS with boring head',v:'−$0.60, +risk'},{k:'Drop LPI to sample AQL',v:'−$14.40'}],
-      quoteTotals:[{k:'Subtotal · cost',v:'$3,925.66',sub:'2 parts, all breaks',bg:'var(--color-bg)',fg:'var(--color-text)'},{k:'Total markup',v:'$785.13',sub:'20% blended',bg:'var(--color-bg)',fg:'var(--color-text)'},{k:'Lead time',v:'8–10 d',sub:'incl. LPI + anodize',bg:'var(--color-bg)',fg:'var(--color-text)'},{k:'Quote total',v:'$4,890.79',sub:'incl. $180 fixture',bg:'var(--color-accent)',fg:'var(--color-bg)'}],
+      quoteTotals:[{k:'Subtotal · cost',v:'$3,925.66',sub:'2 parts, all breaks',bg:'transparent',fg:'inherit',pad:'0'},{k:'Total markup',v:'$785.13',sub:'20% blended',bg:'transparent',fg:'inherit',pad:'20px'},{k:'Lead time',v:'8–10 d',sub:'incl. LPI + anodize',bg:'transparent',fg:'inherit',pad:'20px'},{k:'Quote total',v:'$4,890.79',sub:'incl. $180 fixture',bg:'var(--color-accent)',fg:'var(--color-bg)',pad:'20px'}],
       quoteLines,
       msgs:[
         bubble('L','Target $4,400 all-in for both parts at the qty 10 break, delivered in 8 days.','Buyer agent · 09:02','$4,400'),

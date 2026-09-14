@@ -20,7 +20,7 @@ function stage() {
     fs.writeFileSync(path.join(dir, dst), s);
   };
   copy("app/index.html", "buyer.html", (s) => s.replace(/\/app\/app\.css/g, "app.css").replace(/\/app\/runtime\.js/g, "runtime.js").replace(/\/app\/buyer\.js/g, "buyer.js").replace(/src="\/app\/viewer[^"]*"/g, 'src="about:blank"'));
-  copy("app/shop/index.html", "shop.html", (s) => s.replace(/\/app\/app\.css/g, "app.css").replace(/\/app\/runtime\.js/g, "runtime.js").replace(/\/app\/shop\/shop\.js/g, "shop.js"));
+  copy("app/shop/index.html", "shop.html", (s) => s.replace(/\/app\/app\.css/g, "app.css").replace(/\/app\/runtime\.js/g, "runtime.js").replace(/\/app\/shop\/shop\.js/g, "shop.js").replace(/src="\/app\/viewer[^"]*"/g, 'src="about:blank"'));
   copy("app/app.css", "app.css"); copy("app/runtime.js", "runtime.js"); copy("app/buyer.js", "buyer.js"); copy("app/shop/shop.js", "shop.js");
   return dir;
 }
@@ -89,9 +89,21 @@ async function load(file, reducedMotion) {
   const s = await load(path.join(dir, "shop.html"), false);
   check(s.root.querySelectorAll("tbody tr").length >= 8, "inbox lists the RFQs");
   check(s.has("Halcyon Industrial") && !s.has("US$"), "cast and currency are synced with the buyer side");
-  for (const tab of ["Ingest", "Part", "Costing", "Quote", "Negotiation", "My shop", "Quote PDF", "Inbox"]) {
+  await s.click(s.btn("Parts"), 60);
+  const strip = () => Array.from(s.root.querySelectorAll(".stage-strip button"));
+  check(strip().length === 6, "Parts shows the six-stage strip");
+  const stageBtn = (label) => strip().find((b) => b.textContent.includes(label));
+  for (const stage of ["Ingest", "Part", "Costing", "Quote", "Negotiation", "Quote PDF"]) {
+    await s.click(stageBtn(stage), 60);
+    check(s.text().length > 600 && stageBtn(stage).getAttribute("aria-current") === "step", "stage renders and is current: " + stage);
+  }
+  await s.click(stageBtn("Part"), 60);
+  check(!!s.root.querySelector('iframe[title="Part viewer"]'), "Part stage embeds the 3D viewer");
+  await s.click(stageBtn("Costing"), 60);
+  check(s.root.querySelectorAll(".cost-table").length === 2, "Costing keeps its two tables");
+  for (const tab of ["My shop", "Inbox"]) {
     await s.click(s.btn(tab), 60);
-    check(s.text().length > 600, "tab renders: " + tab);
+    check(s.text().length > 600 && !s.root.querySelector(".stage-strip"), "tab renders without the strip: " + tab);
   }
   await s.click(s.btn("Close"));
   check(!s.root.querySelector("aside"), "agent panel closes");
