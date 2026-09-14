@@ -25,6 +25,30 @@ if (navToggle) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Audience toggle: buyer vs machine shop version of the page           */
+/* ------------------------------------------------------------------ */
+(function audienceToggle() {
+  const picks = $$("[data-audience-pick]");
+  if (!picks.length) return;
+  const root = document.documentElement;
+
+  const setAudience = (a) => {
+    root.dataset.audience = a;
+    picks.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.audiencePick === a)));
+    const role = $(a === "shop" ? "#role-shop" : "#role-buyer");
+    if (role) role.checked = true;
+    try { localStorage.setItem("canyon-audience", a); } catch (e) { /* private mode */ }
+    const url = new URL(location.href);
+    url.searchParams.set("for", a);
+    history.replaceState(null, "", url);
+  };
+
+  picks.forEach((b) => b.addEventListener("click", () => setAudience(b.dataset.audiencePick)));
+  // Sync the buttons and the form with whatever the inline script chose before paint.
+  setAudience(root.dataset.audience === "shop" ? "shop" : "buyer");
+})();
+
+/* ------------------------------------------------------------------ */
 /* Demo dialog                                                          */
 /* ------------------------------------------------------------------ */
 const dialog = $("#demo-dialog");

@@ -421,47 +421,6 @@ p { margin: 0; max-width: var(--measure); }
 .match-count { margin-top: 14px; color: var(--muted); font-size: 0.95rem; }
 .match-count strong { color: var(--text); }
 
-/* For shops */
-.shops-pitch {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(28px, 5vw, 80px);
-  align-items: start;
-}
-.stat-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
-.stat {
-  padding-top: 14px;
-  border-top: 2px solid var(--line-strong);
-}
-.stat.is-after { border-top-color: var(--accent); }
-.stat .num { font-family: var(--font-mono); font-size: clamp(2rem, 4vw, 3rem); font-weight: 500; line-height: 1; }
-.stat .cap { color: var(--muted); font-size: 0.9rem; margin-top: 6px; }
-.plain-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 18px; }
-.plain-list li { display: grid; gap: 4px; padding-left: 18px; position: relative; }
-.plain-list li::before {
-  content: ""; position: absolute; left: 0; top: 0.55em; width: 8px; height: 2px; background: var(--accent);
-}
-.plain-list strong { font-weight: 600; }
-.plain-list span { color: var(--muted); }
-
-/* Pricing */
-.plans {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-.plan { padding: clamp(24px, 3vw, 40px); display: flex; flex-direction: column; gap: 14px; }
-.plan + .plan { border-left: 1px solid var(--line); }
-.plan.is-featured { background: var(--panel); }
-.plan .price { font-family: var(--font-mono); font-size: 2rem; font-weight: 500; }
-.plan .price small { font-size: 0.9rem; color: var(--muted); font-weight: 400; }
-.plan ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; color: var(--muted); }
-.plan ul li::before { content: "+ "; color: var(--accent); font-family: var(--font-mono); }
-.plan .btn { align-self: start; margin-top: auto; }
-
 /* Trial form */
 .trial {
   display: grid;
@@ -543,11 +502,80 @@ dialog.demo::backdrop { background: rgba(10, 12, 14, 0.7); }
 .footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 32px; align-items: center; }
 .footer ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 18px; }
 
+
+/* Audience switching: the whole page has a buyer and a shop version */
+:root[data-audience="buyer"] [data-audience="shop"],
+:root[data-audience="shop"] [data-audience="buyer"] { display: none !important; }
+
+.seg {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 4px;
+  gap: 2px;
+  background: rgba(23, 27, 31, 0.7);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.seg button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted);
+  font: 600 0.9rem var(--font-sans);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.seg button:hover { color: var(--text); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.hero-copy > [data-audience] { display: flex; flex-direction: column; gap: 22px; }
+
+/* How it works: a real sequence, so the numbers carry information */
+.steps {
+  margin: 0; padding: 0; list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(20px, 3vw, 40px);
+  counter-reset: step;
+}
+.steps li { border-top: 2px solid var(--line-strong); padding-top: 16px; }
+.steps li::before {
+  counter-increment: step;
+  content: counter(step);
+  display: block;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+.steps h3 { font-size: 1.35rem; font-stretch: 108%; }
+.steps p { color: var(--muted); margin-top: 6px; }
+
+/* Pricing: one plan, stated plainly */
+.plan-single {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+  padding: clamp(24px, 3vw, 40px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  max-width: 560px;
+}
+.plan-single .price { font-family: var(--font-mono); font-size: clamp(1.8rem, 3.4vw, 2.4rem); font-weight: 500; line-height: 1.15; }
+.plan-single .price small { display: block; font-size: 0.95rem; color: var(--muted); font-weight: 400; font-family: var(--font-sans); margin-top: 4px; }
+.plan-single p { color: var(--muted); }
+.trial-sub { margin-top: 14px; color: var(--muted); font-size: 1.05rem; }
+
 /* Responsive */
 @media (max-width: 960px) {
   .hero .wrap { grid-template-columns: 1fr; }
   .readout { justify-self: start; }
-  .split, .negotiation, .shops-pitch, .trial { grid-template-columns: 1fr; }
+  .split, .negotiation, .trial { grid-template-columns: 1fr; }
   .trusted .wrap { grid-template-columns: 1fr; }
   .logo-row { justify-content: flex-start; }
 }
@@ -568,12 +596,12 @@ dialog.demo::backdrop { background: rgba(10, 12, 14, 0.7); }
     background:
       linear-gradient(180deg, rgba(30,35,40,0.9) 0%, rgba(30,35,40,0.6) 60%, var(--bg) 100%);
   }
-  .plans { grid-template-columns: 1fr; }
-  .plan + .plan { border-left: 0; border-top: 1px solid var(--line); }
+  .steps { grid-template-columns: 1fr; }
+  .seg { align-self: stretch; }
+  .seg button { flex: 1; padding: 0 10px; }
   .shops li { grid-template-columns: 1fr; }
   .shops .queue { text-align: left; }
   .transcript li { grid-template-columns: 1fr; gap: 2px; }
-  .stat-pair { grid-template-columns: 1fr 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

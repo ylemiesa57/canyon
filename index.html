@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Canyon</title>
-  <meta name="description" content="Upload a STEP file. Canyon reads every feature, prices the part, and negotiates with verified machine shops for you.">
+  <meta name="description" content="Upload a STEP file. Canyon prices the part and matches it to a verified machine shop.">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,6 +12,14 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<script>
+  // Pick the audience before first paint so the page never flashes the wrong version.
+  (function () {
+    var a = new URLSearchParams(location.search).get("for");
+    if (a !== "buyer" && a !== "shop") { try { a = localStorage.getItem("canyon-audience"); } catch (e) {} }
+    document.documentElement.dataset.audience = (a === "shop") ? "shop" : "buyer";
+  })();
+</script>
 
 <header class="nav">
   <div class="wrap">
@@ -27,15 +35,13 @@
     </a>
     <nav aria-label="Primary">
       <ul class="nav-links">
-        <li><a href="#pricing-demo">Product</a></li>
-        <li><a href="#negotiation">How it works</a></li>
-        <li><a href="#for-shops">For shops</a></li>
+        <li><a href="#how">How it works</a></li>
         <li><a href="#pricing">Pricing</a></li>
       </ul>
     </nav>
     <div class="nav-actions">
       <a class="btn btn-ghost" href="login.html">Log in</a>
-      <a class="btn btn-primary" href="#trial">Start free trial</a>
+      <a class="btn btn-primary" href="#trial"><span data-audience="buyer">Price a part</span><span data-audience="shop">Start free trial</span></a>
     </div>
     <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 5h16M2 10h16M2 15h16"/></svg>
@@ -45,16 +51,32 @@
 
 <main id="top">
 
-  <!-- Hero: the canyon being machined, live -->
+  <!-- Hero: the canyon being machined, live. Audience toggle switches the whole page. -->
   <section class="hero" aria-label="Introduction">
     <div class="hero-canvas" aria-hidden="true"></div>
     <div class="wrap">
       <div class="hero-copy">
-        <h1>The CAD file is the quote.</h1>
-        <p class="hero-sub">Upload a STEP. Canyon reads every feature, prices the part, and negotiates with verified machine shops for you.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary btn-lg" href="#trial">Start free trial</a>
-          <button class="btn btn-secondary btn-lg" type="button" data-open-demo>Watch the demo</button>
+        <div class="seg" role="group" aria-label="Choose your version of this page">
+          <button type="button" data-audience-pick="buyer" aria-pressed="true">I'm buying parts</button>
+          <button type="button" data-audience-pick="shop" aria-pressed="false">I run a machine shop</button>
+        </div>
+
+        <div data-audience="buyer">
+          <h1>The CAD file is the quote.</h1>
+          <p class="hero-sub">Upload a STEP. Get a price and a lead time in minutes from a shop we've verified.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" href="#trial">Price a part</a>
+            <button class="btn btn-secondary btn-lg" type="button" data-open-demo>Watch the demo</button>
+          </div>
+        </div>
+
+        <div data-audience="shop">
+          <h1>Quote in four minutes, not forty.</h1>
+          <p class="hero-sub">Canyon reads the model and drafts the quote in your rates. You sign off.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" href="#trial">Start free trial</a>
+            <button class="btn btn-secondary btn-lg" type="button" data-open-demo>Watch the demo</button>
+          </div>
         </div>
       </div>
       <aside class="readout" aria-label="Live toolpath readout">
@@ -74,7 +96,7 @@
   <!-- Trusted by -->
   <section class="trusted section-tight" aria-label="Customers">
     <div class="wrap">
-      <p class="trusted-label">Trusted by shops that quote every day</p>
+      <p class="trusted-label">Trusted by</p>
       <!-- Placeholder wordmarks. Swap for real customer logos as they sign. -->
       <ul class="logo-row">
         <li class="w1">Halvorsen</li>
@@ -87,18 +109,36 @@
     </div>
   </section>
 
-  <!-- Pillar 1: CAD-native pricing -->
-  <section class="section" id="pricing-demo">
+  <!-- How it works: three steps, different per audience -->
+  <section class="section" id="how">
     <div class="wrap">
       <div class="section-head">
-        <h2>A price for every feature, before anyone opens the file</h2>
-        <p>Canyon extracts setups, tolerances, material removal, and finish callouts from the model itself. Select a feature to see what it costs. Change the bore tolerance and watch the order move.</p>
+        <h2>How it works</h2>
+      </div>
+      <ol class="steps" data-audience="buyer">
+        <li><h3>Upload the file</h3><p>STEP, IGES, or native CAD.</p></li>
+        <li><h3>See the price</h3><p>A price band and a lead time, feature by feature.</p></li>
+        <li><h3>Approve the match</h3><p>Your agent negotiates with verified shops. You pick the winner.</p></li>
+      </ol>
+      <ol class="steps" data-audience="shop">
+        <li><h3>Forward the RFQ</h3><p>Email it in or drop the file.</p></li>
+        <li><h3>Check the draft</h3><p>Every feature costed in your rates and setups.</p></li>
+        <li><h3>Send the quote</h3><p>Four minutes on average. Cold RFQs included.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Product: the estimator, shared by both audiences -->
+  <section class="section section-deep" id="product">
+    <div class="wrap">
+      <div class="section-head">
+        <h2><span data-audience="buyer">See what each feature costs</span><span data-audience="shop">Every feature, costed in your rates</span></h2>
+        <p>Click a feature. Tighten the bore tolerance and watch the price move.</p>
       </div>
       <div class="split">
         <figure class="drawing" aria-label="Drawing of bracket BRK-2041 with extracted features">
           <svg viewBox="0 0 660 400" role="img" aria-labelledby="drawing-title">
             <title id="drawing-title">Bracket BRK-2041, 180 by 110 mm, with pocket, bore, slot, and four clearance holes</title>
-            <!-- Overall dimensions -->
             <g stroke="#56606c" stroke-width="1" fill="none">
               <path d="M50 16v10M590 16v10M50 21h540"/>
               <path d="M50 21l7-3v6zM590 21l-7-3v6z" fill="#56606c" stroke="none"/>
@@ -107,13 +147,10 @@
             </g>
             <text x="320" y="13" fill="#9aa4b0" font-size="11" text-anchor="middle" font-family="IBM Plex Mono, monospace">180</text>
             <text x="628" y="204" fill="#9aa4b0" font-size="11" font-family="IBM Plex Mono, monospace">110</text>
-
-            <!-- Stock outline (feature: stock) -->
             <g class="feature" data-feature="stock" tabindex="0" role="button" aria-label="Stock and facing">
               <rect class="fill" x="50" y="35" width="540" height="330" rx="9" fill="rgba(255,255,255,0.02)"/>
               <rect class="edge" x="50" y="35" width="540" height="330" rx="9" fill="none" stroke="#c9d0d8" stroke-width="1.6"/>
             </g>
-            <!-- Fillets (feature: fillet) -->
             <g class="feature" data-feature="fillet" tabindex="0" role="button" aria-label="R3 outside corners">
               <g class="fill" fill="transparent">
                 <circle cx="59" cy="44" r="14"/><circle cx="581" cy="44" r="14"/><circle cx="59" cy="356" r="14"/><circle cx="581" cy="356" r="14"/>
@@ -122,19 +159,16 @@
                 <path d="M50 44a9 9 0 0 1 9-9M581 35a9 9 0 0 1 9 9M590 356a9 9 0 0 1-9 9M59 365a9 9 0 0 1-9-9"/>
               </g>
             </g>
-            <!-- Pocket (feature: pocket) -->
             <g class="feature" data-feature="pocket" tabindex="0" role="button" aria-label="Through pocket 62 by 34 mm">
               <rect class="fill" x="96" y="112" width="186" height="102" rx="15" fill="rgba(255,255,255,0.03)"/>
               <rect class="edge" x="96" y="112" width="186" height="102" rx="15" fill="none" stroke="#c9d0d8" stroke-width="1.4"/>
               <path d="M96 112l186 102M282 112L96 214" stroke="#3b434d" stroke-width="1" fill="none"/>
             </g>
-            <!-- Slot (feature: slot) -->
             <g class="feature" data-feature="slot" tabindex="0" role="button" aria-label="Slot 8 by 40 mm">
               <rect class="fill" x="318" y="140" width="24" height="120" rx="12" fill="rgba(255,255,255,0.03)"/>
               <rect class="edge" x="318" y="140" width="24" height="120" rx="12" fill="none" stroke="#c9d0d8" stroke-width="1.4"/>
               <path d="M330 130v140" stroke="#3b434d" stroke-width="1" stroke-dasharray="6 3 1 3"/>
             </g>
-            <!-- Bore (feature: bore) -->
             <g class="feature" data-feature="bore" tabindex="0" role="button" aria-label="Bore 20 mm H7">
               <circle class="fill" cx="470" cy="200" r="30" fill="rgba(255,255,255,0.03)"/>
               <circle class="edge" cx="470" cy="200" r="30" fill="none" stroke="#c9d0d8" stroke-width="1.4"/>
@@ -142,7 +176,6 @@
               <path d="M492 178l40-34h58" stroke="#8593a8" stroke-width="1" fill="none"/>
             </g>
             <text x="536" y="139" fill="#9aa4b0" font-size="11" font-family="IBM Plex Mono, monospace">Ø20 H7</text>
-            <!-- Clearance holes (feature: holes) -->
             <g class="feature" data-feature="holes" tabindex="0" role="button" aria-label="Four 6.6 mm clearance holes">
               <g class="fill" fill="rgba(255,255,255,0.03)">
                 <circle cx="82" cy="67" r="10"/><circle cx="558" cy="67" r="10"/><circle cx="82" cy="333" r="10"/><circle cx="558" cy="333" r="10"/>
@@ -176,12 +209,12 @@
     </div>
   </section>
 
-  <!-- Pillar 2: agent negotiation -->
-  <section class="section section-deep" id="negotiation">
+  <!-- Buyers: agent negotiation -->
+  <section class="section" id="negotiation" data-audience="buyer">
     <div class="wrap">
       <div class="section-head">
-        <h2>Your agent negotiates. Shop agents answer. Nobody waits on email.</h2>
-        <p>You set a target price, a lead time, and what you will trade. Each shop sets its floor and its queue. The agents settle it in rounds, and you approve the match.</p>
+        <h2>Your agent negotiates. You approve.</h2>
+        <p>Set a target price and a lead time. Verified shops answer in rounds.</p>
       </div>
       <div class="negotiation">
         <div class="chart-card">
@@ -200,12 +233,12 @@
     </div>
   </section>
 
-  <!-- Pillar 3: verified supply -->
-  <section class="section" id="supply">
+  <!-- Shops: the verified profile -->
+  <section class="section" id="supply" data-audience="shop">
     <div class="wrap">
       <div class="section-head">
-        <h2>Every shop is a verified capability, not a directory listing</h2>
-        <p>Machines, work envelope, held tolerances, certifications, and this week's queue depth are on file for every shop and checked by us. Add requirements and see who still qualifies.</p>
+        <h2>Your verified profile brings the work</h2>
+        <p>Buyers filter on what we've verified. Toggle a requirement to see who gets the job.</p>
       </div>
       <div class="chips" role="group" aria-label="Part requirements">
         <button class="chip" type="button" aria-pressed="true" data-cap="tol005">Holds ±0.005 mm</button>
@@ -252,74 +285,32 @@
     </div>
   </section>
 
-  <!-- For shops -->
-  <section class="section section-deep" id="for-shops">
-    <div class="wrap shops-pitch">
-      <div>
-        <h2>Run your own inbound RFQs through the estimator first</h2>
-        <p style="margin-top:16px;color:var(--muted);font-size:1.05rem">Quoting is unpaid work done by the most expensive person in your building. Canyon reads the file, drafts the quote in your own rates, and leaves the judgment calls to you.</p>
-        <!-- Placeholder figures. Replace with pilot data. -->
-        <div class="stat-pair">
-          <div class="stat">
-            <div class="num">42 min</div>
-            <div class="cap">Quote setup by hand, average per RFQ</div>
-          </div>
-          <div class="stat is-after">
-            <div class="num">4 min</div>
-            <div class="cap">With Canyon reading the model first</div>
-          </div>
-        </div>
-      </div>
-      <ul class="plain-list">
-        <li><strong>Your rates, your machines.</strong><span>The cost model runs on the shop rates, tooling, and setups you enter. Nothing is priced against a national average.</span></li>
-        <li><strong>Quote the cold RFQs too.</strong><span>When a quote costs four minutes, the unknown buyer gets an answer instead of a slow no.</span></li>
-        <li><strong>A verified profile that brings work.</strong><span>Every quote you run sharpens the capability profile buyers match against when the marketplace routes a job to you.</span></li>
-        <li><strong>Keep the customer.</strong><span>Canyon never sees a relationship you already have. Your inbound stays yours.</span></li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- Pricing -->
-  <section class="section" id="pricing">
+  <!-- Pricing: one plan per audience -->
+  <section class="section section-deep" id="pricing">
     <div class="wrap">
       <div class="section-head">
         <h2>Pricing</h2>
-        <p>Shops pay for the estimator. Buyers pay when a part ships.</p>
       </div>
       <!-- Placeholder prices. -->
-      <div class="plans">
-        <div class="plan is-featured">
-          <h3>Shop</h3>
-          <div class="price">$390 <small>per seat, per month</small></div>
-          <ul>
-            <li>Unlimited RFQs through the estimator</li>
-            <li>Cost model tuned to your rates and machines</li>
-            <li>Verified capability profile on the marketplace</li>
-            <li>14-day free trial, no card needed</li>
-          </ul>
-          <a class="btn btn-primary" href="#trial">Start free trial</a>
-        </div>
-        <div class="plan">
-          <h3>Buyer</h3>
-          <div class="price">Free <small>to upload and price</small></div>
-          <ul>
-            <li>Instant price band and lead time on any STEP file</li>
-            <li>Agent negotiation with verified shops</li>
-            <li>5% platform fee on the parts you order</li>
-            <li>Design-for-cost notes on every feature</li>
-          </ul>
-          <a class="btn btn-secondary" href="#trial">Price a part</a>
-        </div>
+      <div class="plan-single" data-audience="buyer">
+        <div class="price">Free to price <small>5% when a part ships</small></div>
+        <p>Upload as many parts as you like. You pay only on the parts you order.</p>
+        <a class="btn btn-primary btn-lg" href="#trial">Price a part</a>
+      </div>
+      <div class="plan-single" data-audience="shop">
+        <div class="price">$390 <small>per seat, per month</small></div>
+        <p>Unlimited RFQs through the estimator. Fourteen days free, no card.</p>
+        <a class="btn btn-primary btn-lg" href="#trial">Start free trial</a>
       </div>
     </div>
   </section>
 
   <!-- Trial -->
-  <section class="section section-deep" id="trial">
+  <section class="section" id="trial">
     <div class="wrap trial">
       <div>
-        <h2>Start your free trial</h2>
-        <p style="margin-top:14px;color:var(--muted);font-size:1.05rem">Fourteen days on the estimator with your own parts. We will set up your rates with you on the first call.</p>
+        <h2><span data-audience="buyer">Price your first part</span><span data-audience="shop">Start your free trial</span></h2>
+        <p class="trial-sub"><span data-audience="buyer">Sign in, drop the file, and read the price.</span><span data-audience="shop">Fourteen days with your own parts and your own rates.</span></p>
       </div>
       <form class="form" id="trial-form" novalidate>
         <div class="form-fields" style="display:grid;gap:16px">
@@ -335,14 +326,14 @@
           <div class="field">
             <span class="field label" style="font-size:.9rem;font-weight:600">I am</span>
             <div class="radio-row">
-              <label><input type="radio" name="role" value="shop" id="role-shop" checked> A machine shop</label>
-              <label><input type="radio" name="role" value="buyer" id="role-buyer"> Buying parts</label>
+              <label><input type="radio" name="role" value="buyer" id="role-buyer" checked> Buying parts</label>
+              <label><input type="radio" name="role" value="shop" id="role-shop"> A machine shop</label>
             </div>
           </div>
-          <button class="btn btn-primary btn-lg" type="submit">Start free trial</button>
+          <button class="btn btn-primary btn-lg" type="submit"><span data-audience="buyer">Price a part</span><span data-audience="shop">Start free trial</span></button>
         </div>
         <div class="form-done" role="status">
-          <strong>Check your inbox.</strong> We sent a sign-in link to <span id="done-email"></span>. Your trial starts when you open it.
+          <strong>Check your inbox.</strong> We sent a sign-in link to <span id="done-email"></span>.
         </div>
       </form>
     </div>
@@ -355,7 +346,6 @@
     <span>Canyon. The CAD file is the quote.</span>
     <ul>
       <li><a href="login.html">Log in</a></li>
-      <li><a href="#trial">Start free trial</a></li>
       <li><a href="mailto:hello@canyon.build">Book a demo</a></li>
       <li><a href="https://github.com/ylemiesa57/canyon">GitHub</a></li>
     </ul>
@@ -374,7 +364,7 @@
         <div class="play" aria-hidden="true">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor"><path d="M6 3l13 8-13 8z"/></svg>
         </div>
-        <p>Upload, price, negotiate, match. The recorded walkthrough lands here. Until then, every demo on this page is live: scroll down and try them.</p>
+        <p>The recorded walkthrough lands here. Until then, every demo on this page is live. Scroll down and try them.</p>
       </div>
     </div>
   </div>
