@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canyon part viewer</title>
+<style>
+  /* Image-based part viewer: one or more rendered views with finding regions drawn on top.
+     Embed in an iframe. Drive it with postMessage (see the API at the bottom) or open with ?demo=1. */
+  :root { --bg: #f5f6f8; --surface: #fff; --ink: #1e2328; --muted: #6f7883; --line: rgba(30,35,40,.14); --accent: #c9612a; --bad: #b83a2f; --warn: #b7791f; --good: #2f7d4f; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #1e2328; --surface: #252b32; --ink: #e9ecef; --muted: #9aa4b0; --line: rgba(233,236,239,.16); --accent: #dc7439; --bad: #e0776b; --warn: #d9a441; --good: #7fb27a; } }
+  :root[data-theme="dark"] { --bg: #1e2328; --surface: #252b32; --ink: #e9ecef; --muted: #9aa4b0; --line: rgba(233,236,239,.16); --accent: #dc7439; --bad: #e0776b; --warn: #d9a441; --good: #7fb27a; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 13px/1.45 "Archivo", "Helvetica Neue", Arial, sans-serif; display: flex; flex-direction: column; }
+  .bar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); flex: none; }
+  .bar button { border: 1px solid var(--line); background: transparent; color: var(--ink); font: 500 12px inherit; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+  .bar button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .bar .spacer { flex: 1; }
+  .bar .status { color: var(--muted); font-size: 12px; }
+  .stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; overflow: hidden; }
+  .stage img, .stage svg.base { max-width: 100%; max-height: 100%; display: block; }
+  .frame { position: relative; display: inline-block; }
+  .overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .overlay .region { pointer-events: auto; cursor: pointer; fill: transparent; stroke: transparent; stroke-width: 2; transition: fill 140ms ease, stroke 140ms ease; }
+  .overlay .region.high { stroke: var(--bad); stroke-dasharray: 5 4; fill: color-mix(in srgb, var(--bad) 14%, transparent); }
+  .overlay .region.medium { stroke: var(--warn); stroke-dasharray: 5 4; fill: color-mix(in srgb, var(--warn) 14%, transparent); }
+  .overlay .region.low { stroke: var(--muted); stroke-dasharray: 5 4; fill: color-mix(in srgb, var(--muted) 12%, transparent); }
+  .overlay .region:hover, .overlay .region.is-selected { stroke-dasharray: none; stroke-width: 2.5; }
+  .overlay .region.high.is-selected, .overlay .region.high:hover { fill: color-mix(in srgb, var(--bad) 28%, transparent); }
+  .overlay .region.medium.is-selected, .overlay .region.medium:hover { fill: color-mix(in srgb, var(--warn) 28%, transparent); }
+  .overlay .pin { pointer-events: none; font: 700 11px inherit; }
+  .overlay .pin circle { fill: var(--ink); }
+  .overlay .pin text { fill: var(--bg); text-anchor: middle; dominant-baseline: central; }
+  .legend { position: absolute; left: 10px; bottom: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .legend button { border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 88%, transparent); color: var(--ink); font: 500 12px inherit; padding: 4px 9px; border-radius: 6px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+  .legend button[aria-pressed="true"] { border-color: var(--ink); }
+  .legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .legend .high i { background: var(--bad); } .legend .medium i { background: var(--warn); } .legend .low i { background: var(--muted); }
+  .empty { color: var(--muted); text-align: center; padding: 24px; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div id="views"></div>
+  <span class="spacer"></span>
+  <span class="status" id="status">No part loaded</span>
+</div>
+<div class="stage" id="stage"><div class="empty">Send a <code>load</code> message or open with <code>?demo=1</code>.</div></div>
+
+<script>
+(function () {
+  const $ = (s) => document.querySelector(s);
+  let model = null, view = null, selected = null;
+
+  function render() {
+    const stage = $("#stage"), views = $("#views");
+    if (!model) return;
+    views.innerHTML = model.views.map((v) => `<button type="button" data-view="${v.id}" aria-pressed="${v.id === view}">${v.label}</button>`).join("");
+    views.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { view = b.dataset.view; render(); }));
+    const v = model.views.find((x) => x.id === view) || model.views[0];
+    const w = v.width || 1000, h = v.height || 750;
+    const regions = model.findings.flatMap((f) => (f.regions[v.id] || []).map((r, i) => ({ f, r, i })));
+    const base = v.src ? `<img src="${v.src}" width="${w}" height="${h}" alt="${v.label}">` : (v.svg || "");
+    stage.innerHTML = `<div class="frame">${base}
+      <svg class="overlay" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        ${regions.map(({ f, r, i }) => {
+          const cls = `region ${f.sev.toLowerCase()}${selected === f.id ? " is-selected" : ""}`;
+          const shape = r.type === "circle" ? `<circle class="${cls}" data-id="${f.id}" cx="${r.cx}" cy="${r.cy}" r="${r.r}"><title>${f.title}</title></circle>`
+            : `<polygon class="${cls}" data-id="${f.id}" points="${r.points.map((p) => p.join(",")).join(" ")}"><title>${f.title}</title></polygon>`;
+          const c = r.type === "circle" ? [r.cx, r.cy - r.r] : r.points[0];
+          const pin = i === 0 ? `<g class="pin" transform="translate(${c[0]},${c[1]})"><circle r="10"></circle><text>${f.n}</text></g>` : "";
+          return shape + pin;
+        }).join("")}
+      </svg>
+      <div class="legend">${model.findings.map((f) => `<button type="button" class="${f.sev.toLowerCase()}" data-id="${f.id}" aria-pressed="${selected === f.id}"><i></i>${f.n} ${f.title}</button>`).join("")}</div>
+    </div>`;
+    stage.querySelectorAll(".region, .legend button").forEach((el) => {
+      el.addEventListener("click", () => select(el.dataset.id, true));
+      el.addEventListener("mouseenter", () => post({ type: "hover", id: el.dataset.id }));
+    });
+    $("#status").textContent = `${model.name || "Part"} · ${model.findings.length} finding${model.findings.length === 1 ? "" : "s"} · ${v.label}`;
+  }
+  function select(id, fromUser) {
+    selected = selected === id ? null : id;
+    render();
+    if (fromUser) post({ type: "select", id: selected });
+  }
+  function post(msg) { if (window.parent !== window) window.parent.postMessage(Object.assign({ source: "canyon-viewer" }, msg), "*"); }
+
+  // API: parent -> viewer
+  //   { type: "load", model: { name, views: [{ id, label, src | svg, width, height }], findings: [{ id, n, sev, title, regions: { [viewId]: [ {type:"polygon", points:[[x,y],...]} | {type:"circle", cx, cy, r} ] } }] } }
+  //   { type: "select", id }        highlight a finding (null clears)
+  //   { type: "view", id }          switch view
+  //   { type: "theme", value }      "dark" | "light" | ""
+  // viewer -> parent: { source: "canyon-viewer", type: "ready" | "select" | "hover", id }
+  window.addEventListener("message", (e) => {
+    const m = e.data || {};
+    if (m.type === "load") { model = m.model; view = model.views[0] && model.views[0].id; selected = null; render(); }
+    if (m.type === "select") { selected = m.id || null; render(); }
+    if (m.type === "view") { view = m.id; render(); }
+    if (m.type === "theme") { if (m.value) document.documentElement.dataset.theme = m.value; else delete document.documentElement.dataset.theme; }
+  });
+
+  // Demo: the Actuator Housing from the buyer mockup, drawn as SVG so no image asset is needed.
+  const demoPart = (fill, edge) => `<svg class="base" viewBox="0 0 1000 750" width="1000" height="750" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1000" height="750" fill="${fill}"/>
+    <g fill="none" stroke="${edge}" stroke-width="2">
+      <path d="M150 560 L150 300 L420 180 L850 180 L850 440 L580 560 Z" fill="${fill}"/>
+      <path d="M150 300 L420 180 L850 180 L580 300 Z" fill="color-mix(in srgb, ${edge} 10%, ${fill})"/>
+      <path d="M580 300 L850 180 L850 440 L580 560 Z" fill="color-mix(in srgb, ${edge} 22%, ${fill})"/>
+      <path d="M150 300 L580 300 L580 560 L150 560 Z"/>
+      <rect x="200" y="350" width="120" height="160" rx="10"/><rect x="330" y="350" width="120" height="160" rx="10"/><rect x="460" y="350" width="90" height="160" rx="10"/>
+      <circle cx="245" cy="325" r="16"/><circle cx="515" cy="325" r="16"/>
+      <path d="M200 350 l-20 -8 M320 350 l-20 -8 M330 350 l-20 -8 M450 350 l-20 -8" stroke-dasharray="3 3"/>
+    </g></svg>`;
+  if (new URLSearchParams(location.search).get("demo") === "1") {
+    const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+    const fill = dark ? "#252b32" : "#ffffff", edge = dark ? "#c3cad2" : "#363c44";
+    model = {
+      name: "HAL-4417 Actuator Housing",
+      views: [
+        { id: "iso", label: "ISO", svg: demoPart(fill, edge), width: 1000, height: 750 },
+        { id: "top", label: "Top", svg: demoPart(fill, edge).replace('viewBox="0 0 1000 750"', 'viewBox="0 0 1000 750"'), width: 1000, height: 750 },
+      ],
+      findings: [
+        { id: "f1", n: "1", sev: "High", title: "Wall thickness vs. pocket depth", regions: { iso: [{ type: "polygon", points: [[320, 350], [330, 350], [330, 510], [320, 510]] }, { type: "polygon", points: [[450, 350], [460, 350], [460, 510], [450, 510]] }], top: [{ type: "polygon", points: [[320, 350], [330, 350], [330, 510], [320, 510]] }] } },
+        { id: "f2", n: "2", sev: "Medium", title: "Ø0.3750 bores, half-thou band", regions: { iso: [{ type: "circle", cx: 245, cy: 325, r: 24 }, { type: "circle", cx: 515, cy: 325, r: 24 }], top: [{ type: "circle", cx: 245, cy: 325, r: 24 }] } },
+        { id: "f3", n: "3", sev: "Low", title: "Internal corners at R0.031", regions: { iso: [{ type: "circle", cx: 200, cy: 510, r: 18 }, { type: "circle", cx: 550, cy: 510, r: 18 }], top: [{ type: "circle", cx: 200, cy: 510, r: 18 }] } },
+      ],
+    };
+    view = "iso"; render();
+  }
+  post({ type: "ready" });
+})();
+</script>
+</body>
+</html>

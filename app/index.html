@@ -316,18 +316,7 @@
         <button class="seg-opt" style="border:1px solid var(--color-divider);background:var(--color-text);color:var(--color-bg);padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">CAD</button>
         <button class="seg-opt" style="border:1px solid var(--color-divider);border-left:0;background:transparent;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;color:inherit">Drawing</button>
       </div>
-      <div style="position:relative;aspect-ratio:4/3;border:2px solid var(--color-text);background:repeating-linear-gradient(135deg,transparent 0 9px,color-mix(in srgb,var(--color-text) 7%,transparent) 9px 10px)">
-        <div style="position:absolute;inset:0;display:grid;place-items:center">
-          <div style="width:62%;height:44%;background:color-mix(in srgb,var(--color-text) 14%,transparent);border:2px solid color-mix(in srgb,var(--color-text) 50%,transparent);position:relative">
-            <div style="position:absolute;left:10%;top:20%;width:20%;height:60%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 40%,transparent)"></div>
-            <div style="position:absolute;left:40%;top:20%;width:20%;height:60%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 40%,transparent)"></div>
-            <div style="position:absolute;left:70%;top:20%;width:20%;height:60%;background:var(--color-bg);border:2px solid color-mix(in srgb,var(--color-text) 40%,transparent)"></div>
-            <div style="position:absolute;left:-2px;right:-2px;top:50%;height:2px;background:var(--color-accent);opacity:.55"></div>
-          </div>
-        </div>
-        <div style="position:absolute;left:12px;bottom:12px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent)">CAD viewport — drop STEP render here</div>
-        <div style="position:absolute;right:12px;top:12px;width:46px;height:46px;border:2px solid color-mix(in srgb,var(--color-text) 45%,transparent);display:grid;place-items:center;font-size:9px;letter-spacing:.1em;font-weight:700">ISO</div>
-      </div>
+      <iframe src="/app/viewer.html?demo=1" title="Part viewer" style="display:block;width:100%;aspect-ratio:4/3;border:2px solid var(--color-text);background:var(--color-surface)"></iframe>
       <div style="margin-top:18px;border-top:2px solid var(--color-divider);padding-top:14px">
         <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:10px">Cost drivers</div>
         <sc-for list="{{ drivers }}" as="d" hint-placeholder-count="4">
