@@ -83,7 +83,7 @@ async function load(file, reducedMotion) {
   await b.click(newTab());
   check(!!b.btn("Release to shops") && !b.btnStarts("Release anyway"), "release is clean after the fix and the mandate");
   await b.click(b.btn("Release to shops"));
-  check(b.has("negotiation") && b.has("Matched"), "release opens the negotiation with the matched shops");
+  check(/Negotiation/.test(b.text()) && b.has("Shops considered") && b.has("Matched"), "release opens the negotiation with the shops considered");
   await b.click(b.btn("Go to offers"));
   check(/\d shops responded/.test(b.text()), "offers screen lists the responding shops");
   await b.click(b.btn("Accept recommendation"));
