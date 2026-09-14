@@ -211,7 +211,7 @@ class Component extends DCLogic {
       ...cost,
       qtyCurve:[{qty:'1',w:'100%',cost:'$54.32'},{qty:'5',w:'83%',cost:'$45.26'},{qty:'10',w:'79%',cost:'$43.18'},{qty:'25',w:'75%',cost:'$40.79'},{qty:'50',w:'72%',cost:'$39.21'}],
       levers:[{k:'Near-net extrusion at qty 50',v:'−$6.10'},{k:'Relax rib to 2.5 mm (ask buyer)',v:'−$3.20'},{k:'Run Op30 on VF-2SS with boring head',v:'−$0.60, +risk'},{k:'Drop LPI to sample AQL',v:'−$14.40'}],
-      quoteTotals:[{k:'Subtotal · cost',v:'$3,925.66',sub:'2 parts, all breaks',bg:'transparent',fg:'inherit',pad:'0'},{k:'Total markup',v:'$785.13',sub:'20% blended',bg:'transparent',fg:'inherit',pad:'20px'},{k:'Lead time',v:'8–10 d',sub:'incl. LPI + anodize',bg:'transparent',fg:'inherit',pad:'20px'},{k:'Quote total',v:'$4,890.79',sub:'incl. $180 fixture',bg:'var(--color-accent)',fg:'var(--color-bg)',pad:'20px'}],
+      quoteTotals:[{k:'Subtotal · cost',v:'$3,925.66',sub:'2 parts, all breaks',bg:'transparent',fg:'inherit'},{k:'Total markup',v:'$785.13',sub:'20% blended',bg:'transparent',fg:'inherit'},{k:'Lead time',v:'8–10 d',sub:'incl. LPI + anodize',bg:'transparent',fg:'inherit'},{k:'Quote total',v:'$4,890.79',sub:'incl. $180 fixture',bg:'var(--color-accent)',fg:'var(--color-bg)'}],
       quoteLines,
       msgs:[
         bubble('L','Target $4,400 all-in for both parts at the qty 10 break, delivered in 8 days.','Buyer agent · 09:02','$4,400'),

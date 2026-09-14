@@ -66,7 +66,7 @@
           <div style="height:1px;background:var(--color-divider);margin:18px 0 16px"></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:1px solid var(--color-divider-strong);border-bottom:1px solid var(--color-divider);margin-bottom:22px">
             <sc-for list="{{ inboxStats }}" as="s" hint-placeholder-count="4">
-              <div style="padding:16px 20px 18px 0;border-right:1px solid var(--color-divider)">
+              <div class="kpi-cell">
                 <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ s.k }}</div>
                 <div style="font-family:var(--font-heading);font-weight:700;font-size:25px;margin-top:5px;font-variant-numeric:tabular-nums">{{ s.v }}</div>
                 <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ s.sub }}</div>
@@ -373,7 +373,7 @@
           <div style="height:1px;background:var(--color-divider);margin:18px 0 16px"></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:1px solid var(--color-divider-strong);border-bottom:1px solid var(--color-divider);margin-bottom:22px">
             <sc-for list="{{ quoteTotals }}" as="t" hint-placeholder-count="4">
-              <div style="padding:16px 20px 18px {{ t.pad }};border-right:1px solid var(--color-divider);background:{{ t.bg }};color:{{ t.fg }}">
+              <div class="kpi-cell" style="background:{{ t.bg }};color:{{ t.fg }}">
                 <div style="font-size:12px;letter-spacing:0;font-weight:500;opacity:.7">{{ t.k }}</div>
                 <div style="font-family:var(--font-heading);font-weight:700;font-size:25px;margin-top:5px;font-variant-numeric:tabular-nums;white-space:nowrap">{{ t.v }}</div>
                 <div style="font-size:11.5px;opacity:.7">{{ t.sub }}</div>
