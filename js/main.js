@@ -40,6 +40,7 @@ if (navToggle) {
     const url = new URL(location.href);
     url.searchParams.set("for", a);
     history.replaceState(null, "", url);
+    document.dispatchEvent(new CustomEvent("canyon:audience", { detail: a }));
   };
   picks.forEach((b) => b.addEventListener("click", () => setAudience(b.dataset.audiencePick)));
   setAudience(root.dataset.audience === "shop" ? "shop" : "buyer");
@@ -350,22 +351,35 @@ const viewport = (function viewport() {
 /* ------------------------------------------------------------------ */
 (function exchange() {
   const thread = $("#thread");
-  const msgs = $$("#messages .msg");
+  const lists = $$("#thread .messages");
   const offer = $("#offer");
-  if (!thread || !msgs.length) return;
+  if (!thread || !lists.length) return;
+
+  // Each audience has its own thread. Play whichever one is showing.
+  const current = () => lists.find((l) => l.dataset.audience === document.documentElement.dataset.audience) || lists[0];
+  let list = current();
+  let msgs = $$(".msg", list);
 
   const showUpTo = (n) => {
     msgs.forEach((m, i) => m.classList.toggle("is-in", i <= n));
     if (n >= 0 && offer) offer.textContent = msgs[n].dataset.offer;
   };
 
-  if (reduceMotion) { showUpTo(msgs.length - 1); return; }
+  if (reduceMotion) {
+    const showAll = () => {
+      lists.forEach((l) => $$(".msg", l).forEach((m) => m.classList.remove("is-in")));
+      list = current(); msgs = $$(".msg", list); showUpTo(msgs.length - 1);
+    };
+    showAll();
+    document.addEventListener("canyon:audience", showAll);
+    return;
+  }
 
   let i = -1, timer = null, running = false;
   const step = () => {
     i++;
     if (i >= msgs.length) {
-      // Hold on the match, then start over.
+      // Hold on the last line, then start over.
       timer = setTimeout(() => { i = -1; showUpTo(-1); if (offer) offer.textContent = "Offer"; timer = setTimeout(step, 700); }, 3200);
       return;
     }
@@ -376,30 +390,41 @@ const viewport = (function viewport() {
   const start = () => { if (running) return; running = true; i = -1; showUpTo(-1); timer = setTimeout(step, 400); };
   const stop = () => { running = false; clearTimeout(timer); };
 
+  document.addEventListener("canyon:audience", () => {
+    const next = current();
+    if (next === list) return;
+    const wasRunning = running;
+    stop();
+    lists.forEach((l) => $$(".msg", l).forEach((m) => m.classList.remove("is-in")));
+    list = next;
+    msgs = $$(".msg", list);
+    showUpTo(-1);
+    if (offer) offer.textContent = "Offer";
+    if (wasRunning) start();
+  });
+
   showUpTo(-1);
   new IntersectionObserver((entries) => { entries[0].isIntersecting ? start() : stop(); }, { threshold: 0.35 }).observe(thread);
 })();
 
-/* ------------------------------------------------------------------ */
 /* Demo video slot                                                      */
 /* ------------------------------------------------------------------ */
 (function video() {
   const box = $("#video");
   const play = $("#video-play");
-  const note = $("#video-note");
+  const empty = $("#video-empty");
   if (!box || !play) return;
+  const src = box.dataset.src;
+  if (!src) return;                       // no walkthrough yet: leave the empty slot in place
+  if (empty) empty.remove();
+  play.hidden = false;
   play.addEventListener("click", () => {
-    const src = box.dataset.src;
-    if (src) {
-      const f = document.createElement("iframe");
-      f.src = src + (src.includes("?") ? "&" : "?") + "autoplay=1";
-      f.allow = "autoplay; fullscreen; picture-in-picture";
-      f.title = "Canyon demo video";
-      box.appendChild(f);
-      play.remove();
-    } else if (note) {
-      note.hidden = false;
-    }
+    const f = document.createElement("iframe");
+    f.src = src + (src.includes("?") ? "&" : "?") + "autoplay=1";
+    f.allow = "autoplay; fullscreen; picture-in-picture";
+    f.title = "Canyon demo video";
+    box.appendChild(f);
+    play.remove();
   });
 })();
 
