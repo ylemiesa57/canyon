@@ -45,6 +45,7 @@ async function load(file, reducedMotion) {
     has: (s) => api.text().includes(s),
     btn: (label) => Array.from(root.querySelectorAll("button,a")).find((b) => b.textContent.trim() === label),
     btnStarts: (prefix) => Array.from(root.querySelectorAll("button,a")).find((b) => b.textContent.trim().startsWith(prefix)),
+    btnHas: (part) => Array.from(root.querySelectorAll("button,a")).find((b) => b.textContent.includes(part)),
     click: async (el, ms = 80) => { if (!el) throw new Error("missing element"); el.dispatchEvent(new w.MouseEvent("click", { bubbles: true })); await wait(ms); },
     type: async (input, value) => { input.value = value; input.dispatchEvent(new w.Event("input", { bubbles: true })); await wait(40); },
   };
@@ -63,7 +64,7 @@ async function load(file, reducedMotion) {
   check(!!b.btnStarts("Release anyway"), "release is flagged on the example part");
   check(!b.has("correct anything Canyon got wrong"), "spec screen does not ask to correct Canyon");
   check(b.root.querySelectorAll("input.input").length >= 2, "quantity and need-by are inputs");
-  await b.click(b.btnStarts("Part"));
+  await b.click(b.btnHas("Part & DFM")); // a global tab on main, a stage-strip step after the daylight pass
   const apply = Array.from(b.root.querySelectorAll("button")).find((x) => x.textContent.includes("Apply change"));
   check(!!apply, "findings have an apply action");
   await b.click(apply);
