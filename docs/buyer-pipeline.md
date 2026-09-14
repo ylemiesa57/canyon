@@ -2,6 +2,13 @@
 
 Status of every stage, screen, control, and data element on the buyer side as of 2026-09-14. Built from the code in `index.html` (landing), `app/index.html` and `app/buyer.js` (buyer app), and the shop side where the two touch.
 
+Four decisions taken on 2026-09-14 shape the stages below:
+
+1. **Release to shops is always available, and heavily flagged when the part is not safe to release.** The flag is a gate with reasons, not a block.
+2. **The mandate is set in the buyer's profile, first thing.** Every request inherits it. It is not a per-request step.
+3. **Escalation is a shop-side event.** Shop agents pause and ask their shop. The buyer agent never pauses; a round that ends with nothing inside the mandate is a normal end state shown on Offers.
+4. **The New request screen does not ask the buyer to correct Canyon.** Extraction is authoritative and read-only. The buyer enters what only the buyer knows (quantity, need-by) and nothing else.
+
 Status words used below:
 
 - **Wired**: the control does something in the mockup today.
@@ -17,16 +24,16 @@ Everything in the buyer app runs on a tick engine with no backend, no persistenc
 |---|---|---|---|
 | 0. Entry | Landing page, login page | Pick audience, start trial | Wired front end, no backend |
 | 1. Intake | New request, left column | None | Static drop zone, timed file list |
-| 2. Spec | New request, requirements and extraction | Correct anything wrong | Rendered, not editable |
-| 3. Price | New request, bottom of right column | None | Rendered, unlocks at 100% extraction |
+| 2. Spec | New request, requirements and extraction | None. Buyer supplies quantity and need-by only | Rendered, read-only by design |
+| 3. Price | New request, bottom of right column | Release, plain or flagged | Rendered, unlocks at 100% extraction; gate missing |
 | 4. Design for cost | Part and DFM | Change the part or release as-is | Findings rendered, no change action |
-| 5. Mandate | Inside Negotiation, left panel | Set bounds | Rendered, editor missing |
+| 5. Mandate | Buyer profile (decided); shown read-only inside Negotiation today | Set once in profile | Profile missing; per-request view rendered |
 | 6. Match | One sentence in the negotiation thread | None | Missing as a step |
-| 7. Negotiate | Negotiation | Answer an escalation | Thread plays, no escalation UI |
+| 7. Negotiate | Negotiation | None. Escalation belongs to shop agents | Thread plays |
 | 8. Award | Offers | Award single or split | Cards re-rank, award buttons static |
 | 9. After award | Queue row state "Awarded" only | None | Missing |
 
-The queue's stage rail is the canonical state machine: Uploaded, Priced, Matched, Negotiating, Offers ready, Awarded. Six states, five decision points (correct spec, accept a design change, set mandate, answer escalation, award).
+The queue's stage rail is the canonical state machine: Uploaded, Priced, Matched, Negotiating, Offers ready, Awarded. Six states, three decision points per request (release, plain or flagged; accept a design change; award) plus one decision made once per buyer (the profile mandate).
 
 ## Global chrome (every app screen)
 
@@ -82,15 +89,17 @@ Certification chips, five: "ISO 9001 required" (highlighted), "AS9100 preferred"
 
 Feature extraction panel: percent counter (9% per tick to 100%), progress bar, and eight rows revealed one per tick from tick 2: Format STEP AP214; Setups required 3; Faces / holes 412 / 34; Threaded holes 12 (¼-20, M6); Tightest tolerance ±0.0005 in; Material removal 71% by volume; GD&T frames read 7; Surface finish Ra 32 / bead blast.
 
-The screen's own instruction is "correct anything Canyon got wrong," but nothing is editable. Missing: inline edit of every requirement, add or remove a cert, a confirm step, and a re-price when something changes. Also missing: the provenance model that the tags imply (which file, which note, which face), which is what makes "correct it" trustworthy.
+Decision: this screen is read-only. Canyon's extraction is authoritative, and the buyer is not asked to check it. The mockup's subtitle "correct anything Canyon got wrong" has been removed from the app. The buyer's own inputs are quantity and need-by; terms and certs come from the profile (stage 5). Missing: those two inputs as fields, and the provenance model the source tags imply (which file, which note, which face), which matters for trust and for the release gate, not for editing.
 
 ## Stage 3. Price (New request, bottom right)
 
 - "Estimated unit price · 250 ea", "$96.20", "± $14 · 4–6 weeks". Sits at 25% opacity until extraction reaches 100%, then unlocks. Values are fixed strings.
-- "Release to shops" button. Wired, jumps to Negotiation. This is the moment the pipeline moves from the part engine to the deal engine, and today it skips stages 4, 5, and 6 entirely.
+- "Release to shops" button. Wired, jumps to Negotiation. This is the moment the pipeline moves from the part engine to the deal engine.
+
+Decision: release is always one click away, and it is heavily flagged when the part is not safe to release. Safe means all of the following hold: no open High-severity finding; band confidence high; no source conflict in the spec (for example a revision mismatch between drawing and email); the profile ceiling at or above the band's low end; at least as many qualifying shops as the profile requires. When any of these fail, the button becomes a flagged action: accent-bordered, listing the failing reasons, labelled "Release anyway", with "Review manufacturability first" as the safe path. Today the button has no gate at all, so releasing a part with an open High finding looks identical to releasing a clean one.
 - "Review manufacturability first" button. Wired, goes to Part and DFM.
 
-Missing: quantity breaks (the shop side quotes 1, 5, 10, 25, 50; the buyer side has one quantity), confidence on the band (Part and DFM has it, this screen does not), a lead-time range tied to shop queues, and a saved draft. The home page promises "90 sec to a priced band"; this screen takes 14 ticks at 0.42 s, about 6 seconds.
+Missing: the release gate above; quantity breaks (the shop side quotes 1, 5, 10, 25, 50; the buyer side has one quantity); confidence on the band (Part and DFM has it, this screen does not, and the gate needs it here); a lead-time range tied to shop queues; a saved draft. The home page promises "90 sec to a priced band"; this screen takes 14 ticks at 0.42 s, about 6 seconds.
 
 ## Stage 4. Design for cost (Part and DFM)
 
@@ -110,13 +119,15 @@ Findings, three cards revealed from tick 2, each with number, severity, two tags
 2. Medium, Tolerance and Bore. "Ø0.3750 +.0005/-.0000 on two bores." +$6.10, −$5.20. Fix: ±.001 bilateral opens the part from 4 shops to 9.
 3. Low, Feature and Tooling. "Internal corners at R0.031." +$2.30, −$2.30. Fix: R0.125 corners.
 
-Missing: any way to act on a finding. No "apply this change" that updates the spec and re-prices, no "ask my engineer", no upload of a revised model, no dismiss. Finding 2 is the pipeline's clearest argument for matching after DFM, and the screen cannot express the choice.
+Missing: any way to act on a finding. No "apply this change" that updates the spec and re-prices, no "ask my engineer", no upload of a revised model, no dismiss. Finding 2 is the pipeline's clearest argument for matching after DFM, and the screen cannot express the choice. The "Release to shops as-is" button here needs the same gate as stage 3; on this example part it would be flagged, because finding 1 is High.
 
 ## Stage 5. Mandate (Negotiation, left panel)
 
 "Your mandate", six rows, static: Unit price ceiling $95.00 @ 250; Delivery on or before Nov 14; Payment terms Net 45 — hard; Certifications ISO 9001 min.; Sources required 2 qualified; Auto-accept on, inside all bounds. Button "Edit mandate", static. Note: "Canyon will not accept outside these bounds. It will pause and ask you if a shop is close but outside."
 
-The mandate is the only place the buyer's bounds exist, and it is shown after release, on the screen where the agent is already using it. Missing: a mandate step between DFM and release, an editor for all six fields, buyer-level defaults (terms, certs, domestic-only) that pre-fill it, a check of the ceiling against the price band, and the ranking weights (which appear on Offers as 50 / 25 / 15 / 10 but are set nowhere).
+Decision: the mandate lives in the buyer's profile and is the first thing a new buyer sets up. Every request inherits it; the Negotiation panel shows the inherited values read-only, which is what it does today. The app's old note ("It will pause and ask you if a shop is close but outside") has been replaced, since the buyer agent does not pause.
+
+Profile fields the mandate needs, none of which exist yet: ceiling rule (a percentage over Canyon's likely price rather than a fixed dollar figure, since it must work for any part); delivery buffer against need-by; payment terms and whether they are hard; certifications required and preferred; domestic only; sources required; auto-accept; ranking weights (which appear on Offers as 50 / 25 / 15 / 10 but are set nowhere). Assumption to confirm: a per-request override at release is allowed but optional.
 
 ## Stage 6. Match
 
@@ -142,7 +153,7 @@ Typing indicator below the thread: "<next shop> is responding…" until the last
 
 Position panel: "Best live offer" moves through "—", $97.80 Ridgeline 4 wk, $96.40 Midstate 4.5 wk, $94.90 Ridgeline 4 wk Net 45. Shop states, four rows: Ridgeline and Midstate go Reviewing → Countered → Final with their current price; Cascade CNC responds at message 4 with $99.10; Delta Contract Mfg stays at 30% opacity, "No bid — queue full".
 
-Missing: the escalation the mandate promises. The shop side has it (its agent pauses under the floor and asks the shop); the buyer side never pauses and never asks. Also missing: buyer intervention mid-round (accept now, add a concession, drop a shop), round history, and what happens when no shop is inside the mandate.
+Decision: escalation is handled by shop agents. The shop side already has it (Cascade's agent pauses under its 15% floor and asks the shop). The buyer agent runs the three rounds without pausing. If the rounds end with no shop inside the mandate, that is a normal end state: the queue row goes to Offers ready, and Offers shows the best offers with a clear "none inside your mandate" notice for the buyer to award anyway or decline. Missing: that end state, buyer intervention mid-round (accept now, add a concession, drop a shop), and round history.
 
 ## Stage 8. Award (Offers)
 
@@ -161,7 +172,7 @@ Each card: rank number (accent when best), name, cert chips, location and note, 
 
 Recommendation card, revealed at tick 3: "Canyon recommends a 60/40 split award", 150 ea to Ridgeline at $94.90 and 100 ea to Midstate at $96.40, dual-sourcing costs $225. "Accept recommendation" button, static.
 
-Missing: the award itself (single, split with an editable ratio, decline all), PO generation, notifying the shops, and the shop profile view (the shop side's My shop tab is the natural target).
+Missing: the award itself (single, split with an editable ratio, decline all), the "none inside your mandate" end state from stage 7, PO generation, notifying the shops, and the shop profile view (the shop side's My shop tab is the natural target).
 
 ## Stage 9. After award
 
@@ -201,11 +212,11 @@ Kept from the mockup, reachable from the first tab. "Sourcing agent for machined
 
 ## Recommended build order
 
-1. Stage 2 and 3 for real: intake, spec with provenance, price. This is also the shop-side estimator, so it is the first product either way.
-2. The queue as a real state machine with the six rail states plus Draft and Declined, and a "needs you" flag.
-3. Stage 5 before stage 7: a mandate step at release, pre-filled from buyer defaults.
-4. Stage 4 actions: apply a finding and re-price.
-5. Stage 6 as a visible shortlist at release.
-6. Stage 7 escalation on the buyer side, mirroring the shop side.
-7. Stage 8 award actions and the shop profile view.
+1. Stage 2 and 3 for real: intake, read-only spec with provenance, price with confidence. This is also the shop-side estimator, so it is the first product either way.
+2. The release gate on both release buttons, with the five safety checks and the flagged "Release anyway" state.
+3. The buyer profile with the mandate, set up first thing, inherited by every request.
+4. The queue as a real state machine with the six rail states plus Draft and Declined, and a "needs you" flag.
+5. Stage 4 actions: apply a finding and re-price, which also clears the gate.
+6. Stage 6 as a visible shortlist at release, since the gate's "enough qualifying shops" check depends on it.
+7. Stage 8 award actions, the "none inside your mandate" end state, and the shop profile view.
 8. Stage 9, starting with PO and reorder, because it feeds the price function.
