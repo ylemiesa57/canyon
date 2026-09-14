@@ -4,6 +4,7 @@
 (function () {
   const DCLogic = window.DC.DCLogic;
   const MUTED = 'color:color-mix(in srgb,var(--color-text) 55%,transparent)';
+  const MUT_JS = MUTED;
   const ACC = 'color:var(--color-good)';
   const WARN = 'color:var(--color-warn)';
   const BAD = 'color:var(--color-bad)';
@@ -49,6 +50,7 @@
       screen: 'dash', tick: 0, filter: 'all',
       qty: '250', needBy: 'Nov 14, 2026',
       applied: {}, dismissed: {}, released: false, awarded: null, selectedFinding: null,
+      userFiles: [], stlBuffer: null, dragging: false, pickedAt: null,
       releaseDialog: false, theme: readTheme(),
     }, loadProfile());
 
@@ -59,7 +61,34 @@
       window.addEventListener('message', (e) => {
         const m = e.data || {};
         if (m.source === 'canyon-viewer' && m.type === 'select') this.setState({ selectedFinding: m.id || null });
+        // A freshly mounted viewer asks for its model; hand it the buyer's STL if one was dropped.
+        if (m.source === 'canyon-viewer' && m.type === 'ready' && this.state.stlBuffer) this.sendModel();
       });
+    }
+    sendModel() {
+      const v = this.viewer(); if (!v) return;
+      v.postMessage({ type: 'load', model: {
+        name: (this.state.userFiles.find((f) => f.kind === 'STL') || {}).name || 'HAL-4417 Actuator Housing',
+        stlBuffer: this.state.stlBuffer, pdf: '/assets/parts/actuator-housing.pdf',
+        findings: [
+          { id: 'f1', n: '1', sev: 'High', title: 'Wall thickness vs. pocket depth', regions: [{ at: [0.36, 0.5, 0.85], type: 'sphere', radiusFrac: 0.09 }, { at: [0.64, 0.5, 0.85], type: 'sphere', radiusFrac: 0.09 }] },
+          { id: 'f2', n: '2', sev: 'Medium', title: 'Ø0.3750 bores, half-thou band', regions: [{ at: [0.19, 0.11, 1], type: 'sphere', radiusFrac: 0.06 }, { at: [0.81, 0.11, 1], type: 'sphere', radiusFrac: 0.06 }] },
+          { id: 'f3', n: '3', sev: 'Low', title: 'Internal corners at R0.031', regions: [{ at: [0.11, 0.23, 0.7], type: 'sphere', radiusFrac: 0.045 }, { at: [0.89, 0.77, 0.7], type: 'sphere', radiusFrac: 0.045 }] },
+        ] } }, '*');
+    }
+    // Files from the picker or a drop. The output is predetermined; the file names are the buyer's.
+    async takeFiles(list) {
+      const KIND = { stl: 'STL', step: 'STEP', stp: 'STEP', iges: 'IGES', igs: 'IGES', sldprt: 'SolidWorks', x_t: 'Parasolid', pdf: 'Drawing', xlsx: 'Terms sheet', xls: 'Terms sheet', csv: 'Terms sheet' };
+      const files = Array.from(list || []).slice(0, 6).map((f) => {
+        const ext = (f.name.split('.').pop() || '').toLowerCase();
+        return { name: f.name, ext: ext.toUpperCase().slice(0, 4), kind: KIND[ext] || 'File', size: f.size >= 1e6 ? (f.size / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(f.size / 1e3)) + ' KB', file: f };
+      });
+      if (!files.length) return;
+      const stl = files.find((f) => f.kind === 'STL');
+      const readBuffer = (file) => file.arrayBuffer ? file.arrayBuffer() : new Promise((res) => { const rd = new FileReader(); rd.onload = () => res(rd.result); rd.readAsArrayBuffer(file); });
+      const stlBuffer = stl ? await readBuffer(stl.file) : null;
+      this.setState({ userFiles: files.map(({ file, ...rest }) => rest), stlBuffer, dragging: false, pickedAt: Date.now(), applied: {}, dismissed: {}, released: false, awarded: null, selectedFinding: null });
+      this.run();
     }
     viewer() { const f = document.querySelector('iframe[title="Part viewer"]'); return f && f.contentWindow; }
     componentDidUpdate(p, s) { if (s.screen !== this.state.screen) this.run(); }
@@ -190,11 +219,34 @@
       const shown = Math.min(featDefs.length, Math.max(0, t - 1));
       const feats = featDefs.map(([l, v], i) => ({ l, v, vis: this.vis(i < shown, 8) }));
       const pct = Math.min(100, t * 9);
-      const files = [
-        { ext: 'STP', name: 'HAL-4417_rev_c.stp', meta: 'CAD · 18.2 MB', state: t > 1 ? 'Read' : 'Reading…' },
-        { ext: 'PDF', name: 'HAL-4417_RD_bubbled.pdf', meta: 'Drawing · 2.8 MB', state: t > 3 ? 'Read' : 'Queued' },
-        { ext: 'XLS', name: 'halcyon_terms_2026.xlsx', meta: 'Terms sheet · 88 KB', state: t > 5 ? 'Applied' : 'Queued' }
+      const files = st.userFiles.length
+        ? st.userFiles.map((f, i) => ({ ext: f.ext, name: f.name, meta: f.kind + ' · ' + f.size, state: t > 1 + 2 * i ? (f.kind === 'Terms sheet' ? 'Applied' : 'Read') : (i === 0 || t > 2 * i - 1 ? 'Reading…' : 'Queued') }))
+        : [
+          { ext: 'STP', name: 'HAL-4417_rev_c.stp', meta: 'CAD · 18.2 MB', state: t > 1 ? 'Read' : 'Reading…' },
+          { ext: 'PDF', name: 'HAL-4417_RD_bubbled.pdf', meta: 'Drawing · 2.8 MB', state: t > 3 ? 'Read' : 'Queued' },
+          { ext: 'XLS', name: 'halcyon_terms_2026.xlsx', meta: 'Terms sheet · 88 KB', state: t > 5 ? 'Applied' : 'Queued' }
+        ];
+      const cadName = (st.userFiles.find((f) => ['STL', 'STEP', 'IGES', 'SolidWorks', 'Parasolid'].includes(f.kind)) || {}).name || 'HAL-4417_rev_c.stp';
+      const stepDefs = [
+        [0, 'Reading ' + cadName], [2, '412 faces, 34 holes, 3 setups found'], [4, 'Reading the print: 12 tolerances, 7 GD&T frames, Ra 32'],
+        [6, 'Terms applied from your profile: ' + P.terms + ', ' + (P.certsRequired.join(', ') || 'no certs') + ' required'], [8, 'Pricing against 4 comparable parts'],
+        [11, 'Priced: $' + likely.toFixed(2) + ' ± $14, 4 to 6 weeks'], [12, 'Release checks: ' + (5 - failing.length) + ' of 5 passing'],
       ];
+      const agentSteps = stepDefs.filter(([at]) => t >= at).map(([at, text], i, arr) => {
+        const current = i === arr.length - 1 && t < 12;
+        return { text, mark: current ? '…' : '✓', st: current ? 'color:var(--color-text)' : MUT_JS };
+      });
+      const agentElapsed = t >= 12 ? 'done in ' + (t * 0.42).toFixed(0) + ' s' : (t * 0.42).toFixed(0) + ' s';
+      const feed = [
+        st.awarded ? { when: 'just now', text: 'Awarded RFQ-4417: ' + st.awarded.label } : null,
+        st.released ? { when: 'just now', text: 'Released RFQ-4417 to ' + qualifying.length + ' verified shops inside your mandate (ceiling ' + money(ceiling) + ')' } : null,
+        st.pickedAt ? { when: 'just now', text: 'Read ' + st.userFiles.length + ' file' + (st.userFiles.length === 1 ? '' : 's') + ' for RFQ-4417 and priced the part at ' + money(likely) } : null,
+        { when: '2 min', text: 'Countered Midstate at $455 on RFQ-4417. Net 45 is hard in your mandate.' },
+        { when: '14 min', text: 'RFQ-1235: the shop paused under its own floor on your $4,480 final. Waiting on Cascade CNC.' },
+        { when: '1 h', text: 'Ranked 4 offers on RFQ-4402 by your weights. Recommending Midstate at $412.' },
+        { when: '3 h', text: 'Priced RFQ-4388 Isogrid Panel: $312 to $355, low confidence on the .090 ribs.' },
+        { when: '1 d', text: 'RFQ-4396 reorder: matched the same 3 shops as the last three releases.' },
+      ].filter(Boolean).slice(0, 6);
       const reqFields = [
         { l: 'Quantity', v: st.qty, tag: 'You', tagStyle: MUTED, editable: true, readonly: false, set: (e) => this.setState({ qty: e.target.value }) },
         { l: 'Material', v: '6061-T6', tag: 'From CAD', tagStyle: INFO, editable: false, readonly: true },
@@ -302,6 +354,15 @@
         rows, kpis, filters, profileSet: st.profileSet, profileMissing: !st.profileSet,
         // new request
         files, feats, reqFields, certs, extractPct: String(pct), extractW: 'width:' + pct + '%',
+        pickFiles: (e) => this.takeFiles(e.target.files),
+        dropFiles: (e) => { e.preventDefault(); this.takeFiles(e.dataTransfer && e.dataTransfer.files); },
+        dragOver: (e) => { e.preventDefault(); if (!st.dragging) this.setState({ dragging: true }); },
+        dragLeave: () => { if (st.dragging) this.setState({ dragging: false }); },
+        dropSt: st.dragging ? 'border-color:var(--color-accent);background:var(--color-accent-100)' : '',
+        dropNote: st.userFiles.length ? st.userFiles.length + ' file' + (st.userFiles.length === 1 ? '' : 's') + ' from your machine' : 'or drop them here',
+        agentSteps, agentElapsed, agentDotSt: t >= 12 ? 'animation:none;background:var(--color-good)' : '',
+        // queue
+        feed,
         priceVis: pct >= 100 ? 'opacity:1' : 'opacity:.25;pointer-events:none',
         unitPrice: money(likely), bandText: '± $14 · 4–6 weeks' + (savings ? ' · re-priced after ' + Object.keys(st.applied).filter((k) => st.applied[k]).length + ' change' + (savings > 14.9 ? 's' : '') : ''),
         qtyLabel: st.qty + ' ea',
