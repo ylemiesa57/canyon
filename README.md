@@ -25,3 +25,15 @@ External dependencies load from CDNs: Three.js 0.160 from cdnjs, Archivo and IBM
 ## Placeholders to replace
 
 Search the HTML for `Placeholder` comments. Customer wordmarks, the shop list, the quote-time figures, and plan prices are stand-ins until pilot data exists. The trial and login forms have no backend yet.
+
+## Working on it
+
+Branch from `main`, open a pull request, merge when the checks are green. Vercel posts a preview link on every PR; the buyer app is at `/app` and the shop app at `/app/shop` on that preview.
+
+```
+npm install          # once, installs jsdom for the tests
+npm run check        # scripts parse, local asset links resolve, landing copy follows house style
+npm test             # drives the buyer and shop apps headlessly and checks the main flows
+```
+
+The same two commands run in GitHub Actions on every pull request and on every push to `main` (`.github/workflows/pr.yml`). The PR template lists what to fill in.

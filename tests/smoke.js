@@ -1,0 +1,105 @@
+// Headless smoke tests for the buyer and shop apps. Runs the real pages in jsdom with the
+// site-absolute asset paths rewritten to a temp folder, drives the main flows, and asserts
+// on what the screens say. Kept independent of visual details so a design pass does not break it.
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const { JSDOM } = require("jsdom");
+
+const root = path.resolve(__dirname, "..");
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+let failures = 0;
+const check = (cond, msg) => { if (cond) console.log("  ok  ", msg); else { failures++; console.error("  FAIL", msg); } };
+
+function stage() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "canyon-smoke-"));
+  const copy = (src, dst, rewrite) => {
+    let s = fs.readFileSync(path.join(root, src), "utf8");
+    if (rewrite) s = rewrite(s);
+    fs.mkdirSync(path.dirname(path.join(dir, dst)), { recursive: true });
+    fs.writeFileSync(path.join(dir, dst), s);
+  };
+  copy("app/index.html", "buyer.html", (s) => s.replace(/\/app\/app\.css/g, "app.css").replace(/\/app\/runtime\.js/g, "runtime.js").replace(/\/app\/buyer\.js/g, "buyer.js").replace(/src="\/app\/viewer[^"]*"/g, 'src="about:blank"'));
+  copy("app/shop/index.html", "shop.html", (s) => s.replace(/\/app\/app\.css/g, "app.css").replace(/\/app\/runtime\.js/g, "runtime.js").replace(/\/app\/shop\/shop\.js/g, "shop.js"));
+  copy("app/app.css", "app.css"); copy("app/runtime.js", "runtime.js"); copy("app/buyer.js", "buyer.js"); copy("app/shop/shop.js", "shop.js");
+  return dir;
+}
+
+async function load(file, reducedMotion) {
+  const dom = await JSDOM.fromFile(file, {
+    runScripts: "dangerously", resources: "usable", pretendToBeVisual: true,
+    beforeParse(w) {
+      w.matchMedia = () => ({ matches: reducedMotion, addEventListener() {} });
+      // file:// documents cannot change history in jsdom; the apps only use it for the hash
+      w.history.replaceState = () => {}; w.history.pushState = () => {};
+    },
+  });
+  const w = dom.window; const errors = [];
+  w.addEventListener("error", (e) => errors.push(e.message));
+  await new Promise((r) => w.addEventListener("load", r));
+  await wait(150);
+  const root = w.document.getElementById("root");
+  const api = {
+    w, errors, root,
+    text: () => root.textContent.replace(/\s+/g, " ").trim(),
+    has: (s) => api.text().includes(s),
+    btn: (label) => Array.from(root.querySelectorAll("button,a")).find((b) => b.textContent.trim() === label),
+    btnStarts: (prefix) => Array.from(root.querySelectorAll("button,a")).find((b) => b.textContent.trim().startsWith(prefix)),
+    click: async (el, ms = 80) => { if (!el) throw new Error("missing element"); el.dispatchEvent(new w.MouseEvent("click", { bubbles: true })); await wait(ms); },
+    type: async (input, value) => { input.value = value; input.dispatchEvent(new w.Event("input", { bubbles: true })); await wait(40); },
+  };
+  return api;
+}
+
+(async () => {
+  const dir = stage();
+
+  console.log("Buyer app");
+  let b = await load(path.join(dir, "buyer.html"), true); // finished states, no timers to wait on
+  check(b.has("Request queue"), "opens on the queue");
+  check(b.has("Set your mandate first"), "asks for the mandate before first release");
+  const newTab = () => b.btnStarts("New re") || b.btnStarts("New R");
+  await b.click(newTab());
+  check(!!b.btnStarts("Release anyway"), "release is flagged on the example part");
+  check(!b.has("correct anything Canyon got wrong"), "spec screen does not ask to correct Canyon");
+  check(b.root.querySelectorAll("input.input").length >= 2, "quantity and need-by are inputs");
+  await b.click(b.btnStarts("Part"));
+  const apply = Array.from(b.root.querySelectorAll("button")).find((x) => x.textContent.includes("Apply change"));
+  check(!!apply, "findings have an apply action");
+  await b.click(apply);
+  check(b.has("2 findings open"), "applying a finding reduces the open count");
+  await b.click(b.btn("Profile"));
+  await b.click(b.btn("Save mandate"));
+  check(b.has("Request queue") && !b.has("Set your mandate first"), "saving the mandate returns to a queue without the banner");
+  await b.click(newTab());
+  check(!!b.btn("Release to shops") && !b.btnStarts("Release anyway"), "release is clean after the fix and the mandate");
+  await b.click(b.btn("Release to shops"));
+  check(b.has("negotiation") && b.has("Matched"), "release opens the negotiation with the matched shops");
+  await b.click(b.btn("Go to offers"));
+  check(/\d shops responded/.test(b.text()), "offers screen lists the responding shops");
+  await b.click(b.btn("Accept recommendation"));
+  check(b.has("Awarded."), "accepting the split awards the RFQ");
+  await b.click(b.btn("Queue"));
+  check(/RFQ-4417.*?Awarded/.test(b.text()), "queue shows the RFQ as awarded");
+  check(b.errors.length === 0, "no runtime errors (" + b.errors.join("; ") + ")");
+  b.w.close();
+
+  console.log("Shop app");
+  const s = await load(path.join(dir, "shop.html"), false);
+  check(s.root.querySelectorAll("tbody tr").length >= 8, "inbox lists the RFQs");
+  check(s.has("Halcyon Industrial") && !s.has("US$"), "cast and currency are synced with the buyer side");
+  for (const tab of ["Ingest", "Part", "Costing", "Quote", "Negotiation", "My shop", "Quote PDF", "Inbox"]) {
+    await s.click(s.btn(tab), 60);
+    check(s.text().length > 600, "tab renders: " + tab);
+  }
+  await s.click(s.btn("Close"));
+  check(!s.root.querySelector("aside"), "agent panel closes");
+  await s.click(s.btn("Agent"));
+  check(!!s.root.querySelector("aside"), "agent panel reopens");
+  check(s.errors.length === 0, "no runtime errors (" + s.errors.join("; ") + ")");
+  s.w.close();
+
+  fs.rmSync(dir, { recursive: true, force: true });
+  if (failures) { console.error(`\n${failures} smoke check(s) failed`); process.exit(1); }
+  console.log("\nAll smoke checks passed");
+})().catch((e) => { console.error("SMOKE FAIL", e); process.exit(1); });
