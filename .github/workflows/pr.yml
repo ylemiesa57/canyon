@@ -1,8 +1,7 @@
 name: PR checks
 
 on:
-  pull_request:
-    branches: [main]
+  pull_request:   # every PR, including stacked ones that target another branch
   push:
     branches: [main]
 

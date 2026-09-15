@@ -168,10 +168,10 @@
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:1px solid var(--color-divider-strong);border-bottom:1px solid var(--color-divider);margin-bottom:22px">
     <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
-      <div style="padding:16px 20px 18px 0;border-right:1px solid var(--color-divider)">
-        <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ k.l }}</div>
-        <div style="font-family:var(--font-heading);font-weight:700;font-size:25px;margin-top:5px;font-variant-numeric:tabular-nums">{{ k.v }}</div>
-        <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ k.s }}</div>
+      <div class="kpi-tile" style="padding:20px 24px 22px 0;border-right:1px solid var(--color-divider)">
+        <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:10px">{{ k.l }}</div>
+        <div style="font-family:var(--font-heading);font-weight:700;font-size:28px;line-height:1.1;margin-bottom:8px;font-variant-numeric:tabular-nums">{{ k.v }}</div>
+        <div style="font-size:12px;line-height:1.4;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ k.s }}</div>
       </div>
     </sc-for>
   </div>
@@ -208,7 +208,15 @@
       <div style="font-size:12.5px;font-variant-numeric:tabular-nums">{{ r.need }}</div>
     </div>
   </sc-for>
-  <div style="margin-top:16px;font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Stages advance automatically — Canyon only interrupts you when a decision is required.</div>
+  <div style="margin-top:28px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start">
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px"><span class="pulse-dot"></span>Your agent, last 24 hours</div>
+      <sc-for list="{{ feed }}" as="a" hint-placeholder-count="6">
+        <div style="display:grid;grid-template-columns:72px 1fr;gap:12px;padding:9px 0;border-top:1px solid var(--color-divider);font-size:13px"><span style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent);font-variant-numeric:tabular-nums">{{ a.when }}</span><span>{{ a.text }}</span></div>
+      </sc-for>
+    </div>
+    <div style="font-size:12.5px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 55%,transparent);padding-top:26px">Stages advance on their own. Your agent reads, prices, matches, and negotiates inside your mandate, and only stops for the three decisions that are yours: release, a design change, and the award.</div>
+  </div>
 </div>
 </sc-if>
 
@@ -219,10 +227,11 @@
   <p style="margin:0 0 22px;font-size:14px;color:color-mix(in srgb,var(--color-text) 65%,transparent)">Drop the CAD. Everything below fills itself in.</p>
   <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:26px;align-items:start">
     <div>
-      <div style="border:2px dashed color-mix(in srgb,var(--color-text) 40%,transparent);padding:38px 26px;background:color-mix(in srgb,var(--color-text) 3%,transparent)">
-        <div style="font-family:var(--font-heading);font-weight:700;font-size:19px;margin-bottom:6px">Drop STEP, IGES, SLDPRT, X_T — or a folder</div>
-        <div style="font-size:13px;color:color-mix(in srgb,var(--color-text) 62%,transparent);margin-bottom:16px">Drawings and PDFs are read too: Canyon pulls tolerances, finish callouts and notes off the print.</div>
-        <button class="btn btn-secondary" style="padding:9px 16px">Browse files</button>
+      <div sc-on-drop="{{ dropFiles }}" sc-on-dragover="{{ dragOver }}" sc-on-dragleave="{{ dragLeave }}" style="border:2px dashed color-mix(in srgb,var(--color-text) 40%,transparent);padding:38px 26px;background:color-mix(in srgb,var(--color-text) 3%,transparent);transition:border-color .15s ease,background .15s ease;{{ dropSt }}">
+        <div style="font-family:var(--font-heading);font-weight:700;font-size:19px;margin-bottom:6px">Drop STEP, STL, IGES, SLDPRT, X_T — or a folder</div>
+        <div style="font-size:13px;color:color-mix(in srgb,var(--color-text) 62%,transparent);margin-bottom:16px">Drawings and PDFs are read too: Canyon pulls tolerances, finish callouts and notes off the print. An STL shows up in the 3D viewer on Part &amp; DFM.</div>
+        <label class="btn btn-secondary" style="padding:9px 16px;cursor:pointer">Browse files<input type="file" multiple accept=".stl,.step,.stp,.iges,.igs,.sldprt,.x_t,.pdf,.xlsx,.xls,.csv" sc-on-change="{{ pickFiles }}" style="display:none"></label>
+        <span style="margin-left:12px;font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ dropNote }}</span>
       </div>
       <div style="margin-top:18px;border-top:1px solid var(--color-divider-strong)">
         <sc-for list="{{ files }}" as="f" hint-placeholder-count="3">
@@ -264,6 +273,12 @@
     </div>
 
     <div style="border:1px solid var(--color-divider-strong);background:var(--color-surface);position:sticky;top:74px">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--color-divider-strong)">
+        <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;margin-bottom:8px"><span class="pulse-dot" style="{{ agentDotSt }}"></span>Your agent<span style="margin-left:auto;font-weight:400;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ agentElapsed }}</span></div>
+        <sc-for list="{{ agentSteps }}" as="s" hint-placeholder-count="6">
+          <div style="display:flex;gap:8px;align-items:baseline;font-size:12.5px;padding:3px 0;{{ s.st }}"><span style="width:14px;flex:none;text-align:center;font-size:11px">{{ s.mark }}</span><span>{{ s.text }}</span></div>
+        </sc-for>
+      </div>
       <div style="padding:12px 16px;border-bottom:1px solid var(--color-divider-strong);display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:12px;letter-spacing:0;font-weight:500">Feature extraction</span>
         <span style="font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--color-accent-700)">{{ extractPct }}%</span>

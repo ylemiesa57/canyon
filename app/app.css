@@ -354,3 +354,6 @@ tr.is-hot .cost-dot, tr.is-pin .cost-dot { background: var(--color-accent); }
 /* — KPI band cells (shop): a quarter inch between the divider and the text; the first cell stays on the page edge — */
 .kpi-cell { padding: 16px 20px 18px 24px; border-right: 1px solid var(--color-divider); }
 .kpi-cell:first-child { padding-left: 0; }
+
+.kpi-tile + .kpi-tile { padding-left: 24px !important; }
+.kpi-tile:last-child { border-right: 0 !important; }
