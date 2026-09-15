@@ -52,6 +52,7 @@
       applied: {}, dismissed: {}, released: false, awarded: null, selectedFinding: null,
       userFiles: [], stlBuffer: null, dragging: false, pickedAt: null,
       awards: [], quoteFor: null, quoteFrom: 'offers', badgeBump: 0, bioOpen: {},
+      agent: 'min', chat: [], chatInput: '', chatSeen: 0,
       releaseDialog: false, theme: readTheme(),
     }, loadProfile());
 
@@ -92,6 +93,12 @@
       this.run();
     }
     viewer() { const f = document.querySelector('iframe[title="Part viewer"]'); return f && f.contentWindow; }
+    // Agent chat: canned, in the RFQ's context.
+    ask(q, a) {
+      const t = new Date(); const hhmm = t.getHours().toString().padStart(2, '0') + ':' + t.getMinutes().toString().padStart(2, '0');
+      const chat = this.state.chat.concat([{ who: 'You', time: hhmm, text: q }, { who: 'Your agent', time: hhmm, text: a }]);
+      this.setState({ chat, chatInput: '' });
+    }
     // Award animation: a ghost of the offer swoops into the Profile tab, whose badge then bumps.
     fly(fromEl, label) {
       const tab = document.querySelector('[data-tab="profile"]');
@@ -260,11 +267,11 @@
       const feats = featDefs.map(([l, v], i) => ({ l, v, vis: this.vis(i < shown, 8) }));
       const pct = Math.min(100, t * 9);
       const files = st.userFiles.length
-        ? st.userFiles.map((f, i) => ({ ext: f.ext, name: f.name, meta: f.kind + ' · ' + f.size, state: t > 1 + 2 * i ? (f.kind === 'Terms sheet' ? 'Applied' : 'Read') : (i === 0 || t > 2 * i - 1 ? 'Reading…' : 'Queued') }))
+        ? st.userFiles.map((f, i) => ({ ext: f.ext, name: f.name, meta: f.kind + ' · ' + f.size, read: t > 1 + 2 * i ? ({ STL: '412 faces · 34 holes · 3 setups · 0.61 kg', STEP: '412 faces · 34 holes · 3 setups · 0.61 kg', Drawing: '12 tolerances · 7 GD&T frames · Ra 32 · 9 notes', 'Terms sheet': 'Net 45 · qty ' + st.qty + ' · need by Nov 14' }[f.kind] || 'read as reference') : '', state: t > 1 + 2 * i ? (f.kind === 'Terms sheet' ? 'Applied' : 'Read') : (i === 0 || t > 2 * i - 1 ? 'Reading…' : 'Queued') }))
         : [
-          { ext: 'STP', name: 'HAL-4417_rev_c.stp', meta: 'CAD · 18.2 MB', state: t > 1 ? 'Read' : 'Reading…' },
-          { ext: 'PDF', name: 'HAL-4417_RD_bubbled.pdf', meta: 'Drawing · 2.8 MB', state: t > 3 ? 'Read' : 'Queued' },
-          { ext: 'XLS', name: 'halcyon_terms_2026.xlsx', meta: 'Terms sheet · 88 KB', state: t > 5 ? 'Applied' : 'Queued' }
+          { ext: 'STP', name: 'HAL-4417_rev_c.stp', meta: 'CAD · 18.2 MB', read: t > 1 ? '412 faces · 34 holes · 3 setups · 0.61 kg' : '', state: t > 1 ? 'Read' : 'Reading…' },
+          { ext: 'PDF', name: 'HAL-4417_RD_bubbled.pdf', meta: 'Drawing · 2.8 MB', read: t > 3 ? '12 tolerances · 7 GD&T frames · Ra 32 · 9 notes' : '', state: t > 3 ? 'Read' : 'Queued' },
+          { ext: 'XLS', name: 'halcyon_terms_2026.xlsx', meta: 'Terms sheet · 88 KB', read: t > 5 ? 'Net 45 · qty 250 · need by Nov 14 · ISO 9001 required' : '', state: t > 5 ? 'Applied' : 'Queued' }
         ];
       const cadName = (st.userFiles.find((f) => ['STL', 'STEP', 'IGES', 'SolidWorks', 'Parasolid'].includes(f.kind)) || {}).name || 'HAL-4417_rev_c.stp';
       const stepDefs = [
@@ -392,6 +399,7 @@
           bars: o.bars.map(([l, v]) => ({ l, v: v + '%', w: 'width:' + v + '%' }))
         };
       });
+      const chatAll = [{ who: 'Your agent', time: '09:58', text: st.awarded ? 'Award sent. I will draft the PO and watch the first-article date.' : st.released ? 'Two sources are inside your mandate. I am recommending a 60/40 split so both stay qualified for the quarterly reorder.' : 'I priced HAL-4417 at ' + money(likely) + ' from 4 comparable parts. Release checks: ' + (5 - failing.length) + ' of 5 passing.' }].concat(st.chat);
       const splitA = Math.round(qtyN * 0.6), splitB = qtyN - splitA;
       const quoteDefs = { r: ['Ridgeline Tool Works', 'Elkhart, IN', 94.9, '4 weeks'], m: ['Midstate Precision', 'Dayton, OH', 96.4, '4.5 weeks'], c: ['Cascade CNC', 'Bend, OR', 99.1, '6 weeks'], split: ['Ridgeline Tool Works', 'Elkhart, IN', 94.9, '4 weeks'] };
       const qd = quoteDefs[st.quoteFor] || quoteDefs.c;
@@ -427,6 +435,22 @@
         priceVis: pct >= 100 ? 'opacity:1' : 'opacity:.25;pointer-events:none',
         unitPrice: money(likely), bandText: '± $14 · 4–6 weeks' + (savings ? ' · re-priced after ' + Object.keys(st.applied).filter((k) => st.applied[k]).length + ' change' + (savings > 14.9 ? 's' : '') : ''),
         qtyLabel: st.qty + ' ea',
+        // agent drawer
+        agentOpen: st.agent === 'open', agentMin: st.agent === 'min',
+        agentBtnSt: st.agent === 'open' ? 'border-color:var(--color-accent)' : '',
+        agentToggle: () => this.setState({ agent: st.agent === 'open' ? 'min' : 'open', chatSeen: chatAll.length }),
+        agentMinimize: () => this.setState({ agent: 'min' }), agentClose: () => this.setState({ agent: 'closed' }),
+        agentExpand: () => this.setState({ agent: 'open', chatSeen: chatAll.length }),
+        agentContext: 'on RFQ-4417 · ' + (st.awarded ? 'awarded' : st.released ? 'negotiating' : 'priced'),
+        agentUnread: chatAll.length > st.chatSeen, agentUnreadCount: String(chatAll.length - st.chatSeen),
+        chat: chatAll.map((m) => ({ who: m.who, time: m.time, text: m.text, align: m.who === 'You' ? 'flex-end' : 'flex-start', bg: m.who === 'You' ? 'var(--color-surface)' : 'var(--color-accent-100)', rule: m.who === 'You' ? 'transparent' : 'var(--color-accent)' })),
+        suggestions: [
+          { label: 'Why this ceiling?', ask: () => this.ask('Why this ceiling?', 'Your profile sets the ceiling at Canyon\'s likely price' + (ceilingPct ? ' plus ' + ceilingPct + '%' : '') + '. On this part that is ' + money(ceiling) + '. ' + (bids.filter((o) => o.prices[phase] * k <= ceiling).length || 'None') + ' of ' + (bids.length || 3) + ' bids sit inside it.') },
+          { label: 'Why these shops?', ask: () => this.ask('Why these shops?', 'Six verified shops were considered against your mandate. ' + excluded.map((x) => x.name + ' is out: ' + x.why).join('. ') + '. ' + qualifying.map((q) => q.name).join(', ') + ' pass every hard criterion.') },
+          { label: 'What changed the price?', ask: () => this.ask('What changed the price?', savings ? 'Applying ' + Object.keys(st.applied).filter((x) => st.applied[x]).length + ' design change(s) took ' + money(savings) + ' off the likely price and scaled every bid by the same ' + Math.round((1 - k) * 100) + '%. The band is now ' + money(bandLoF) + ' to ' + money(bandHiF) + '.' : 'Nothing yet. The likely price is ' + money(likely) + ' from 4 comparable parts. Applying finding 1 on Part & DFM would take $14.90 off it and move every bid with it.') },
+        ],
+        chatInput: st.chatInput, chatType: (e) => this.setState({ chatInput: e.target.value }),
+        chatSend: () => { const q = (st.chatInput || '').trim(); if (q) this.ask(q, 'I can check that against your mandate and the negotiation record for RFQ-4417. Ridgeline\'s ' + bid(94.9) + ' is the best live offer inside your ' + money(ceiling) + ' ceiling; say the word and I will surface the offers.'); },
         // nav
         inRfq: ['rfq', 'part', 'neg', 'offers', 'quote'].includes(sc), stages, goHome: this.go('home'),
         toggleTheme: () => { const next = st.theme === '' ? 'dark' : st.theme === 'dark' ? 'light' : ''; applyTheme(next); this.setState({ theme: next }); },
