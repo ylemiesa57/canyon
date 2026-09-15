@@ -34,6 +34,7 @@
       <button sc-camel-on-click="{{ toggleTheme }}" class="btn btn-ghost" style="font-size:12px;padding:4px 8px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ themeLabel }}</button>
       <a href="{{ shopLink }}" style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent);text-decoration:none;white-space:nowrap">Shop side</a>
       <span style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Halcyon Industrial · Buyer</span>
+      <button sc-camel-on-click="{{ agentToggle }}" class="btn btn-secondary" style="padding:5px 10px;font-size:12px;gap:8px;{{ agentBtnSt }}"><span class="pulse-dot" style="width:8px;height:8px"></span>Agent</button>
       <div style="width:28px;height:28px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-family:var(--font-heading);font-weight:700;font-size:11px">DM</div>
     </div>
   </div>
@@ -251,6 +252,7 @@
             <div style="flex:1;min-width:0">
               <div style="font-size:13.5px;font-weight:600">{{ f.name }}</div>
               <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ f.meta }}</div>
+              <div style="font-size:11px;margin-top:2px;color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ f.read }}</div>
             </div>
             <span style="font-size:12px;letter-spacing:0;font-weight:500;color:var(--color-accent-700)">{{ f.state }}</span>
           </div>
@@ -572,22 +574,22 @@
     <div style="display:flex;gap:8px"><button sc-camel-on-click="{{ quoteBack }}" class="btn btn-secondary">Back</button><button class="btn btn-primary">Download</button></div>
   </div>
   <div class="hr" style="margin:16px 0"></div>
-  <div style="max-width:760px;background:#f3f2f2;color:#201e1d;padding:40px 44px;box-shadow:var(--shadow-lg);font-size:13px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:2px solid #201e1d;padding-bottom:16px">
-      <div style="display:flex;align-items:center;gap:10px;font:700 18px var(--font-heading)"><span style="width:16px;height:16px;background:var(--color-accent);display:inline-block"></span>{{ quote.shop }}</div>
-      <div style="text-align:right;font-size:12px;line-height:1.5">Quotation {{ quote.no }}<br>Sep 14, 2026 · valid 90 days<br>{{ quote.loc }}</div>
+  <div class="paper">
+    <div class="paper-head">
+      <div class="paper-brand"><i></i>{{ quote.shop }}</div>
+      <div class="paper-meta">Quotation {{ quote.no }}<br>Sep 14, 2026 · valid 90 days<br>{{ quote.loc }}</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:16px 0;font-size:12px;line-height:1.5">
-      <div><div style="font-size:11.5px;color:#7d7979">To</div>Halcyon Industrial<br>Grand Rapids, MI<br>RFQ-4417 · Actuator Housing · Rev C</div>
-      <div><div style="font-size:11.5px;color:#7d7979">Terms</div>{{ quote.terms }} · Ex Works {{ quote.loc }}<br>Lead {{ quote.lead }}<br>Material 6061-T6 per AMS-QQ-A-250/11 · bead blast + clear anodize</div>
+    <div class="paper-cols">
+      <div><div class="paper-k">To</div>Halcyon Industrial<br>Grand Rapids, MI<br>RFQ-4417 · Actuator Housing · Rev C</div>
+      <div><div class="paper-k">Terms</div>{{ quote.terms }} · Ex Works {{ quote.loc }}<br>Lead {{ quote.lead }}<br>Material 6061-T6 per AMS-QQ-A-250/11 · bead blast + clear anodize</div>
     </div>
-    <div style="margin-top:12px"><b style="font-family:var(--font-heading)">HAL-4417</b> <span style="color:#605d5d">Actuator Housing · 6061-T6</span></div>
-    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px">
-      <thead><tr style="text-align:left;color:#7d7979;font-size:11.5px"><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Qty</th><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Unit price</th><th style="padding:6px 0;border-bottom:1px solid #bab6b6">Line total</th></tr></thead>
-      <tbody><tr sc-each="{{ quote.lines }}" sc-as="l"><td class="tnum" style="padding:6px 0;border-bottom:1px solid #d7d3d3">{{ l.qty }}</td><td class="tnum" style="padding:6px 0;border-bottom:1px solid #d7d3d3">{{ l.price }}</td><td class="tnum" style="padding:6px 0;border-bottom:1px solid #d7d3d3">{{ l.total }}</td></tr></tbody>
+    <div class="paper-line"><b>HAL-4417</b> <span>Actuator Housing · 6061-T6</span></div>
+    <table class="paper-table">
+      <thead><tr><th>Qty</th><th>Unit price</th><th>Line total</th></tr></thead>
+      <tbody><tr sc-each="{{ quote.lines }}" sc-as="l"><td>{{ l.qty }}</td><td>{{ l.price }}</td><td>{{ l.total }}</td></tr></tbody>
     </table>
-    <div style="display:flex;justify-content:flex-end;margin-top:20px"><div style="min-width:260px;border-top:2px solid #201e1d;padding-top:10px;font-size:12px"><div style="display:flex;justify-content:space-between;padding:4px 0"><span>First article inspection</span><b class="tnum">included</b></div><div style="display:flex;justify-content:space-between;padding:4px 0"><span>Certs to Halcyon QA</span><b class="tnum">included</b></div><div style="display:flex;justify-content:space-between;padding:8px 0 0;font:700 16px var(--font-heading)"><span>Quote total, qty {{ quote.qty }}</span><span class="tnum">{{ quote.total }}</span></div></div></div>
-    <div style="margin-top:28px;font-size:11px;color:#7d7979;line-height:1.5">Prices in USD, exclusive of taxes and freight. Negotiated by Canyon inside the buyer's mandate; {{ quote.note }} Generated by Canyon for {{ quote.shop }}.</div>
+    <div class="paper-totals"><div><div class="paper-row"><span>First article inspection</span><b class="tnum">included</b></div><div class="paper-row"><span>Certs to Halcyon QA</span><b class="tnum">included</b></div><div class="paper-grand"><span>Quote total, qty {{ quote.qty }}</span><span class="tnum">{{ quote.total }}</span></div></div></div>
+    <div class="paper-note">Prices in USD, exclusive of taxes and freight. Negotiated by Canyon inside the buyer's mandate; {{ quote.note }} Generated by Canyon for {{ quote.shop }}.</div>
   </div>
 </div>
 </sc-if>
@@ -652,6 +654,26 @@
   </div>
 </div>
 </sc-if>
+<!-- ══ AGENT DRAWER (shared shape with the shop side) ══ -->
+<sc-if value="{{ agentOpen }}" hint-placeholder-val="{{ false }}">
+  <aside class="agent-drawer">
+    <div class="drawer-head"><span class="pulse-dot" style="width:8px;height:8px"></span><b style="font-family:var(--font-heading);font-weight:700;font-size:13.5px">Your agent</b><span style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ agentContext }}</span><span class="ctl"><button sc-camel-on-click="{{ agentMinimize }}" title="Minimize">–</button><button sc-camel-on-click="{{ agentClose }}" title="Close">×</button></span></div>
+    <div style="flex:1 1 0%;overflow:auto;padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);font-size:13px">
+      <sc-for list="{{ chat }}" as="c" hint-placeholder-count="4">
+        <div style="align-self:{{ c.align }};max-width:92%;background:{{ c.bg }};padding:10px 12px;border-left:2px solid {{ c.rule }};border-radius:var(--radius-sm)"><div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:4px">{{ c.who }} · {{ c.time }}</div>{{ c.text }}</div>
+      </sc-for>
+    </div>
+    <div style="padding:var(--space-3) var(--space-4);border-top:1px solid var(--color-divider);display:flex;flex-direction:column;gap:8px">
+      <div class="chat-suggest"><sc-for list="{{ suggestions }}" as="q" hint-placeholder-count="3"><button sc-camel-on-click="{{ q.ask }}">{{ q.label }}</button></sc-for></div>
+      <div style="display:flex;gap:6px"><input class="input" id="agent-input" placeholder="Ask about this part, the shops, or your mandate" sc-on-input="{{ chatType }}" value="{{ chatInput }}"><button sc-camel-on-click="{{ chatSend }}" class="btn btn-primary">↑</button></div>
+      <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">The agent can be wrong. Check the mandate and the offer before you award.</div>
+    </div>
+  </aside>
+</sc-if>
+<sc-if value="{{ agentMin }}" hint-placeholder-val="{{ true }}">
+  <button class="agent-bubble" sc-camel-on-click="{{ agentExpand }}" title="Open your agent"><span class="pulse-dot"></span>Agent<sc-if value="{{ agentUnread }}" hint-placeholder-val="{{ false }}"><span class="unread">{{ agentUnreadCount }}</span></sc-if></button>
+</sc-if>
+
 <!-- ══ RELEASE DIALOG ══ -->
 <sc-if value="{{ releaseDialog }}" hint-placeholder-val="{{ false }}">
   <div class="dialog-backdrop" style="z-index:60">
