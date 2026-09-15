@@ -34,7 +34,7 @@
     <nav aria-label="Primary">
       <ul class="nav-links">
         <li><a href="#how">How it works</a></li>
-        <li><a href="#inside">Inside a quote</a></li>
+        <li><a href="#inside">What you get</a></li>
         <li><a href="#demo">Demo</a></li>
         <li><a href="#pricing">Pricing</a></li>
       </ul>
@@ -64,7 +64,7 @@
           <p class="hero-sub">Quoting, capability checks, verification and the back and forth normally take weeks. On Canyon they all happen the day you upload the file.</p>
           <div class="hero-actions">
             <a class="btn btn-primary btn-lg" href="#trial">Price a part</a>
-            <a class="btn btn-secondary btn-lg" href="#inside">See a priced part</a>
+            <a class="btn btn-secondary btn-lg" href="#inside">See a real example</a>
           </div>
         </div>
         <div data-audience="shop">
@@ -72,7 +72,7 @@
           <p class="hero-sub">Canyon reads the email, the drawing and the model, costs the job op by op at your rates, and drafts the quote. Your agent negotiates while you're at the machine.</p>
           <div class="hero-actions">
             <a class="btn btn-primary btn-lg" href="#trial">Start free trial</a>
-            <a class="btn btn-secondary btn-lg" href="#inside">See a costed job</a>
+            <a class="btn btn-secondary btn-lg" href="#inside">See a real example</a>
           </div>
         </div>
         <p class="hero-hint">Drag to orbit. Click the canyon to send a pulse.</p>
@@ -85,8 +85,12 @@
     <div class="wrap">
       <div class="panel trusted reveal">
         <p class="trusted-label"><span data-audience="buyer">Verified shops</span><span data-audience="shop">Buyers sending RFQs</span></p>
-        <!-- Placeholder wordmarks, drawn from the shops and buyers in the app mockups.
-             Swap for real logos as shops onboard and buyers sign. -->
+        <!-- Buyer view lists shops, shop view lists buyers, so each side sees its own supply.
+             The MIT groups are the world Vasu works in and are the kind of team that buys
+             machined parts one or two at a time. PERMISSION PENDING: one researcher using
+             Canyon is not the same as his lab or his department endorsing it. Get written
+             sign-off from each group, or drop the name, before this ships.
+             Shop names remain stand-ins until real shops onboard. -->
         <ul class="logo-row" data-audience="buyer">
           <li class="w1">Ridgeline</li>
           <li class="w2">Ironwood</li>
@@ -95,11 +99,11 @@
           <li class="w5">Halvorsen</li>
         </ul>
         <ul class="logo-row" data-audience="shop">
-          <li class="w1">Halcyon</li>
-          <li class="w2">Redline</li>
-          <li class="w3">meridian_robotics</li>
-          <li class="w4">Sable Aerospace</li>
-          <li class="w5">Northwind Ag</li>
+          <li class="w1">MIT MechE</li>
+          <li class="w2">Edgerton Center</li>
+          <li class="w3">mit_nano</li>
+          <li class="w4">MIT Motorsports</li>
+          <li class="w5">Rocket Team</li>
         </ul>
       </div>
     </div>
@@ -160,49 +164,49 @@
     </div>
   </section>
 
-  <!-- Inside a quote: what goes in, what comes out -->
+  <!-- What you get: what you send on the left, what comes back on the right, in plain words -->
   <section class="section" id="inside">
     <div class="wrap">
       <div class="panel reveal">
-        <h2><span data-audience="buyer">Inside a priced part</span><span data-audience="shop">Inside a costed job</span></h2>
+        <h2><span data-audience="buyer">Upload a file. Get a real price.</span><span data-audience="shop">An RFQ lands. A quote comes out.</span></h2>
 
         <div class="inside" data-audience="buyer">
           <div class="inside-col">
-            <p class="col-label">Read from your upload</p>
+            <p class="col-label">You send</p>
             <ul class="spec">
-              <li><span class="k">HAL-4417_rev_c.stp</span><span class="v">STEP AP214. 3 setups, 412 faces, 34 holes, 12 threaded, 71% of the billet removed.</span></li>
-              <li><span class="k">HAL-4417_RD_bubbled.pdf</span><span class="v">7 GD&amp;T frames, tightest tolerance 0.0005 in, Ra 32 and bead blast.</span></li>
-              <li><span class="k">halcyon_terms_2026.xlsx</span><span class="v">Net 45, ISO 9001 required, domestic only, material certs to QA.</span></li>
+              <li><span class="k">The 3D model</span><span class="v">Whatever your CAD program saves. You do not have to prepare anything.</span></li>
+              <li><span class="k">The drawing</span><span class="v">If you have one. Canyon reads the dimensions and the notes off it.</span></li>
+              <li><span class="k">Your terms</span><span class="v">How you pay, what certifications you need. Set once, applied to everything after.</span></li>
             </ul>
           </div>
           <div class="inside-col">
-            <p class="col-label">What comes back</p>
+            <p class="col-label">Canyon sends back</p>
             <ul class="spec">
-              <li><span class="k">Price band</span><span class="v">Opens at $62 to $148 and closes on $88 to $104 at 250 ea as comparables land.</span></li>
-              <li><span class="k">Cost drivers</span><span class="v">Machining 62%, material and scrap 21%, setups 11%, inspection 6%.</span></li>
-              <li><span class="k">Findings</span><span class="v">Three on this part. Taking one wall from 0.060 to 0.090 in saves $3,725 at 250 ea.</span></li>
+              <li><span class="k">A price</span><span class="v">$88 to $104 a part at 250. The range tightens as real shops confirm it.</span></li>
+              <li><span class="k">A date</span><span class="v">A lead time checked against how booked those shops actually are.</span></li>
+              <li><span class="k">Why it costs that</span><span class="v">Most of it is machine time. One wall is thinner than it needs to be: thicken it a little and this order drops $3,725.</span></li>
             </ul>
-            <p class="callout">Canyon's read is the quote, not a form to correct. You supply the quantity and the need-by date. Nothing else.</p>
+            <p class="callout">You never check Canyon's work. You say how many you want and when you need them, and that is the whole job.</p>
           </div>
         </div>
 
         <div class="inside" data-audience="shop">
           <div class="inside-col">
-            <p class="col-label">Read from the RFQ</p>
+            <p class="col-label">What lands</p>
             <ul class="spec">
-              <li><span class="k">BRKT-001.step</span><span class="v">155 x 85 x 42 mm, 14 pockets, 6 bores, minimum wall 1.8 mm, 0.61 kg finished.</span></li>
-              <li><span class="k">BRKT-001-RevA.pdf</span><span class="v">9 notes, 12 tolerances, true position 0.1 on the bores, 100% liquid penetrant.</span></li>
-              <li><span class="k">RE: RFQ 1235.eml</span><span class="v">Quantities 10, 25 and 50. Need by Nov 3. Net 30. Anodize on the plate only.</span></li>
+              <li><span class="k">The whole thread</span><span class="v">Six files and four emails. Canyon reads them together instead of one at a time.</span></li>
+              <li><span class="k">A model, a drawing</span><span class="v">Size, features and every note on the print, pulled off both and matched up.</span></li>
+              <li><span class="k">The contradiction</span><span class="v">The drawing said Rev A and the email said Rev B. Canyon caught it and held the quote.</span></li>
             </ul>
           </div>
           <div class="inside-col">
-            <p class="col-label">Costed on your floor</p>
+            <p class="col-label">What comes out</p>
             <ul class="spec">
-              <li><span class="k">Op10 Rough</span><span class="v">Haas VF-2SS at $85 / hr. 24 min of vise setup, amortised across the ten.</span></li>
-              <li><span class="k">Op30 Bores</span><span class="v">DMU 50 at $95 / hr, because one setup holds true position to datum A.</span></li>
-              <li><span class="k">Unit cost</span><span class="v">$54.32 at 1, $43.18 at 10, $39.21 at 50. Outside ops go in or out on a click.</span></li>
+              <li><span class="k">Your real cost</span><span class="v">Each step priced on the machine that would run it, at the rate you set. Not an industry average.</span></li>
+              <li><span class="k">Every quantity</span><span class="v">$54.32 for one. $43.18 each at ten. $39.21 each at fifty.</span></li>
+              <li><span class="k">A quote to sign</span><span class="v">Four minutes after it landed. Change a number if you want, then send it.</span></li>
             </ul>
-            <p class="callout">The drawing says Rev A and the email says Rev B. Canyon costed Rev A and will hold the quote until the buyer confirms.</p>
+            <p class="callout">Your rates and your floor never leave the shop. Canyon quotes with them. The buyer only ever sees a price.</p>
           </div>
         </div>
       </div>
@@ -294,6 +298,39 @@
           </aside>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Voices.
+       BUYER: Vasu is a real person and a real user. The words are a DRAFT written for him,
+       not a quote he gave. Get his written approval, and approval for the photo, before this
+       ships, and correct anything he would say differently.
+       SHOP: PLACEHOLDER. Dana Reyes and Cascade CNC are invented, like the rest of the shop
+       mock data. This must be replaced with a real shop's own words before launch. Publishing
+       an invented customer quote as if it were real is not something to ship by accident. -->
+  <section class="section" id="voices">
+    <div class="wrap">
+      <figure class="panel quote reveal" data-audience="buyer">
+        <blockquote>
+          <p>I used to email five shops and wait a week to hear back from three of them. I uploaded the file and had real prices the same afternoon, from shops I could see were actually set up for the part. It negotiated better than I would have.</p>
+        </blockquote>
+        <figcaption>
+          <img class="face" src="assets/vasu.jpeg" alt="" width="56" height="56" loading="lazy">
+          <span class="who">Vasu</span>
+          <span class="role">Graduate Student Researcher, Mechanical Engineering, MIT</span>
+        </figcaption>
+      </figure>
+
+      <figure class="panel quote reveal" data-audience="shop">
+        <blockquote>
+          <p>Half of what came in was work we could not run, and we only found that out after somebody had spent an hour on the package. Now it is priced on my machines at my rates before I even look at it. I sign the ones worth signing.</p>
+        </blockquote>
+        <figcaption>
+          <span class="face mono" aria-hidden="true">CC</span>
+          <span class="who">Dana Reyes</span>
+          <span class="role">Owner, Cascade CNC, Bend, OR</span>
+        </figcaption>
+      </figure>
     </div>
   </section>
 
