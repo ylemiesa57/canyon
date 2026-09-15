@@ -268,6 +268,27 @@ main { position: relative; z-index: 1; }
 .js .msg.is-in { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .js .msg { opacity: 1; transform: none; transition: none; } }
 
+/* Voices: one quote per audience, the person carried on the same line as the words */
+.quote { margin: 0; display: grid; gap: clamp(20px, 3vw, 32px); }
+.quote blockquote { margin: 0; padding-left: clamp(16px, 2.5vw, 28px); border-left: 2px solid var(--accent); }
+.quote blockquote p {
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+  line-height: 1.4; font-stretch: 105%; font-weight: 400;
+  letter-spacing: -0.01em; max-width: 42ch; text-wrap: pretty;
+}
+.quote figcaption { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 16px; align-items: center; }
+.quote .face {
+  grid-row: span 2; width: 56px; height: 56px; border-radius: 50%;
+  border: 1px solid var(--line-strong); object-fit: cover; flex: none;
+}
+.quote .face.mono {
+  display: grid; place-items: center; border-radius: 0;
+  background: var(--panel-solid); color: var(--text);
+  font-family: var(--font-sans); font-weight: 700; font-size: 0.95rem; letter-spacing: 0.02em;
+}
+.quote .who { font-weight: 600; font-size: 1rem; align-self: end; }
+.quote .role { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); line-height: 1.4; align-self: start; }
+
 /* Pricing */
 .plan-single { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 32px; }
 .plan-single .price { font-family: var(--font-mono); font-size: clamp(1.8rem, 3.4vw, 2.4rem); font-weight: 500; line-height: 1.3; }
