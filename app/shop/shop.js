@@ -45,18 +45,19 @@
   // stand-in (a 180 × 110 × 25 plate with three pockets) carries the bracket's findings. Anchors are
   // bounding-box fractions, so they land on the equivalent features when the real mesh replaces the file.
   const PART_MODEL = {
-    name: 'BRKT-001 Industrial Bracket (stand-in mesh)',
-    stl: '/assets/parts/actuator-housing.stl',
-    pdf: '/assets/parts/actuator-housing.pdf',
+    name: 'BRKT-001 Industrial Bracket',
+    stl: '/assets/parts/industrial-bracket.stl',
+    pdf: '/assets/parts/industrial-bracket.pdf',
     findings: [
-      { id: 'f1', n: '1', sev: 'High', title: 'From solid, 71% becomes chips', regions: [{ at: [40 / 180, 0.5, 0.85], type: 'box', size: [30, 64, 18] }, { at: [90 / 180, 0.5, 0.85], type: 'box', size: [30, 64, 18] }, { at: [140 / 180, 0.5, 0.85], type: 'box', size: [30, 64, 18] }] },
-      { id: 'f2', n: '2', sev: 'High', title: '1.8 mm ribs between pockets', regions: [{ at: [65 / 180, 0.5, 0.85], type: 'box', size: [8, 64, 18] }, { at: [115 / 180, 0.5, 0.85], type: 'box', size: [8, 64, 18] }] },
-      { id: 'f3', n: '3', sev: 'Medium', title: 'Ø8 H7 bores, true position Ø0.1', regions: [{ at: [35 / 180, 12 / 110, 1], type: 'sphere', radius: 9 }, { at: [145 / 180, 98 / 110, 1], type: 'sphere', radius: 9 }] },
-      { id: 'f4', n: '4', sev: 'Medium', title: '100% liquid penetrant, all surfaces', regions: [{ at: [0.5, 0.5, 0.5], type: 'box', size: [182, 112, 27] }] }
+      { id: 'f1', n: '1', sev: 'High', title: 'From solid, 71% becomes chips', regions: [{ at: [32 / 155, 25 / 85, 0.75], type: 'box', size: [40, 30, 24] }, { at: [77 / 155, 25 / 85, 0.75], type: 'box', size: [40, 30, 24] }, { at: [122 / 155, 25 / 85, 0.75], type: 'box', size: [40, 30, 24] }, { at: [32 / 155, 60 / 85, 0.75], type: 'box', size: [40, 30, 24] }, { at: [77 / 155, 60 / 85, 0.75], type: 'box', size: [40, 30, 24] }, { at: [122 / 155, 60 / 85, 0.75], type: 'box', size: [40, 30, 24] }] },
+      { id: 'f2', n: '2', sev: 'High', title: '1.8 mm ribs between pockets', regions: [{ at: [54.5 / 155, 0.5, 0.75], type: 'box', size: [6, 66, 24] }, { at: [99.5 / 155, 0.5, 0.75], type: 'box', size: [6, 66, 24] }, { at: [0.5, 42.5 / 85, 0.75], type: 'box', size: [132, 6, 24] }] },
+      { id: 'f3', n: '3', sev: 'Medium', title: 'Ø8 H7 bores, true position Ø0.1', regions: [{ at: [6 / 155, 5 / 85, 1], type: 'sphere', radius: 7 }, { at: [149 / 155, 80 / 85, 1], type: 'sphere', radius: 7 }] },
+      { id: 'f4', n: '4', sev: 'Medium', title: '100% liquid penetrant, all surfaces', regions: [{ at: [0.5, 0.5, 0.5], type: 'box', size: [157, 87, 44] }] }
     ]
   };
 class Component extends DCLogic {
-  state = { screen: 'inbox', stage: 'ingest', agent: false, filter: 'all', hot: null, pin: null, closed: {}, lpi: false, theme: readTheme(), selectedFinding: null, view: '3d' };
+  state = { screen: 'inbox', stage: 'ingest', agent: true, agentMin: true, filter: 'all', hot: null, pin: null, closed: {}, lpi: false, theme: readTheme(), selectedFinding: null, view: '3d',
+    chatExtra: [], chatInput: '', chatSeen: 0, sent: false, sendDialog: false, won: [], wonBump: 0, extraFiles: [], dragging: false };
   // Three tabs like the buyer console; the RFQ's six stages sit in a strip under Parts.
   static TABS = [['inbox', 'Inbox'], ['parts', 'Parts'], ['shop', 'My shop']];
   static STAGES = [['ingest', 'Ingest'], ['part', 'Part'], ['cost', 'Costing'], ['quote', 'Quote'], ['neg', 'Negotiation'], ['pdf', 'Quote PDF']];
@@ -81,6 +82,99 @@ class Component extends DCLogic {
   componentDidUpdate(p, prev) { if (prev.screen !== this.state.screen) history.replaceState(null, '', '#' + this.state.screen); }
   viewer() { const f = document.querySelector('iframe[title="Part viewer"]'); return f && f.contentWindow; }
   go(s) { return () => this.setState(Component.isStage(s) ? { screen: s, stage: s } : { screen: s }); }
+  // Agent chat: canned answers in the RFQ's context. New lines also count as unread on the bubble.
+  ask(q, a) {
+    const t = new Date(); const hhmm = t.getHours().toString().padStart(2, '0') + ':' + t.getMinutes().toString().padStart(2, '0');
+    const chatExtra = this.state.chatExtra.concat([{ who: 'You', time: hhmm, text: q }, { who: 'Shop agent', time: hhmm, text: a }]);
+    this.setState({ chatExtra, chatInput: '' });
+  }
+  say(a) { const t = new Date(); const hhmm = t.getHours().toString().padStart(2, '0') + ':' + t.getMinutes().toString().padStart(2, '0'); this.setState({ chatExtra: this.state.chatExtra.concat([{ who: 'Shop agent', time: hhmm, text: a }]) }); }
+  // Win animation: a ghost of the offer swoops into the My shop tab, whose badge then bumps.
+  fly(fromEl, label) {
+    const tab = document.querySelector('[data-tab="shop"]');
+    if (!fromEl || !tab || !fromEl.animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return Promise.resolve();
+    const a = fromEl.getBoundingClientRect(), b = tab.getBoundingClientRect();
+    const g = document.createElement('div'); g.className = 'fly-ghost'; g.textContent = label;
+    g.style.left = a.left + 'px'; g.style.top = a.top + 'px'; g.style.width = Math.min(a.width, 360) + 'px';
+    document.body.appendChild(g);
+    const dx = b.left + b.width / 2 - (a.left + Math.min(a.width, 360) / 2), dy = b.top + b.height / 2 - (a.top + 20);
+    const anim = g.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.12)', opacity: .25 }], { duration: 720, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    return anim.finished.catch(() => {}).then(() => g.remove());
+  }
+  takeFiles(list) {
+    const KIND = { stl: 'STL', step: 'STEP', stp: 'STEP', iges: 'IGES', igs: 'IGES', sldprt: 'SolidWorks', x_t: 'Parasolid', pdf: 'PDF drawing', eml: 'Email', xlsx: 'BOM', xls: 'BOM', csv: 'BOM', jpg: 'Photo', png: 'Photo' };
+    const READ = { STL: 'mesh read · envelope and volume measured · features matched to BRKT-001', STEP: 'faces, holes and setups read', 'PDF drawing': 'notes, tolerances and finish callouts read', Email: 'quantities, dates and terms read', BOM: 'part numbers matched', Photo: 'reference only, no dimensions' };
+    const files = Array.from(list || []).slice(0, 6).map((f) => {
+      const ext = (f.name.split('.').pop() || '').toLowerCase(); const kind = KIND[ext] || 'File';
+      return { name: f.name, size: (f.size >= 1e6 ? (f.size / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(f.size / 1e3)) + ' KB') + ' · from your machine', kind, extracted: READ[kind] || 'read as reference', linked: 'RFQ 1235' };
+    });
+    if (!files.length) return;
+    this.setState({ extraFiles: this.state.extraFiles.concat(files), dragging: false });
+    this.say('Read ' + files.length + ' more file' + (files.length === 1 ? '' : 's') + ' for RFQ 1235: ' + files.map((f) => f.name).join(', ') + '. Nothing changed the cost.');
+  }
+  // Values added on top of the mockup's own: agent drawer, inbox band, send gate, win, intake.
+  extras(vals) {
+    const st = this.state, MUT = 'color:color-mix(in srgb,var(--color-text) 55%,transparent)';
+    const chatAll = vals.chatSeed.concat(st.chatExtra.map((m) => ({ who: m.who, time: m.time, text: m.text, align: m.who === 'You' ? 'flex-end' : 'flex-start', bg: m.who === 'You' ? 'var(--color-surface)' : 'var(--color-accent-100)', rule: m.who === 'You' ? 'transparent' : 'var(--color-accent)' })));
+    const checks = [
+      { label: 'Revision confirmed with the buyer', ok: false, detail: 'Rev A vs Rev B open' },
+      { label: 'Margin at or above your 15% floor', ok: true, detail: '20% blended' },
+      { label: 'Buyer certs on file', ok: true, detail: 'ISO 9001 verified' },
+      { label: 'Drawing notes read', ok: true, detail: '9 of 9' },
+      { label: 'Outside ops scheduled', ok: true, detail: 'LPI at Sable NDT, 2 d' },
+    ].map((c) => Object.assign(c, { cls: c.ok ? 'ok' : 'no', mark: c.ok ? '✓' : '✕' }));
+    const failing = checks.filter((c) => !c.ok);
+    const send = () => { this.setState({ sent: true, sendDialog: false, screen: 'neg', stage: 'neg' }); this.say('Quote Q-1235 sent to Halcyon Industrial at $4,890.79, 8 to 10 days. I flagged the Rev A/B question in the cover note.'); };
+    const needsCount = (st.sent ? 0 : 1) + 1;
+    const agentLines = { 'RFQ 1235': st.won.length ? 'Won at $4,480. PO expected from Halcyon this week.' : st.sent ? 'Quote sent; the buyer\'s $4,480 final is under your floor. Waiting on you.' : 'Costed both parts; the buyer\'s $4,480 final is under your 15% floor. Waiting on you.', 'RFQ 1238': 'Drawing says Rev C, email says Rev B. Holding the quote until Sable confirms.', 'RFQ 4417': 'Bid $99.10 at 6 weeks to Halcyon\'s agent; ranked 3rd of 3 on price, 1st on response.', 'RFQ 1236': 'Countered Meridian at $6,380; their target is $6,100.', 'RFQ 1234': 'Holding $3,110; Northwind is comparing two shops.', 'RFQ 1231': 'Quoted three sensor mounts as one release; waiting on Redline.', 'RFQ 1229': 'Quoted $1,240 on Sep 12; no reply yet.', 'RFQ 1227': 'Won on Sep 10 at $2,860; in the schedule for Oct 2.' };
+    const rfqs = vals.rfqs.map((r) => {
+      const won = r.id === 'RFQ 1235' && st.won.length; const sent = r.id === 'RFQ 1235' && st.sent && !won;
+      return Object.assign({}, r, { agentLine: agentLines[r.id] || '', dotCls: r.group === 'neg' ? 'pulse-dot' : '',
+        status: won ? 'Won' : sent ? 'Quoted' : r.status, group: won || sent ? 'quoted' : r.group, tagClass: won || sent ? 'tag-outline' : r.tagClass });
+    }).filter((r) => st.filter === 'all' || r.group === st.filter);
+    const feed = [
+      st.won.length ? { when: 'just now', text: 'Won RFQ 1235 at $4,480. Both parts, 8 to 10 days, Net 30.' } : null,
+      st.sent ? { when: 'just now', text: 'Sent Q-1235 to Halcyon Industrial at $4,890.79.' } : null,
+      { when: '9 min', text: 'RFQ 1235: Halcyon\'s final of $4,480 is under your 15% floor. Paused for you.' },
+      { when: '41 min', text: 'RFQ 4417: bid $99.10 at 6 weeks to Halcyon\'s agent.' },
+      { when: '2 h', text: 'RFQ 1238: found a Rev B mention in the email against a Rev C drawing. Holding.' },
+      { when: '3 h', text: 'RFQ 1236: countered Meridian at $6,380, holding Net 30.' },
+    ].filter(Boolean).slice(0, 3);
+    const tabs = Component.TABS.map(([k, label]) => ({ key: k, label, go: k === 'parts' ? this.go(st.stage) : this.go(k),
+      sel: k === (Component.isStage(st.screen) ? 'parts' : st.screen) ? 'border-bottom-color:var(--color-accent);color:var(--color-text)' : MUT,
+      badge: k === 'shop' && st.won.length ? String(st.won.length) : '', badgeCls: k === 'shop' && st.won.length ? 'on' + (st.wonBump ? ' bump' : '') : '' }));
+    const quoteTotals = vals.quoteTotals.map((t, i) => i === 0 ? Object.assign({}, t, { sub: t.sub + ' · high confidence' }) : t);
+    return {
+      tabs, rfqs, quoteTotals, feed,
+      agentStatus: st.won.length ? 'RFQ 1235 is won. Negotiating 4 RFQs, one holding on a revision.' : (st.sent ? '1 decision waiting: Halcyon\'s final on RFQ 1235. Negotiating 4, one holding on a revision.' : '2 decisions waiting on you. Negotiating 4 RFQs, one holding on a revision.'),
+      needsCount: String(needsCount), needsPlural: needsCount === 1 ? '' : 's', needsAny: needsCount > 0, needsNone: needsCount === 0, filterNeeds: () => this.setState({ filter: 'needs' }),
+      files: vals.files.concat(st.extraFiles),
+      pickFiles: (e) => this.takeFiles(e.target.files), dropFiles: (e) => { e.preventDefault(); this.takeFiles(e.dataTransfer && e.dataTransfer.files); },
+      dragOver: (e) => { e.preventDefault(); if (!st.dragging) this.setState({ dragging: true }); }, dragLeave: () => { if (st.dragging) this.setState({ dragging: false }); },
+      dropSt: st.dragging ? 'border-color:var(--color-accent);background:var(--color-accent-100)' : '',
+      checks, failing, passCount: String(checks.length - failing.length), checkCount: String(checks.length), failCount: String(failing.length), failPlural: failing.length === 1 ? '' : 's',
+      sendLabel: st.sent ? 'Sent' : failing.length ? 'Send anyway…' : 'Send quote', sendClass: failing.length || st.sent ? 'btn-secondary' : 'btn-primary',
+      sendClick: st.sent ? this.go('neg') : failing.length ? () => this.setState({ sendDialog: true }) : send,
+      sendDialog: st.sendDialog, closeSendDialog: () => this.setState({ sendDialog: false }), sendAnyway: send, resolveFirst: () => this.setState({ sendDialog: false, screen: 'ingest', stage: 'ingest' }),
+      acceptOffer: (e) => { const from = e && e.target && e.target.closest ? e.target.closest('[data-reco]') : null; this.fly(from, 'Won · RFQ 1235 · $4,480').then(() => { this.setState({ won: [{ rfq: 'RFQ 1235', part: 'Industrial bracket + plate', buyer: 'Halcyon Industrial', value: '$4,480', when: 'just now' }], wonBump: Date.now() }); setTimeout(() => this.setState({ wonBump: 0 }), 800); this.say('Accepted $4,480. Margin lands at 13.9%, under your floor by your call. I will confirm the PO with Halcyon.'); }); },
+      holdOffer: () => this.say('Holding. I told Halcyon\'s agent we need until tomorrow 09:00 and kept the price at $4,540.'),
+      counterOffer: () => this.say('Countered at $4,540 with anodize off and 8 days. That keeps you at 15.0% margin, exactly on your floor.'),
+      wonBanner: st.won.length > 0, wonText: 'Halcyon Industrial accepted $4,480 for both parts, 8 to 10 days, Net 30.', won: st.won, wonAny: st.won.length > 0, wonCount: String(st.won.length), goShop: this.go('shop'),
+      agentOpen: st.agent && !st.agentMin, agentMin: st.agent && st.agentMin,
+      agentBtnSt: st.agent && !st.agentMin ? 'border-color:var(--color-accent)' : '',
+      toggleAgent: () => this.setState(st.agent && !st.agentMin ? { agentMin: true } : { agent: true, agentMin: false, chatSeen: chatAll.length }),
+      agentMinimize: () => this.setState({ agentMin: true }), agentClose: () => this.setState({ agent: false }), agentExpand: () => this.setState({ agent: true, agentMin: false, chatSeen: chatAll.length }),
+      agentUnread: chatAll.length > st.chatSeen, agentUnreadCount: String(chatAll.length - st.chatSeen),
+      chat: chatAll,
+      suggestions: [
+        { label: 'Why is Op30 costly?', ask: () => this.ask('Why is Op30 costly?', 'Two Ø8 H7 bores carry true position Ø0.1 to datum A across faces. Holding that in one setup needs the DMU; on the Haas it would take a third setup and a boring head, saving $0.60 but adding position risk.') },
+        { label: 'Re-cost in 7075', ask: () => this.ask('Re-cost in 7075', '7075-T6 plate is $14.20/kg against $9.40. Material goes from $9.40 to $13.30 per part and machining is unchanged, so BRKT-001 lands at $58.22 at qty 10. Still under Halcyon\'s $4,480 across both parts.') },
+        { label: 'Draft reply to buyer', ask: () => this.ask('Draft reply to buyer', 'Draft: "Halcyon team, the drawing is Rev A and the email mentions Rev B, which changes the rib thickness. Please confirm which revision to quote. Price holds either way until Sep 20." Say send and I will send it.') },
+      ],
+      chatInput: st.chatInput, chatType: (e) => this.setState({ chatInput: e.target.value }),
+      chatSend: () => { const q = (st.chatInput || '').trim(); if (q) this.ask(q, 'I can check that against the cost model and the thread for RFQ 1235. The open items are the Rev A/B question and Halcyon\'s $4,480 final, which is $20 under your floor.'); },
+    };
+  }
 
   // Builds the Costing tab's view: step rows with their feature sub-rows, material lines,
   // subtotals, the highlight state of every drawing region, and the caption.
@@ -156,7 +250,7 @@ class Component extends DCLogic {
       {id:'PLT-002',name:'Mounting Plate',material:'Aluminum 6061-T6 · anodize II',lead:'8–10 business days (incl. outside op)',breaks:brk('PLT-002','Mounting Plate','6061-T6 · anodize II','A',[[1,21.34],[5,18.21],[10,17.39],[25,16.42],[50,15.78]])}
     ];
     const bubble=(side,text,meta,offer)=>({left:side==='L'?text:'',leftMeta:side==='L'?meta:'',leftVis:side==='L'?'visible':'hidden',right:side==='R'?text:'',rightMeta:side==='R'?meta:'',rightVis:side==='R'?'visible':'hidden',offer});
-    return {
+    const vals = {
       tabs, stages, inParts, escalated, agentOpen: agent, agentBtnSt: agent ? 'background:var(--color-text);color:var(--color-bg);border-color:var(--color-text)' : '',
       toggleTheme: () => { const next = theme === '' ? 'dark' : theme === 'dark' ? 'light' : ''; applyTheme(next); const v = this.viewer(); if (v) v.postMessage({ type: 'theme', value: next }, '*'); this.setState({ theme: next }); },
       themeLabel: theme === 'dark' ? 'Dark' : theme === 'light' ? 'Light' : 'Auto theme',
@@ -224,7 +318,7 @@ class Component extends DCLogic {
       rails:[{k:'Floor margin',v:'15% ($4,500)'},{k:'Auto-accept at or above',v:'$4,600'},{k:'Min lead time',v:'7 days'},{k:'Max concessions',v:'3 rounds'},{k:'Escalate on',v:'scope change · < floor'},{k:'Offer validity',v:'48 h'}],
       machines:[{name:'Haas VF-2SS',type:'3-axis VMC',env:'762 × 406 × 508',rate:'$85',setup:'$85 / hr',w:'62%',booked:'62%'},{name:'DMG Mori DMU 50',type:'5-axis',env:'500 × 450 × 400',rate:'$125',setup:'$110 / hr',w:'44%',booked:'44%'},{name:'Doosan Puma 2100',type:'CNC lathe',env:'Ø350 × 550',rate:'$80',setup:'$85 / hr',w:'71%',booked:'71%'},{name:'Zeiss Contura',type:'CMM',env:'700 × 1000 × 600',rate:'$70',setup:'—',w:'30%',booked:'30%'}],
       rules:[{k:'Default markup',v:'20%'},{k:'Floor margin',v:'15%'},{k:'Rush (< 5 d)',v:'+25%'},{k:'Material buffer',v:'+5% stock'},{k:'Repeat buyer discount',v:'−2% after 3 orders'}],
-      chat:[
+      chatSeed:[
         {who:'You',time:'09:14',text:'Why is Op30 on the DMU instead of the Haas?',align:'flex-end',bg:'var(--color-surface)',rule:'transparent'},
         {who:'Shop agent',time:'09:14',text:'Two Ø8 H7 bores carry true position Ø0.1 to datum A across faces. Holding that in one setup needs the 5-axis; on the Haas it would take a third setup and a boring head, saving $0.60 but adding position risk.',align:'flex-start',bg:'var(--color-accent-100)',rule:'var(--color-accent)'},
         {who:'You',time:'09:15',text:'What if the buyer accepts 2.5 mm ribs?',align:'flex-end',bg:'var(--color-surface)',rule:'transparent'},
@@ -232,6 +326,8 @@ class Component extends DCLogic {
         {who:'Shop agent',time:'09:16',text:'Reminder: the Rev A / Rev B conflict is still open with Halcyon. I would not commit a final price until they confirm.',align:'flex-start',bg:'var(--color-accent-100)',rule:'var(--color-accent)'}
       ]
     };
+    Object.assign(vals, this.extras(vals));
+    return vals;
   }
 }
   window.DC.mount(Component);

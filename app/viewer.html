@@ -235,6 +235,7 @@ function post(msg) { if (window.parent !== window) window.parent.postMessage(Obj
 async function loadModel(m) {
   model = m; selected = null;
   if (m.stl) { $("#status").textContent = "Loading STL…"; const buf = await (await fetch(m.stl)).arrayBuffer(); model.stlPositions = parseSTL(buf); }
+  if (m.stlBuffer) model.stlPositions = parseSTL(m.stlBuffer);
   view = model.stlPositions ? "3d" : model.pdf ? "pdf" : (model.views && model.views[0] && model.views[0].id);
   show();
 }
@@ -249,7 +250,7 @@ stage.addEventListener("dragleave", () => stage.classList.remove("drop"));
 stage.addEventListener("drop", (e) => { e.preventDefault(); stage.classList.remove("drop"); const f = e.dataTransfer.files[0]; if (f) loadFile(f); });
 
 /* API, parent → viewer:
-     { type: "load", model: { name, stl: url, pdf: url, views: [{ id, label, src }],
+     { type: "load", model: { name, stl: url | stlBuffer: ArrayBuffer, pdf: url, views: [{ id, label, src }],
          findings: [{ id, n, sev: "High|Medium|Low", title,
                       regions: [{ at: [fx, fy, fz] | position: [x, y, z], type: "sphere", radius | radiusFrac } | { ..., type: "box", size: [dx, dy, dz] }] }] } }
      { type: "select", id }   { type: "view", id }   { type: "theme", value: "dark" | "light" | "" }

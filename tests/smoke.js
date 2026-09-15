@@ -64,24 +64,45 @@ async function load(file, reducedMotion) {
   check(!!b.btnStarts("Release anyway"), "release is flagged on the example part");
   check(!b.has("correct anything Canyon got wrong"), "spec screen does not ask to correct Canyon");
   check(b.root.querySelectorAll("input.input").length >= 2, "quantity and need-by are inputs");
+  const picker = b.root.querySelector('input[type="file"]');
+  check(!!picker, "Browse files is a real file input");
+  if (picker) {
+    Object.defineProperty(picker, "files", { value: [new b.w.File(["solid x endsolid x"], "my-part.stl", { type: "model/stl" }), new b.w.File(["%PDF"], "my-part.pdf")], configurable: true });
+    picker.dispatchEvent(new b.w.Event("change", { bubbles: true })); await wait(200);
+    check(b.has("my-part.stl") && b.has("2 files from your machine"), "picked files replace the example list");
+    check(b.has("Your agent") && b.has("Reading my-part.stl"), "agent narrates the read from the buyer's file name");
+  }
   await b.click(b.btnHas("Part & DFM")); // a global tab on main, a stage-strip step after the daylight pass
   const apply = Array.from(b.root.querySelectorAll("button")).find((x) => x.textContent.includes("Apply change"));
   check(!!apply, "findings have an apply action");
   await b.click(apply);
   check(b.has("2 findings open"), "applying a finding reduces the open count");
-  await b.click(b.btn("Profile"));
+  await b.click(b.btnStarts("Profile"));
   await b.click(b.btn("Save mandate"));
   check(b.has("Request queue") && !b.has("Set your mandate first"), "saving the mandate returns to a queue without the banner");
   await b.click(newTab());
   check(!!b.btn("Release to shops") && !b.btnStarts("Release anyway"), "release is clean after the fix and the mandate");
   await b.click(b.btn("Release to shops"));
-  check(b.has("negotiation") && b.has("Matched"), "release opens the negotiation with the matched shops");
+  check(/Negotiation/.test(b.text()) && b.has("Shops considered") && b.has("Matched"), "release opens the negotiation with the shops considered");
   await b.click(b.btn("Go to offers"));
   check(/\d shops responded/.test(b.text()), "offers screen lists the responding shops");
   await b.click(b.btn("Accept recommendation"));
   check(b.has("Awarded."), "accepting the split awards the RFQ");
+  await b.click(b.btnStarts("Profile"));
+  check(b.has("Awards") && /Profile1/.test(b.text().replace(/\s+/g, "")), "award lands on Profile with a badge");
+  await b.click(b.btnStarts("Quote PDF"));
+  check(b.has("Quotation Q-4417") && !!b.root.querySelector(".paper .paper-brand"), "buyer quote uses the shared paper document");
+  check(!!b.root.querySelector(".agent-bubble"), "buyer agent starts as a corner bubble");
+  await b.click(b.root.querySelector(".agent-bubble"));
+  check(!!b.root.querySelector("aside.agent-drawer"), "buyer drawer expands");
+  await b.click(Array.from(b.root.querySelectorAll("button")).find((x) => x.textContent.trim() === "Why these shops?"));
+  check(b.has("pass every hard criterion"), "buyer agent answers from the mandate data");
+  await b.click(b.root.querySelector('.agent-drawer .ctl button[title="Minimize"]'));
   await b.click(b.btn("Queue"));
   check(/RFQ-4417.*?Awarded/.test(b.text()), "queue shows the RFQ as awarded");
+  check(b.has("Your agent") && b.has("Sent your award"), "agent band leads the queue and reflects the award");
+  const awardedRows = (b.text().match(/✓ Awarded/g) || []).length;
+  check(awardedRows === 3, "only human-awarded rows read Awarded (" + awardedRows + " of 6): the rail stops at Offers ready");
   check(b.errors.length === 0, "no runtime errors (" + b.errors.join("; ") + ")");
   b.w.close();
 
@@ -105,11 +126,29 @@ async function load(file, reducedMotion) {
     await s.click(s.btn(tab), 60);
     check(s.text().length > 600 && !s.root.querySelector(".stage-strip"), "tab renders without the strip: " + tab);
   }
-  check(!s.root.querySelector("aside"), "agent drawer starts closed");
-  await s.click(s.btn("Agent"));
-  check(!!s.root.querySelector("aside"), "agent drawer opens");
-  await s.click(s.btn("Close"));
-  check(!s.root.querySelector("aside"), "agent drawer closes");
+  check(!s.root.querySelector("aside") && !!s.root.querySelector(".agent-bubble"), "agent starts minimized as a corner bubble");
+  await s.click(s.root.querySelector(".agent-bubble"));
+  check(!!s.root.querySelector("aside"), "bubble expands the drawer");
+  await s.click(Array.from(s.root.querySelectorAll("button")).find((x) => x.textContent.trim() === "Why is Op30 costly?"));
+  check((s.text().match(/Why is Op30 costly\?/g) || []).length >= 2, "suggested question gets a canned answer");
+  await s.click(s.root.querySelector('.agent-drawer .ctl button[title="Minimize"]'));
+  check(!s.root.querySelector("aside") && !!s.root.querySelector(".agent-bubble"), "minimize returns it to the bubble");
+  await s.click(s.root.querySelector(".agent-bubble")); await s.click(s.root.querySelector('.agent-drawer .ctl button[title="Close"]'));
+  check(!s.root.querySelector("aside") && !s.root.querySelector(".agent-bubble"), "close hides it until the header button");
+  await s.click(s.btn("Inbox"));
+  check(s.has("Your agent") && s.has("Decide on 2 RFQs") && s.has("needs your decision"), "inbox leads with the agent band and the human stop");
+  await s.click(s.btnStarts("Parts")); await s.click(stageBtn("Quote"), 60);
+  check(s.has("Send checks") && !!s.btnStarts("Send anyway"), "send-quote gate is flagged on the open revision");
+  await s.click(s.btnStarts("Send anyway"));
+  check(s.has("Send with 1 open issue?"), "send dialog opens with the failing check");
+  await s.click(s.btn("Send anyway"));
+  check(s.has("negotiation") || s.has("Negotiation"), "sending lands on the negotiation");
+  await s.click(s.btnStarts("Accept $4,480"));
+  check(s.has("Won.") && /Myshop1/.test(s.text().replace(/\s+/g, "")), "accepting wins the RFQ and badges My shop");
+  await s.click(s.btnStarts("My shop"));
+  check(s.has("Won") && s.has("$4,480"), "My shop lists the win");
+  await s.click(s.btnStarts("Quote PDF"));
+  check(!!s.root.querySelector(".paper .paper-brand") && s.has("Quotation Q-1235"), "shop quote uses the shared paper document");
   check(s.errors.length === 0, "no runtime errors (" + s.errors.join("; ") + ")");
   s.w.close();
 
