@@ -4,6 +4,7 @@
 (function () {
   const DCLogic = window.DC.DCLogic;
   const MUTED = 'color:color-mix(in srgb,var(--color-text) 55%,transparent)';
+  const MUT_JS = MUTED;
   const ACC = 'color:var(--color-good)';
   const WARN = 'color:var(--color-warn)';
   const BAD = 'color:var(--color-bad)';
@@ -28,13 +29,13 @@
 
   /* ── Verified shops the match step filters ── */
   const SHOPS = [
-    { key: 'r', name: 'Ridgeline Tool Works', loc: 'Elkhart, IN', certs: ['ISO 9001', 'AS9100D'], domestic: true, queue: 'queue 54%', lead: '4 wk', note: '12 prior jobs with Halcyon' },
-    { key: 'm', name: 'Midstate Precision', loc: 'Dayton, OH', certs: ['ISO 9001'], domestic: true, queue: 'queue 67%', lead: '4.5 wk', note: 'Holds 400-pc ceiling at price' },
-    { key: 'c', name: 'Cascade CNC', loc: 'Bend, OR', certs: ['ISO 9001', 'AS9100D'], domestic: true, queue: 'queue 58%', lead: '6 wk', note: 'New to your supplier list' },
-    { key: 'd', name: 'Delta Contract Mfg', loc: 'Mesa, AZ', certs: ['AS9100D'], domestic: true, queue: 'queue 96%', lead: '9 wk', note: '5-axis cell booked through Nov' },
-    { key: 'h', name: 'Halvorsen Machine', loc: 'Duluth, MN', certs: ['ISO 9001'], domestic: true, queue: 'queue 71%', lead: '7 wk', note: 'Lead time past need-by' },
-    { key: 'i', name: 'Ironwood Tool and Die', loc: 'Erie, PA', certs: [], domestic: true, queue: 'queue 66%', lead: '5 wk', note: 'No ISO 9001 on file' },
-  ];
+    { key: 'r', name: 'Ridgeline Tool Works', loc: 'Elkhart, IN', certs: ['ISO 9001', 'AS9100D'], domestic: true, queuePct: 54, leadWk: 4, bio: '14 people, six 3-axis VMCs and two 5-axis. Aluminum housings and brackets for ag and off-road OEMs. 12 prior jobs with Halcyon.' },
+    { key: 'm', name: 'Midstate Precision', loc: 'Dayton, OH', certs: ['ISO 9001'], domestic: true, queuePct: 67, leadWk: 4.5, bio: '22 people, high-mix prototype to 500-piece runs. Holds a 400-piece price ceiling on repeat parts.' },
+    { key: 'c', name: 'Cascade CNC', loc: 'Bend, OR', certs: ['ISO 9001', 'AS9100D'], domestic: true, queuePct: 58, leadWk: 6, bio: '9 people, Haas VF-2SS and a DMU 50 5-axis, in-house CMM. Aerospace brackets and manifolds. New to your supplier list.' },
+    { key: 'd', name: 'Delta Contract Mfg', loc: 'Mesa, AZ', certs: ['AS9100D'], domestic: true, queuePct: 96, leadWk: 9, bio: '40 people, 5-axis production cell. Booked through November on a defense program.' },
+    { key: 'h', name: 'Halvorsen Machine', loc: 'Duluth, MN', certs: ['ISO 9001'], domestic: true, queuePct: 71, leadWk: 10, bio: '11 people, large-envelope 3-axis up to 1,020 mm and in-house anodize. Strong on plates and weldments.' },
+    { key: 'i', name: 'Ironwood Tool and Die', loc: 'Erie, PA', certs: [], domestic: true, queuePct: 66, leadWk: 5, bio: '7 people, tool and die shop taking on production machining. No quality certification on file yet.' },
+  ].map((s) => Object.assign(s, { queue: 'queue ' + s.queuePct + '%', lead: s.leadWk + ' wk' }));
 
   /* ── Findings on the current part ── */
   const FINDINGS = [
@@ -49,6 +50,9 @@
       screen: 'dash', tick: 0, filter: 'all',
       qty: '250', needBy: 'Nov 14, 2026',
       applied: {}, dismissed: {}, released: false, awarded: null, selectedFinding: null,
+      userFiles: [], stlBuffer: null, dragging: false, pickedAt: null,
+      awards: [], quoteFor: null, quoteFrom: 'offers', badgeBump: 0, bioOpen: {},
+      agent: 'min', chat: [], chatInput: '', chatSeen: 0,
       releaseDialog: false, theme: readTheme(),
     }, loadProfile());
 
@@ -59,17 +63,62 @@
       window.addEventListener('message', (e) => {
         const m = e.data || {};
         if (m.source === 'canyon-viewer' && m.type === 'select') this.setState({ selectedFinding: m.id || null });
+        // A freshly mounted viewer asks for its model; hand it the buyer's STL if one was dropped.
+        if (m.source === 'canyon-viewer' && m.type === 'ready' && this.state.stlBuffer) this.sendModel();
       });
     }
+    sendModel() {
+      const v = this.viewer(); if (!v) return;
+      v.postMessage({ type: 'load', model: {
+        name: (this.state.userFiles.find((f) => f.kind === 'STL') || {}).name || 'HAL-4417 Actuator Housing',
+        stlBuffer: this.state.stlBuffer, pdf: '/assets/parts/actuator-housing.pdf',
+        findings: [
+          { id: 'f1', n: '1', sev: 'High', title: 'Wall thickness vs. pocket depth', regions: [{ at: [0.36, 0.5, 0.85], type: 'sphere', radiusFrac: 0.09 }, { at: [0.64, 0.5, 0.85], type: 'sphere', radiusFrac: 0.09 }] },
+          { id: 'f2', n: '2', sev: 'Medium', title: 'Ø0.3750 bores, half-thou band', regions: [{ at: [0.19, 0.11, 1], type: 'sphere', radiusFrac: 0.06 }, { at: [0.81, 0.11, 1], type: 'sphere', radiusFrac: 0.06 }] },
+          { id: 'f3', n: '3', sev: 'Low', title: 'Internal corners at R0.031', regions: [{ at: [0.11, 0.23, 0.7], type: 'sphere', radiusFrac: 0.045 }, { at: [0.89, 0.77, 0.7], type: 'sphere', radiusFrac: 0.045 }] },
+        ] } }, '*');
+    }
+    // Files from the picker or a drop. The output is predetermined; the file names are the buyer's.
+    async takeFiles(list) {
+      const KIND = { stl: 'STL', step: 'STEP', stp: 'STEP', iges: 'IGES', igs: 'IGES', sldprt: 'SolidWorks', x_t: 'Parasolid', pdf: 'Drawing', xlsx: 'Terms sheet', xls: 'Terms sheet', csv: 'Terms sheet' };
+      const files = Array.from(list || []).slice(0, 6).map((f) => {
+        const ext = (f.name.split('.').pop() || '').toLowerCase();
+        return { name: f.name, ext: ext.toUpperCase().slice(0, 4), kind: KIND[ext] || 'File', size: f.size >= 1e6 ? (f.size / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(f.size / 1e3)) + ' KB', file: f };
+      });
+      if (!files.length) return;
+      const stl = files.find((f) => f.kind === 'STL');
+      const readBuffer = (file) => file.arrayBuffer ? file.arrayBuffer() : new Promise((res) => { const rd = new FileReader(); rd.onload = () => res(rd.result); rd.readAsArrayBuffer(file); });
+      const stlBuffer = stl ? await readBuffer(stl.file) : null;
+      this.setState({ userFiles: files.map(({ file, ...rest }) => rest), stlBuffer, dragging: false, pickedAt: Date.now(), applied: {}, dismissed: {}, released: false, awarded: null, selectedFinding: null });
+      this.run();
+    }
     viewer() { const f = document.querySelector('iframe[title="Part viewer"]'); return f && f.contentWindow; }
+    // Agent chat: canned, in the RFQ's context.
+    ask(q, a) {
+      const t = new Date(); const hhmm = t.getHours().toString().padStart(2, '0') + ':' + t.getMinutes().toString().padStart(2, '0');
+      const chat = this.state.chat.concat([{ who: 'You', time: hhmm, text: q }, { who: 'Your agent', time: hhmm, text: a }]);
+      this.setState({ chat, chatInput: '' });
+    }
+    // Award animation: a ghost of the offer swoops into the Profile tab, whose badge then bumps.
+    fly(fromEl, label) {
+      const tab = document.querySelector('[data-tab="profile"]');
+      if (!fromEl || !tab || !fromEl.animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return Promise.resolve();
+      const a = fromEl.getBoundingClientRect(), b = tab.getBoundingClientRect();
+      const g = document.createElement('div'); g.className = 'fly-ghost'; g.textContent = label;
+      g.style.left = a.left + 'px'; g.style.top = a.top + 'px'; g.style.width = Math.min(a.width, 360) + 'px';
+      document.body.appendChild(g);
+      const dx = b.left + b.width / 2 - (a.left + Math.min(a.width, 360) / 2), dy = b.top + b.height / 2 - (a.top + 20);
+      const anim = g.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.12)', opacity: .25 }], { duration: 720, easing: 'cubic-bezier(.2,.7,.2,1)' });
+      return anim.finished.catch(() => {}).then(() => g.remove());
+    }
     componentDidUpdate(p, s) { if (s.screen !== this.state.screen) this.run(); }
     componentWillUnmount() { clearInterval(this._iv); }
 
     run() {
       clearInterval(this._iv);
       this.setState({ tick: 0 });
-      const speed = { dash: 1100, rfq: 420, part: 700, neg: 1300, offers: 1500, home: 2000, profile: 99999 }[this.state.screen] || 900;
-      const max = { dash: 9, rfq: 14, part: 8, neg: 9, offers: 4, home: 4, profile: 0 }[this.state.screen] || 8;
+      const speed = { dash: 1100, rfq: 420, part: 700, neg: 1300, offers: 1500, home: 2000, profile: 99999, quote: 99999 }[this.state.screen] || 900;
+      const max = { dash: 9, rfq: 14, part: 8, neg: 9, offers: 4, home: 4, profile: 0, quote: 0 }[this.state.screen] || 8;
       this._iv = setInterval(() => {
         this.setState(s => ({ tick: s.tick >= max ? (s.screen === 'dash' ? 0 : max) : s.tick + 1 }));
       }, speed);
@@ -94,7 +143,8 @@
     renderVals() {
       const st = this.state, sc = st.screen, t = st.tick, P = st.profile;
       const tabs = [['dash', 'Queue'], ['rfq', 'New request'], ['profile', 'Profile']]
-        .map(([k, label]) => ({ label, go: this.go(k), sel: k === sc ? 'border-bottom-color:var(--color-accent);color:var(--color-text)' : MUTED }));
+        .map(([k, label]) => ({ key: k, label, go: this.go(k), sel: k === sc ? 'border-bottom-color:var(--color-accent);color:var(--color-text)' : MUTED,
+          badge: k === 'profile' && st.awards.length ? String(st.awards.length) : '', badgeCls: k === 'profile' && st.awards.length ? 'on' + (st.badgeBump ? ' bump' : '') : '' }));
 
       /* ── Derived: price, band, findings, mandate, match, gate ── */
       const savings = FINDINGS.reduce((s, f, i) => s + (st.applied[i] ? f.save : 0), 0);
@@ -123,10 +173,31 @@
       });
       const openFindings = findings.filter((f) => f.open);
       const highOpen = openFindings.filter((f) => f.sev === 'High');
-      const qualifying = SHOPS.filter((s) => P.certsRequired.every((c) => s.certs.includes(c)) && (!P.domestic || s.domestic) && !['h', 'i'].includes(s.key));
-      const excluded = SHOPS.filter((s) => !qualifying.includes(s)).map((s) => ({
-        name: s.name, why: !P.certsRequired.every((c) => s.certs.includes(c)) ? 'missing ' + P.certsRequired.filter((c) => !s.certs.includes(c)).join(', ') : s.note.toLowerCase()
-      }));
+      // Every shop is judged on the same mandate criteria; the cards on Negotiation show the verdicts.
+      const weeksToNeedBy = 8.7; // Nov 14 from the request date
+      const leadLimit = weeksToNeedBy - num(P.bufferDays, 7) / 7;
+      const judge = (s) => {
+        const crit = [];
+        P.certsRequired.forEach((c) => crit.push({ label: c + ' required', ok: s.certs.includes(c), hard: true, detail: s.certs.includes(c) ? 'verified' : 'not on file' }));
+        P.certsPreferred.forEach((c) => crit.push({ label: c + ' preferred', ok: s.certs.includes(c), hard: false, detail: s.certs.includes(c) ? 'verified' : 'no' }));
+        if (P.domestic) crit.push({ label: 'Domestic (DFARS)', ok: s.domestic, hard: true, detail: s.loc.split(', ')[1] || '' });
+        crit.push({ label: 'Lead time before need-by', ok: s.leadWk <= leadLimit, hard: true, detail: s.leadWk + ' wk vs ' + leadLimit.toFixed(1) + ' wk' });
+        crit.push({ label: 'Queue has room', ok: s.queuePct < 90, hard: true, detail: s.queuePct + '% loaded' });
+        return crit;
+      };
+      const considered = SHOPS.map((s) => {
+        const criteria = judge(s);
+        const matched = criteria.every((c) => c.ok || !c.hard);
+        const open = !!st.bioOpen[s.key];
+        return { name: s.name, loc: s.loc, bio: s.bio, matched, open, toggleLabel: open ? 'About this shop ▴' : 'About this shop ▾',
+          toggle: () => this.setState({ bioOpen: Object.assign({}, st.bioOpen, { [s.key]: !open }) }),
+          badge: matched ? 'Matched' : 'Excluded', badgeSt: matched ? 'background:var(--color-good-soft);color:var(--color-good)' : 'background:color-mix(in srgb,var(--color-text) 8%,transparent)',
+          cardSt: matched ? '' : 'opacity:.72',
+          criteria: criteria.map((c) => ({ label: c.label, detail: c.detail, cls: c.ok ? 'ok' : c.hard ? 'no' : 'na', mark: c.ok ? '✓' : c.hard ? '✕' : '–' })),
+          queueText: s.queuePct + '% loaded', queueW: 'width:' + s.queuePct + '%', queueColor: s.queuePct >= 85 ? 'var(--color-bad)' : s.queuePct >= 65 ? 'var(--color-warn)' : 'var(--color-good)', _s: s };
+      });
+      const qualifying = considered.filter((c) => c.matched).map((c) => c._s);
+      const excluded = considered.filter((c) => !c.matched).map((c) => ({ name: c.name, why: c.criteria.filter((x) => x.cls === 'no').map((x) => x.label.toLowerCase()).join(', ') }));
       const gateReasons = [];
       if (!st.profileSet) gateReasons.push('Your mandate is not set. Set it once in Profile.');
       highOpen.forEach((f) => gateReasons.push('High finding open: ' + f.title + ' (' + f.impact + ')'));
@@ -158,14 +229,18 @@
         { id: 'RFQ-4388', ago: '4 d ago', part: 'Isogrid Panel', sub: 'Rev B · thin wall .090 ribs', qty: '25', mat: '6061-T6', base: 2, band: 'pricing…', need: 'Dec 19' },
         { id: 'RFQ-4371', ago: '9 d ago', part: 'Valve Body', sub: 'Rev B · awarded to Cascade CNC', qty: '500', mat: '17-4 PH', base: 5, band: '$61.80 firm', need: 'Oct 02' },
       ];
-      const stageNames = ['Uploaded', 'Priced', 'Matched', 'Negotiating', 'Offers ready', 'Awarded'];
+      const stageNames = ['Uploaded', 'Priced', 'Matched', 'Negotiating', 'Offers ready · needs your approval', 'Awarded'];
+      const agentLines = { 'RFQ-4417': st.awarded ? 'Award sent to the shop; PO draft ready' : st.released ? 'Negotiating: countered Midstate at $455, holding Net 45' : 'Priced from the model; release checks ' + (5 - failing.length) + ' of 5', 'RFQ-1235': 'Buyer final $4,480 is under the shop floor; waiting on Cascade CNC', 'RFQ-4402': 'Ranked 4 offers by your weights; recommending Midstate at $412', 'RFQ-4396': 'Repeat order awarded to the same shop as the last three', 'RFQ-4388': 'Matched 5 shops; pricing the .090 ribs at low confidence', 'RFQ-4371': 'Awarded to Cascade CNC at $61.80; on schedule for Oct 02' };
+      const awardedTo = { 'RFQ-4417': st.awarded ? (st.awarded.key === 'split' ? 'Ridgeline + Midstate' : (st.awarded.label || '').split(' · ')[0]) : '', 'RFQ-4396': 'Ridgeline Tool Works', 'RFQ-4371': 'Cascade CNC' };
       const rowsAll = rowDefs.map((r, i) => {
-        const adv = r.live ? (r.base === 3 && t > 2 ? 4 : r.base) : Math.min(5, r.base + (t > i * 2 ? 1 : 0));
+        const adv = r.live ? (r.base === 3 && t > 2 ? 4 : r.base) : (r.base >= 5 ? 5 : Math.min(4, r.base + (t > i * 2 ? 1 : 0)));
         const needs = adv === 1 || adv === 4;
         return Object.assign({}, r, {
-          stage: stageNames[adv], adv, needs, needsVis: needs ? 'visibility:visible' : 'visibility:hidden',
+          stage: adv === 1 && r.live ? 'Priced · needs your release' : stageNames[adv], adv, needs, needsVis: needs ? 'visibility:visible' : 'visibility:hidden',
+          inProgress: adv < 5, isAwarded: adv === 5, awardedTo: awardedTo[r.id] || 'shop', agentLine: agentLines[r.id] || '',
+          viewQuote: (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ screen: 'quote', quoteFor: r.id === 'RFQ-4417' && st.awarded ? st.awarded.key : 'c', quoteFrom: 'dash' }); },
           open: this.go(adv >= 4 ? 'offers' : adv === 3 ? 'neg' : adv <= 1 ? 'rfq' : 'part'),
-          stageColor: needs ? WARN : adv >= 4 ? ACC : MUTED,
+          stageColor: needs ? WARN + ';font-weight:600' : MUTED,
           pips: [0, 1, 2, 3, 4].map((n) => ({ st: n < adv ? 'background:var(--color-text)' : 'background:color-mix(in srgb,var(--color-text) 14%,transparent)' })),
         });
       });
@@ -174,6 +249,7 @@
         label: l, go: () => this.setState({ filter: k }), on: st.filter === k ? 'background:var(--color-text);color:var(--color-bg)' : ''
       }));
       const needsCount = rowsAll.filter((r) => r.needs).length;
+      const filterNeeds = () => this.setState({ filter: 'needs' });
       const kpis = [
         { l: 'Open requests', v: '13', s: needsCount + ' awaiting your decision' },
         { l: 'In negotiation', v: '5', s: 'agents active now' },
@@ -190,11 +266,34 @@
       const shown = Math.min(featDefs.length, Math.max(0, t - 1));
       const feats = featDefs.map(([l, v], i) => ({ l, v, vis: this.vis(i < shown, 8) }));
       const pct = Math.min(100, t * 9);
-      const files = [
-        { ext: 'STP', name: 'HAL-4417_rev_c.stp', meta: 'CAD · 18.2 MB', state: t > 1 ? 'Read' : 'Reading…' },
-        { ext: 'PDF', name: 'HAL-4417_RD_bubbled.pdf', meta: 'Drawing · 2.8 MB', state: t > 3 ? 'Read' : 'Queued' },
-        { ext: 'XLS', name: 'halcyon_terms_2026.xlsx', meta: 'Terms sheet · 88 KB', state: t > 5 ? 'Applied' : 'Queued' }
+      const files = st.userFiles.length
+        ? st.userFiles.map((f, i) => ({ ext: f.ext, name: f.name, meta: f.kind + ' · ' + f.size, read: t > 1 + 2 * i ? ({ STL: '412 faces · 34 holes · 3 setups · 0.61 kg', STEP: '412 faces · 34 holes · 3 setups · 0.61 kg', Drawing: '12 tolerances · 7 GD&T frames · Ra 32 · 9 notes', 'Terms sheet': 'Net 45 · qty ' + st.qty + ' · need by Nov 14' }[f.kind] || 'read as reference') : '', state: t > 1 + 2 * i ? (f.kind === 'Terms sheet' ? 'Applied' : 'Read') : (i === 0 || t > 2 * i - 1 ? 'Reading…' : 'Queued') }))
+        : [
+          { ext: 'STP', name: 'HAL-4417_rev_c.stp', meta: 'CAD · 18.2 MB', read: t > 1 ? '412 faces · 34 holes · 3 setups · 0.61 kg' : '', state: t > 1 ? 'Read' : 'Reading…' },
+          { ext: 'PDF', name: 'HAL-4417_RD_bubbled.pdf', meta: 'Drawing · 2.8 MB', read: t > 3 ? '12 tolerances · 7 GD&T frames · Ra 32 · 9 notes' : '', state: t > 3 ? 'Read' : 'Queued' },
+          { ext: 'XLS', name: 'halcyon_terms_2026.xlsx', meta: 'Terms sheet · 88 KB', read: t > 5 ? 'Net 45 · qty 250 · need by Nov 14 · ISO 9001 required' : '', state: t > 5 ? 'Applied' : 'Queued' }
+        ];
+      const cadName = (st.userFiles.find((f) => ['STL', 'STEP', 'IGES', 'SolidWorks', 'Parasolid'].includes(f.kind)) || {}).name || 'HAL-4417_rev_c.stp';
+      const stepDefs = [
+        [0, 'Reading ' + cadName], [2, '412 faces, 34 holes, 3 setups found'], [4, 'Reading the print: 12 tolerances, 7 GD&T frames, Ra 32'],
+        [6, 'Terms applied from your profile: ' + P.terms + ', ' + (P.certsRequired.join(', ') || 'no certs') + ' required'], [8, 'Pricing against 4 comparable parts'],
+        [11, 'Priced: $' + likely.toFixed(2) + ' ± $14, 4 to 6 weeks'], [12, 'Release checks: ' + (5 - failing.length) + ' of 5 passing'],
       ];
+      const agentSteps = stepDefs.filter(([at]) => t >= at).map(([at, text], i, arr) => {
+        const current = i === arr.length - 1 && t < 12;
+        return { text, mark: current ? '…' : '✓', st: current ? 'color:var(--color-text)' : MUT_JS };
+      });
+      const agentElapsed = t >= 12 ? 'done in ' + (t * 0.42).toFixed(0) + ' s' : (t * 0.42).toFixed(0) + ' s';
+      const feed = [
+        st.awarded ? { when: 'just now', text: 'Awarded RFQ-4417: ' + st.awarded.label } : null,
+        st.released ? { when: 'just now', text: 'Released RFQ-4417 to ' + qualifying.length + ' verified shops inside your mandate (ceiling ' + money(ceiling) + ')' } : null,
+        st.pickedAt ? { when: 'just now', text: 'Read ' + st.userFiles.length + ' file' + (st.userFiles.length === 1 ? '' : 's') + ' for RFQ-4417 and priced the part at ' + money(likely) } : null,
+        { when: '2 min', text: 'Countered Midstate at $455 on RFQ-4417. Net 45 is hard in your mandate.' },
+        { when: '14 min', text: 'RFQ-1235: the shop paused under its own floor on your $4,480 final. Waiting on Cascade CNC.' },
+        { when: '1 h', text: 'Ranked 4 offers on RFQ-4402 by your weights. Recommending Midstate at $412.' },
+        { when: '3 h', text: 'Priced RFQ-4388 Isogrid Panel: $312 to $355, low confidence on the .090 ribs.' },
+        { when: '1 d', text: 'RFQ-4396 reorder: matched the same 3 shops as the last three releases.' },
+      ].filter(Boolean).slice(0, 6);
       const reqFields = [
         { l: 'Quantity', v: st.qty, tag: 'You', tagStyle: MUTED, editable: true, readonly: false, set: (e) => this.setState({ qty: e.target.value }) },
         { l: 'Material', v: '6061-T6', tag: 'From CAD', tagStyle: INFO, editable: false, readonly: true },
@@ -273,7 +372,14 @@
       const bids = offerDefs.filter((o) => o.prices[phase] != null);
       const inside = bids.filter((o) => o.prices[phase] * k <= ceiling);
       const noneInside = phase === 2 && bids.length > 0 && inside.length === 0;
-      const award = (key, label) => () => this.setState({ awarded: { key, label } });
+      const award = (key, label, shop, price, qty, lead) => (e) => {
+        const from = e && e.target && e.target.closest ? e.target.closest('[data-offer], [data-reco]') : null;
+        this.fly(from, 'Awarded · ' + shop + ' · ' + money(price)).then(() => {
+          const entry = { key, rfq: 'RFQ-4417', part: 'Actuator Housing', shop, price: money(price), qty: String(qty), lead, when: 'just now', viewQuote: () => this.setState({ screen: 'quote', quoteFor: key, quoteFrom: 'profile' }) };
+          this.setState({ awarded: { key, label }, awards: [entry].concat(st.awards), badgeBump: Date.now() });
+          setTimeout(() => this.setState({ badgeBump: 0 }), 800);
+        });
+      };
       const offers = offerDefs.map((o) => {
         const r = o.ranks[phase], p = o.prices[phase] == null ? null : o.prices[phase] * k, best = r === 0 && p != null;
         const over = p != null && p > ceiling;
@@ -287,12 +393,23 @@
           rankColor: best ? 'color:var(--color-accent)' : MUTED,
           cta: p == null ? 'Ask again' : best ? 'Award ' + Math.round(qtyN * 0.6) + ' ea' : 'Award all ' + qtyN,
           ctaStyle: best ? 'background:var(--color-accent);color:var(--color-bg)' : 'border:1px solid var(--color-divider)',
-          award: p == null ? () => {} : award(o.key, o.name + ' · ' + money(p) + ' · ' + o.leads[phase]),
+          award: p == null ? () => {} : award(o.key, o.name + ' · ' + money(p) + ' · ' + o.leads[phase], o.name, p, best ? Math.round(qtyN * 0.6) : qtyN, o.leads[phase]),
+          hasQuote: p != null, viewQuote: () => this.setState({ screen: 'quote', quoteFor: o.key, quoteFrom: 'offers' }),
           hasProfile: !!o.profileHref, profileHref: o.profileHref || '#',
           bars: o.bars.map(([l, v]) => ({ l, v: v + '%', w: 'width:' + v + '%' }))
         };
       });
+      const chatAll = [{ who: 'Your agent', time: '09:58', text: st.awarded ? 'Award sent. I will draft the PO and watch the first-article date.' : st.released ? 'Two sources are inside your mandate. I am recommending a 60/40 split so both stay qualified for the quarterly reorder.' : 'I priced HAL-4417 at ' + money(likely) + ' from 4 comparable parts. Release checks: ' + (5 - failing.length) + ' of 5 passing.' }].concat(st.chat);
       const splitA = Math.round(qtyN * 0.6), splitB = qtyN - splitA;
+      const quoteDefs = { r: ['Ridgeline Tool Works', 'Elkhart, IN', 94.9, '4 weeks'], m: ['Midstate Precision', 'Dayton, OH', 96.4, '4.5 weeks'], c: ['Cascade CNC', 'Bend, OR', 99.1, '6 weeks'], split: ['Ridgeline Tool Works', 'Elkhart, IN', 94.9, '4 weeks'] };
+      const qd = quoteDefs[st.quoteFor] || quoteDefs.c;
+      const qQty = st.quoteFor === 'split' || (st.awarded && st.awarded.key === 'r' && st.quoteFor === 'r') ? splitA : qtyN;
+      const qPrice = qd[2] * k;
+      const quote = { no: 'Q-4417-' + (st.quoteFor || 'c').toUpperCase().slice(0, 1), shop: qd[0], loc: qd[1], lead: qd[3], terms: P.terms, qty: String(qQty),
+        lines: [{ qty: String(qQty), price: money(qPrice), total: '$' + Math.round(qPrice * qQty).toLocaleString('en-US') }], total: '$' + Math.round(qPrice * qQty).toLocaleString('en-US'),
+        note: st.quoteFor === 'split' ? 'this is the Ridgeline half of a 60/40 split award.' : 'price holds 90 days from release.' };
+      const agentStatus = st.awarded ? 'Sent your award to ' + awardedTo['RFQ-4417'] + '. Negotiating 2 other RFQs.' : needsCountEarly() + ' offer' + (needsCountEarly() === 1 ? '' : 's') + ' ready for your approval. Negotiating 2 RFQs, pricing 1.';
+      function needsCountEarly() { return rowsAll.filter((r) => r.needs).length; }
 
       return {
         tabs, isHome: sc === 'home', isDash: sc === 'dash', isRfq: sc === 'rfq', isPart: sc === 'part', isNeg: sc === 'neg', isOffers: sc === 'offers', isProfile: sc === 'profile',
@@ -302,11 +419,40 @@
         rows, kpis, filters, profileSet: st.profileSet, profileMissing: !st.profileSet,
         // new request
         files, feats, reqFields, certs, extractPct: String(pct), extractW: 'width:' + pct + '%',
+        pickFiles: (e) => this.takeFiles(e.target.files),
+        dropFiles: (e) => { e.preventDefault(); this.takeFiles(e.dataTransfer && e.dataTransfer.files); },
+        dragOver: (e) => { e.preventDefault(); if (!st.dragging) this.setState({ dragging: true }); },
+        dragLeave: () => { if (st.dragging) this.setState({ dragging: false }); },
+        dropSt: st.dragging ? 'border-color:var(--color-accent);background:var(--color-accent-100)' : '',
+        dropNote: st.userFiles.length ? st.userFiles.length + ' file' + (st.userFiles.length === 1 ? '' : 's') + ' from your machine' : 'or drop them here',
+        agentSteps, agentElapsed, agentDotSt: t >= 12 ? 'animation:none;background:var(--color-good)' : '',
+        // queue
+        feed: feed.slice(0, 3), agentStatus, agentSub: 'Working inside your mandate. It stops only for release, design changes, and awards.',
+        needsCount: String(needsCount), needsPlural: needsCount === 1 ? '' : 's', needsAny: needsCount > 0, needsNone: needsCount === 0, filterNeeds,
+        // awards and quote
+        awards: st.awards, awardsAny: st.awards.length > 0, awardsCount: String(st.awards.length),
+        isQuote: sc === 'quote', quote, quoteBack: this.go(st.quoteFrom === 'profile' ? 'profile' : st.quoteFrom === 'dash' ? 'dash' : 'offers'),
         priceVis: pct >= 100 ? 'opacity:1' : 'opacity:.25;pointer-events:none',
         unitPrice: money(likely), bandText: '± $14 · 4–6 weeks' + (savings ? ' · re-priced after ' + Object.keys(st.applied).filter((k) => st.applied[k]).length + ' change' + (savings > 14.9 ? 's' : '') : ''),
         qtyLabel: st.qty + ' ea',
+        // agent drawer
+        agentOpen: st.agent === 'open', agentMin: st.agent === 'min',
+        agentBtnSt: st.agent === 'open' ? 'border-color:var(--color-accent)' : '',
+        agentToggle: () => this.setState({ agent: st.agent === 'open' ? 'min' : 'open', chatSeen: chatAll.length }),
+        agentMinimize: () => this.setState({ agent: 'min' }), agentClose: () => this.setState({ agent: 'closed' }),
+        agentExpand: () => this.setState({ agent: 'open', chatSeen: chatAll.length }),
+        agentContext: 'on RFQ-4417 · ' + (st.awarded ? 'awarded' : st.released ? 'negotiating' : 'priced'),
+        agentUnread: chatAll.length > st.chatSeen, agentUnreadCount: String(chatAll.length - st.chatSeen),
+        chat: chatAll.map((m) => ({ who: m.who, time: m.time, text: m.text, align: m.who === 'You' ? 'flex-end' : 'flex-start', bg: m.who === 'You' ? 'var(--color-surface)' : 'var(--color-accent-100)', rule: m.who === 'You' ? 'transparent' : 'var(--color-accent)' })),
+        suggestions: [
+          { label: 'Why this ceiling?', ask: () => this.ask('Why this ceiling?', 'Your profile sets the ceiling at Canyon\'s likely price' + (ceilingPct ? ' plus ' + ceilingPct + '%' : '') + '. On this part that is ' + money(ceiling) + '. ' + (bids.filter((o) => o.prices[phase] * k <= ceiling).length || 'None') + ' of ' + (bids.length || 3) + ' bids sit inside it.') },
+          { label: 'Why these shops?', ask: () => this.ask('Why these shops?', 'Six verified shops were considered against your mandate. ' + excluded.map((x) => x.name + ' is out: ' + x.why).join('. ') + '. ' + qualifying.map((q) => q.name).join(', ') + ' pass every hard criterion.') },
+          { label: 'What changed the price?', ask: () => this.ask('What changed the price?', savings ? 'Applying ' + Object.keys(st.applied).filter((x) => st.applied[x]).length + ' design change(s) took ' + money(savings) + ' off the likely price and scaled every bid by the same ' + Math.round((1 - k) * 100) + '%. The band is now ' + money(bandLoF) + ' to ' + money(bandHiF) + '.' : 'Nothing yet. The likely price is ' + money(likely) + ' from 4 comparable parts. Applying finding 1 on Part & DFM would take $14.90 off it and move every bid with it.') },
+        ],
+        chatInput: st.chatInput, chatType: (e) => this.setState({ chatInput: e.target.value }),
+        chatSend: () => { const q = (st.chatInput || '').trim(); if (q) this.ask(q, 'I can check that against your mandate and the negotiation record for RFQ-4417. Ridgeline\'s ' + bid(94.9) + ' is the best live offer inside your ' + money(ceiling) + ' ceiling; say the word and I will surface the offers.'); },
         // nav
-        inRfq: ['rfq', 'part', 'neg', 'offers'].includes(sc), stages, goHome: this.go('home'),
+        inRfq: ['rfq', 'part', 'neg', 'offers', 'quote'].includes(sc), stages, goHome: this.go('home'),
         toggleTheme: () => { const next = st.theme === '' ? 'dark' : st.theme === 'dark' ? 'light' : ''; applyTheme(next); this.setState({ theme: next }); },
         themeLabel: st.theme === 'dark' ? 'Dark' : st.theme === 'light' ? 'Light' : 'Auto theme',
         // gate
@@ -323,7 +469,7 @@
         findings, drivers, partMeta, openCount: String(openFindings.length),
         bandPos: 'left:' + b[0] + '%;right:' + b[1] + '%', bandLo: money(b[2] - savings).replace('.00', ''), bandMid: money(likely).replace('.20', ''), bandHi: money(b[3] - savings).replace('.00', ''), bandConf: b[4],
         // negotiation
-        msgs, mandate, shopStates, matched, excluded, matchedCount: String(qualifying.length), excludedCount: String(excluded.length),
+        msgs, mandate, shopStates, matched, excluded, considered, consideredCount: String(SHOPS.length), matchedCount: String(qualifying.length), excludedCount: String(excluded.length),
         roundNo: String(Math.min(3, Math.ceil(msgShown / 3))),
         typingVis: nextMsg ? 'opacity:1' : 'opacity:0',
         typingWho: nextMsg ? nextMsg.who + ' is responding…' : 'Round closed',
@@ -335,8 +481,8 @@
         noneInside, ceilingText: money(ceiling),
         awarded: !!st.awarded, awardedText: st.awarded ? st.awarded.label : '', notAwarded: !st.awarded,
         splitText: splitA + ' ea to Ridgeline at ' + bid(94.9) + ' and ' + splitB + ' ea to Midstate at ' + bid(96.4) + '. Both hold Net 45. Dual-sourcing costs $225 total and removes single-shop schedule risk on a part you reorder quarterly.',
-        acceptSplit: award('split', '60/40 split · Ridgeline ' + splitA + ' ea at ' + bid(94.9) + ' · Midstate ' + splitB + ' ea at ' + bid(96.4)),
-        declineAll: award('declined', 'Declined all offers. The RFQ is back in your queue at Priced.'),
+        acceptSplit: award('split', '60/40 split · Ridgeline ' + splitA + ' ea at ' + bid(94.9) + ' · Midstate ' + splitB + ' ea at ' + bid(96.4), 'Ridgeline + Midstate', 94.9 * k, qtyN, '4 to 4.5 weeks'),
+        declineAll: () => this.setState({ awarded: { key: 'declined', label: 'Declined all offers. The RFQ is back in your queue at Priced.' } }),
         // profile
         profile: P,
         setCeilingPct: this.setField('ceilingPct'), setBufferDays: this.setField('bufferDays'), setTerms: this.setField('terms'), setSources: this.setField('sources'),

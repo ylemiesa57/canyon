@@ -1,7 +1,9 @@
 // Canyon landing page behaviour.
-// 1. Viewport: a Three.js canyon terrain as CAD wireframe, fixed behind the page.
-//    An end mill machines it. Scroll flies the camera down the canyon and sends
-//    ripple pulses across the contours. Clicking the canyon sends a pulse too.
+// 1. Viewport: a Three.js canyon terrain, fixed behind the page, in two readings.
+//    For a shop it is a part being cut: wireframe forward, an end mill working a
+//    raster toolpath, pulses radiating outward like chips. For a buyer it is a
+//    survey: contours forward, no tool, a slow wavefront crossing the terrain and
+//    pulses that collapse inward. Scroll flies the camera; clicking sends a pulse.
 // 2. Audience toggle (buyer vs machine shop).
 // 3. Scroll reveal for panels, the looping agent exchange, the demo video slot, the trial form.
 
@@ -40,6 +42,7 @@ if (navToggle) {
     const url = new URL(location.href);
     url.searchParams.set("for", a);
     history.replaceState(null, "", url);
+    document.dispatchEvent(new CustomEvent("canyon:audience", { detail: a }));
   };
   picks.forEach((b) => b.addEventListener("click", () => setAudience(b.dataset.audiencePick)));
   setAudience(root.dataset.audience === "shop" ? "shop" : "buyer");
@@ -99,8 +102,14 @@ const viewport = (function viewport() {
   // --- Ripple material: lines brighten to the accent where a ring passes.
   const MAX_RIPPLES = 8;
   const ripples = [];
-  for (let i = 0; i < MAX_RIPPLES; i++) ripples.push(new THREE.Vector4(0, 0, -100, 0)); // x, z, startTime, strength
+  // x, z, startTime, strength. A negative strength means the ring collapses inward
+  // instead of spreading: the buyer's pulses arrive, the shop's leave.
+  for (let i = 0; i < MAX_RIPPLES; i++) ripples.push(new THREE.Vector4(0, 0, -100, 0));
   let rippleSlot = 0;
+  // The buyer's wavefront: a heading across the canyon, a position along it, and a strength
+  // that is zero for the shop. Position is driven from the frame loop so it can be parked.
+  const sweep = new THREE.Vector4(0.92, 0.39, 0, 0);
+  const SWEEP_SPAN = 110, SWEEP_SPEED = 17;
   const lineMaterial = (color, opacity) => new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
@@ -111,6 +120,7 @@ const viewport = (function viewport() {
       uOpacity: { value: opacity },
       uTime: { value: 0 },
       uRipples: { value: ripples },
+      uSweep: { value: sweep },
     },
     vertexShader: `
       varying vec3 vWorld;
@@ -149,6 +159,19 @@ const viewport = (function viewport() {
   const wireMat = lineMaterial(0x55627a, 0.5);
   const contourMat = lineMaterial(0x8593a8, 0.55);
 
+  // Two readings of the same terrain. `cut` carries the toolpath and the end mill, so it is
+  // 1 for a shop and 0 for a buyer; `ripple` is the sign handed to new pulses. Everything
+  // here except `ripple` is eased, because the audience toggle can fire at any scroll position.
+  const LOOK = {
+    shop:  { wire: 0.50, contour: 0.55, cut: 1, sweep: 0.00, camSide: 46, camY: 42, dipSide: 18, dipY: 22, ripple: 1 },
+    buyer: { wire: 0.22, contour: 0.75, cut: 0, sweep: 0.55, camSide: 58, camY: 54, dipSide: 10, dipY: 12, ripple: -1 },
+  };
+  const EASED = ["wire", "contour", "cut", "sweep", "camSide", "camY", "dipSide", "dipY"];
+  const audienceOf = (el) => (el.dataset.audience === "shop" ? "shop" : "buyer");
+  let target = LOOK[audienceOf(document.documentElement)];
+  const look = Object.assign({}, target);
+  const setAudience = (a) => { target = LOOK[a] || LOOK.buyer; };
+
   scene.add(new THREE.LineSegments(new THREE.WireframeGeometry(geo), wireMat));
 
   // Contour rings at every terrace level.
@@ -179,27 +202,33 @@ const viewport = (function viewport() {
   }
   const trailGeo = new THREE.BufferGeometry().setFromPoints(path);
   trailGeo.setDrawRange(0, 0);
-  scene.add(new THREE.Line(trailGeo, new THREE.LineBasicMaterial({ color: 0xdc7439, transparent: true, opacity: 0.9, fog: true })));
+  const trailMat = new THREE.LineBasicMaterial({ color: 0xdc7439, transparent: true, opacity: 0.9, fog: true });
+  scene.add(new THREE.Line(trailGeo, trailMat));
 
   const tool = new THREE.Group();
-  const cutter = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 7, 18), new THREE.MeshBasicMaterial({ color: 0xdc7439 }));
+  const cutter = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 7, 18), new THREE.MeshBasicMaterial({ color: 0xdc7439, transparent: true }));
   cutter.position.y = 3.5;
-  const shank = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 6, 14), new THREE.MeshBasicMaterial({ color: 0x9aa4b0 }));
+  const shank = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 6, 14), new THREE.MeshBasicMaterial({ color: 0x9aa4b0, transparent: true }));
   shank.position.y = 10;
-  const flute = new THREE.Mesh(new THREE.BoxGeometry(3.1, 6.6, 0.25), new THREE.MeshBasicMaterial({ color: BG }));
+  const flute = new THREE.Mesh(new THREE.BoxGeometry(3.1, 6.6, 0.25), new THREE.MeshBasicMaterial({ color: BG, transparent: true }));
   flute.position.y = 3.5;
   tool.add(cutter, shank, flute);
-  tool.add(new THREE.Line(
+  const axis = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 13, 0), new THREE.Vector3(0, 70, 0)]),
     new THREE.LineBasicMaterial({ color: 0xdc7439, transparent: true, opacity: 0.35 })
-  ));
+  );
+  tool.add(axis);
   scene.add(tool);
+  // Full-strength opacity per material, scaled by `cut` every frame.
+  const cutParts = [[trailMat, 0.9], [cutter.material, 1], [shank.material, 1], [flute.material, 1], [axis.material, 0.35]];
 
   // --- Ripples
   const clock = new THREE.Clock();
   const addRipple = (x, z, strength = 1) => {
     if (reduceMotion) return;
-    ripples[rippleSlot].set(x, z, clock.getElapsedTime(), strength);
+    // In-flight rings keep the direction they were born with, so a mid-page toggle
+    // never turns a pulse inside out.
+    ripples[rippleSlot].set(x, z, clock.getElapsedTime(), strength * target.ripple);
     rippleSlot = (rippleSlot + 1) % MAX_RIPPLES;
   };
 
@@ -214,8 +243,8 @@ const viewport = (function viewport() {
     // Fly from z = +70 down to z = -70, dipping into the canyon mid-page and climbing out.
     const z = 70 - 140 * t;
     const dip = Math.sin(Math.PI * t);
-    const side = 46 - 18 * dip;
-    const y = 42 - 22 * dip;
+    const side = look.camSide - look.dipSide * dip;
+    const y = look.camY - look.dipY * dip;
     camPos.set(meander(z) + side, y, z + 26);
     camTarget.set(meander(z - 40), -6 + 4 * dip, z - 40);
 
@@ -288,14 +317,25 @@ const viewport = (function viewport() {
   let progress = reduceMotion ? 0.62 : 0.0;
   const SPEED = 1 / 52;
   let lastPulse = 0;
+  // Parked mid-terrain under reduced motion, so the buyer still gets a resting frame.
+  let sweepPos = reduceMotion ? 0 : -SWEEP_SPAN;
   let last = performance.now();
   let hidden = document.hidden;
   document.addEventListener("visibilitychange", () => { hidden = document.hidden; });
 
   const applyProgress = () => {
-    const idx = Math.min(path.length - 1, Math.floor(progress * (path.length - 1)));
+    const idx = Math.max(0, Math.min(path.length - 1, Math.floor(progress * (path.length - 1))));
     trailGeo.setDrawRange(0, idx + 1);
     tool.position.copy(path[idx]);
+  };
+
+  const applyLook = () => {
+    wireMat.uniforms.uOpacity.value = look.wire;
+    contourMat.uniforms.uOpacity.value = look.contour;
+    cutParts.forEach(([m, base]) => { m.opacity = base * look.cut; });
+    tool.visible = look.cut > 0.01;
+    sweep.z = sweepPos;
+    sweep.w = look.sweep;
   };
 
   const frame = (now) => {
@@ -307,6 +347,10 @@ const viewport = (function viewport() {
     wireMat.uniforms.uTime.value = time;
     contourMat.uniforms.uTime.value = time;
 
+    // Ease between the two readings. Reduced motion snaps instead.
+    const k = reduceMotion ? 1 : 1 - Math.exp(-dt / 0.18);
+    EASED.forEach((key) => { look[key] += (target[key] - look[key]) * k; });
+
     if (!reduceMotion) {
       progress += dt * SPEED;
       if (progress >= 1) progress = 0;
@@ -315,21 +359,34 @@ const viewport = (function viewport() {
       cur.yaw += (want.yaw - cur.yaw) * 0.06;
       cur.pitch += (want.pitch - cur.pitch) * 0.06;
       scrollTSmooth += (scrollT - scrollTSmooth) * 0.08;
-      // The cutter sends a pulse every few seconds: a probe cycle.
-      if (time - lastPulse > 3.6) { lastPulse = time; addRipple(tool.position.x, tool.position.z, 0.55); }
+      if (look.sweep > 0.01) {
+        sweepPos += dt * SWEEP_SPEED;
+        // The band is clear of the terrain at both ends, so the wrap is never seen.
+        if (sweepPos > SWEEP_SPAN) sweepPos = -SWEEP_SPAN;
+      }
+      // A pulse every few seconds: the cutter probing for a shop, the canyon answering for a buyer.
+      if (time - lastPulse > (look.cut > 0.5 ? 3.6 : 4.2)) {
+        lastPulse = time;
+        if (look.cut > 0.5) addRipple(tool.position.x, tool.position.z, 0.55);
+        else addRipple(meander(camTarget.z) + (Math.random() - 0.5) * 50, camTarget.z + (Math.random() - 0.5) * 50, 0.55);
+      }
     } else {
       scrollTSmooth = scrollT;
     }
     applyProgress();
+    applyLook();
     placeCamera();
     renderer.render(scene, camera);
   };
   applyProgress();
+  applyLook();
   placeCamera();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 
-  return { addRipple };
+  document.addEventListener("canyon:audience", (e) => setAudience(e.detail));
+
+  return { addRipple, setAudience };
 })();
 
 /* ------------------------------------------------------------------ */
@@ -350,22 +407,35 @@ const viewport = (function viewport() {
 /* ------------------------------------------------------------------ */
 (function exchange() {
   const thread = $("#thread");
-  const msgs = $$("#messages .msg");
+  const lists = $$("#thread .messages");
   const offer = $("#offer");
-  if (!thread || !msgs.length) return;
+  if (!thread || !lists.length) return;
+
+  // Each audience has its own thread. Play whichever one is showing.
+  const current = () => lists.find((l) => l.dataset.audience === document.documentElement.dataset.audience) || lists[0];
+  let list = current();
+  let msgs = $$(".msg", list);
 
   const showUpTo = (n) => {
     msgs.forEach((m, i) => m.classList.toggle("is-in", i <= n));
     if (n >= 0 && offer) offer.textContent = msgs[n].dataset.offer;
   };
 
-  if (reduceMotion) { showUpTo(msgs.length - 1); return; }
+  if (reduceMotion) {
+    const showAll = () => {
+      lists.forEach((l) => $$(".msg", l).forEach((m) => m.classList.remove("is-in")));
+      list = current(); msgs = $$(".msg", list); showUpTo(msgs.length - 1);
+    };
+    showAll();
+    document.addEventListener("canyon:audience", showAll);
+    return;
+  }
 
   let i = -1, timer = null, running = false;
   const step = () => {
     i++;
     if (i >= msgs.length) {
-      // Hold on the match, then start over.
+      // Hold on the last line, then start over.
       timer = setTimeout(() => { i = -1; showUpTo(-1); if (offer) offer.textContent = "Offer"; timer = setTimeout(step, 700); }, 3200);
       return;
     }
@@ -376,18 +446,34 @@ const viewport = (function viewport() {
   const start = () => { if (running) return; running = true; i = -1; showUpTo(-1); timer = setTimeout(step, 400); };
   const stop = () => { running = false; clearTimeout(timer); };
 
+  document.addEventListener("canyon:audience", () => {
+    const next = current();
+    if (next === list) return;
+    const wasRunning = running;
+    stop();
+    lists.forEach((l) => $$(".msg", l).forEach((m) => m.classList.remove("is-in")));
+    list = next;
+    msgs = $$(".msg", list);
+    showUpTo(-1);
+    if (offer) offer.textContent = "Offer";
+    if (wasRunning) start();
+  });
+
   showUpTo(-1);
   new IntersectionObserver((entries) => { entries[0].isIntersecting ? start() : stop(); }, { threshold: 0.35 }).observe(thread);
 })();
 
-/* ------------------------------------------------------------------ */
 /* Demo video slot                                                      */
 /* ------------------------------------------------------------------ */
 (function video() {
   const box = $("#video");
   const play = $("#video-play");
-  const note = $("#video-note");
+  const empty = $("#video-empty");
   if (!box || !play) return;
+  const src = box.dataset.src;
+  if (!src) return;                       // no walkthrough yet: leave the empty slot in place
+  if (empty) empty.remove();
+  play.hidden = false;
   play.addEventListener("click", () => {
     const src = box.dataset.src;
     if (src) {
