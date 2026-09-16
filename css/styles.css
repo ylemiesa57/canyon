@@ -151,7 +151,7 @@ main { position: relative; z-index: 1; }
 .nav .wrap { height: 100%; display: flex; align-items: center; gap: 28px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; font-stretch: 118%; font-weight: 600; font-size: 1.15rem; }
 .brand:hover { text-decoration: none; }
-.brand-mark { display: inline-block; width: 18px; height: 18px; background: var(--accent); flex: none; }
+.brand-mark { display: inline-block; width: 18px; height: 18px; flex: none; object-fit: contain; }
 .nav-links { display: flex; gap: 22px; margin: 0 0 0 12px; padding: 0; list-style: none; font-size: 0.95rem; color: var(--muted); }
 .nav-links a:hover { color: var(--text); text-decoration: none; }
 .nav-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
