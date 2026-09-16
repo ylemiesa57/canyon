@@ -19,10 +19,18 @@
     .login-card h1 { font-size: 1.75rem; font-stretch: 112%; }
     .login-foot { color: var(--muted); font-size: 0.9rem; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .login-foot a { color: var(--text); }
+    .login-close {
+      position: fixed; top: var(--gutter); right: var(--gutter);
+      width: 36px; height: 36px; display: grid; place-items: center;
+      border-radius: 50%; color: var(--muted); text-decoration: none;
+      font-size: 1.4rem; line-height: 1; transition: background 0.15s ease, color 0.15s ease;
+    }
+    .login-close:hover { background: rgba(255,255,255,0.06); color: var(--text); }
   </style>
 </head>
 <body>
 <main class="login-page">
+  <a class="login-close" href="index.html" aria-label="Close and return to Canyon home">&times;</a>
   <div class="login-card">
     <a class="brand" href="index.html" aria-label="Canyon home">
       <img class="brand-mark" src="assets/logo-mark.png" alt="" width="18" height="18">
