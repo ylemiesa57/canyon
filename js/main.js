@@ -392,7 +392,9 @@ const viewport = (function viewport() {
     const src = box.dataset.src;
     if (src) {
       const f = document.createElement("iframe");
-      f.src = src + (src.includes("?") ? "&" : "?") + "autoplay=1";
+      // Loom reads autoplay=true; YouTube and Vimeo read autoplay=1.
+      const autoplay = src.includes("loom.com") ? "autoplay=true" : "autoplay=1";
+      f.src = src + (src.includes("?") ? "&" : "?") + autoplay;
       f.allow = "autoplay; fullscreen; picture-in-picture";
       f.title = "Canyon demo video";
       box.appendChild(f);
