@@ -19,6 +19,7 @@
     .login-card h1 { font-size: 1.75rem; font-stretch: 112%; }
     .login-foot { color: var(--muted); font-size: 0.9rem; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .login-foot a { color: var(--text); }
+    .login-sub { color: var(--muted); font-size: 1rem; line-height: 1.5; margin-top: -8px; }
     .login-close {
       position: fixed; top: var(--gutter); right: var(--gutter);
       width: 36px; height: 36px; display: grid; place-items: center;
@@ -37,22 +38,39 @@
       Canyon
     </a>
     <h1>Log in</h1>
-    <form class="form" id="login-form" action="#" method="post">
-      <div class="field">
-        <label for="login-email">Work email</label>
-        <input id="login-email" name="email" type="email" autocomplete="username" required>
+    <p class="login-sub">No password. We email you a link that signs you in.</p>
+    <form class="form" id="login-form" novalidate>
+      <div class="form-fields" style="display:grid;gap:16px">
+        <div class="field">
+          <label for="login-email">Work email</label>
+          <input id="login-email" name="email" type="email" autocomplete="email" required>
+          <span class="error">Enter a valid email address.</span>
+        </div>
+        <button class="btn btn-primary btn-lg" type="submit">Email me a sign-in link</button>
       </div>
-      <div class="field">
-        <label for="login-password">Password</label>
-        <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+      <div class="form-done" role="status">
+        <strong>Check your inbox.</strong> We sent a sign-in link to <span id="login-done-email"></span>.
       </div>
-      <button class="btn btn-primary btn-lg" type="submit">Log in</button>
     </form>
     <div class="login-foot">
-      <a href="#">Forgot password</a>
       <span>New here? <a href="index.html#trial">Start free trial</a></span>
     </div>
   </div>
 </main>
+<script>
+  // No backend yet: validate the address and show the confirmation, like the trial form.
+  (function () {
+    var form = document.getElementById("login-form");
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var email = document.getElementById("login-email");
+      var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
+      email.closest(".field").classList.toggle("is-invalid", !ok);
+      if (!ok) { email.focus(); return; }
+      document.getElementById("login-done-email").textContent = email.value.trim();
+      form.classList.add("is-done");
+    });
+  })();
+</script>
 </body>
 </html>
