@@ -113,13 +113,14 @@ main { position: relative; z-index: 1; }
 
 /* Vista: a gap where the canyon shows through */
 .vista {
-  min-height: 52vh;
-  display: grid;
-  place-items: center;
-  padding: 24px var(--gutter);
+  min-height: 74vh;
+  padding: 0 var(--gutter);
   pointer-events: none;
 }
 .vista-line {
+  position: sticky;
+  top: 38vh;
+  margin: 0 auto;
   font-size: clamp(1.5rem, 3.6vw, 3rem);
   line-height: 1.2;
   font-stretch: 118%;
@@ -134,8 +135,22 @@ main { position: relative; z-index: 1; }
 
 /* Scroll reveal: visible at rest without JS or under reduced motion */
 .js .reveal { opacity: 0; transform: translateY(28px); transition: opacity 700ms ease, transform 700ms cubic-bezier(.2,.7,.2,1); }
+.js .reveal.from-left { transform: translate(-40px, 12px); }
+.js .reveal.from-right { transform: translate(40px, 12px); }
 .js .reveal.is-in { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) { .js .reveal { opacity: 1; transform: none; transition: none; } }
+/* Children of a .stagger list arrive one after another once their panel is in */
+.js .stagger > * { opacity: 0; transform: translateY(14px); transition: opacity 520ms ease, transform 520ms cubic-bezier(.2,.7,.2,1); transition-delay: calc(var(--i, 0) * 70ms + 120ms); }
+.js .reveal.is-in .stagger > * { opacity: 1; transform: none; }
+/* Where the weeks go: the Canyon column wipes in from its accent rule after the "today" text is already there */
+.js .compress .now { clip-path: inset(0 100% 0 0); transition: clip-path 640ms cubic-bezier(.2,.7,.2,1); transition-delay: calc(var(--i, 0) * 70ms + 380ms); }
+.js .reveal.is-in .compress .now { clip-path: inset(0 0 0 0); }
+@supports (animation-timeline: view()) {
+  .js .reveal.is-in .compress .now { transition: none; animation: wipe-in linear both; animation-timeline: view(); animation-range: entry 15% entry 75%; }
+  @keyframes wipe-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .js .reveal, .js .stagger > *, .js .compress .now { opacity: 1; transform: none; clip-path: none; transition: none; animation: none; }
+}
 
 /* Nav */
 .nav {
@@ -220,15 +235,16 @@ main { position: relative; z-index: 1; }
 
 /* How it works: a real sequence */
 .steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: clamp(20px, 3vw, 40px); counter-reset: step; }
-.steps li { border-top: 2px solid var(--line-strong); padding-top: 16px; }
-.steps li::before { counter-increment: step; content: counter(step); display: block; font-family: var(--font-mono); color: var(--accent); font-size: 0.9rem; margin-bottom: 10px; }
+.steps li { border-top: 2px solid var(--line-strong); padding-top: 16px; transition: border-color 360ms ease; }
+.steps li::before { counter-increment: step; content: counter(step); display: block; font-family: var(--font-mono); color: var(--muted); font-size: 0.9rem; margin-bottom: 10px; transition: color 360ms ease; }
+.steps li.is-lit { border-top-color: var(--accent); }
+.steps li.is-lit::before { color: var(--accent); }
 .steps h3 { font-size: 1.35rem; font-stretch: 108%; line-height: 1.25; }
-.steps.timed li::before { content: none; }
-.steps .time { display: block; font-family: var(--font-mono); color: var(--accent); font-size: 0.9rem; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
 .steps p { color: var(--muted); margin-top: 8px; line-height: 1.5; }
 
 /* Demo video */
-.video { position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: var(--bg-deep); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.demo-sub { color: var(--muted); font-size: 1.05rem; line-height: 1.55; margin: -14px 0 22px; max-width: 62ch; }
+.video { position: relative; aspect-ratio: 4 / 3; max-width: 760px; margin-inline: auto; background: var(--bg-deep); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
 .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .video-poster {
   position: absolute; inset: 0; width: 100%; height: 100%;
@@ -251,8 +267,10 @@ main { position: relative; z-index: 1; }
   font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted);
 }
 .thread-head .right { text-align: right; }
-.thread-head .offer { color: var(--text); font-size: 1rem; line-height: 1.4; font-weight: 500; min-width: 8ch; text-align: center; font-variant-numeric: tabular-nums; }
-.messages { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; min-height: 380px; }
+.thread-head .offer { color: var(--text); font-size: 1rem; line-height: 1.4; font-weight: 500; min-width: 8ch; text-align: center; font-variant-numeric: tabular-nums; transition: transform 220ms cubic-bezier(.2,.7,.2,1), color 220ms ease; }
+.thread-head .offer.pop { transform: scale(1.16); color: var(--accent); }
+.js .panel.is-talking { box-shadow: 0 0 0 1px rgba(220,116,57,0.28), 0 0 56px rgba(220,116,57,0.10); transition: box-shadow 600ms ease; }
+.messages { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; min-height: 300px; }
 .msg { display: flex; }
 .msg span {
   max-width: 78%; padding: 12px 16px; border-radius: var(--radius); font-size: 1.05rem; line-height: 1.5;
@@ -354,20 +372,7 @@ main { position: relative; z-index: 1; }
 .spec .v { font-size: 0.98rem; line-height: 1.5; color: var(--text); opacity: 0.88; }
 .callout { margin-top: 20px; padding: 14px 16px; background: var(--accent-soft); border-left: 2px solid var(--accent); font-size: 0.95rem; line-height: 1.5; }
 
-/* Demo video: an unfilled slot until a walkthrough exists */
-.video-empty {
-  position: absolute; inset: 0;
-  display: grid; place-items: center; align-content: center; gap: 10px;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 39px, rgba(255,255,255,0.045) 39px 40px),
-    repeating-linear-gradient(90deg, transparent 0 39px, rgba(255,255,255,0.045) 39px 40px);
-  text-align: center; padding: 24px;
-}
-.video-empty .slot-label {
-  font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--muted); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 6px 12px;
-}
-.video-empty .slot-note { color: var(--muted); font-size: 0.95rem; max-width: 34ch; }
+/* Demo links under the player */
 .demo-links { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-top: 20px; }
 .demo-note { color: var(--muted); font-size: 0.9rem; }
 
@@ -407,9 +412,10 @@ main { position: relative; z-index: 1; }
   .steps { grid-template-columns: 1fr; }
   .seg { align-self: stretch; }
   .seg button { flex: 1; padding: 0 10px; }
-  .vista { min-height: 36vh; }
+  .vista { min-height: 52vh; }
+  .vista-line { top: 30vh; }
   .msg span { max-width: 90%; font-size: 1rem; }
-  .messages { min-height: 340px; }
+  .messages { min-height: 270px; }
   .spec li { grid-template-columns: 1fr; }
   .demo-links .btn { flex: 1 1 auto; }
 }

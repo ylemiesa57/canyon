@@ -12,11 +12,14 @@
   const readTheme = () => { try { return localStorage.getItem('canyon-theme') || ''; } catch (e) { return ''; } };
   const applyTheme = (t) => { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; try { localStorage.setItem('canyon-theme', t); } catch (e) { /* private mode */ } };
   const money = (n) => '$' + n.toFixed(2);
+  const moneyTrim = (n) => money(n).replace(/\.00$/, ''); // cents only when they carry information
   const num = (v, d) => { const n = parseFloat(v); return Number.isFinite(n) ? n : d; };
+  const plural = (n, word, pl) => n + ' ' + (n === 1 ? word : (pl || word + 's'));
+  const today = () => new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   /* ── Profile: the mandate, set once per buyer ── */
   const DEFAULT_PROFILE = {
-    ceilingPct: '0', bufferDays: '7', terms: 'Net 45', termsHard: true,
+    ceilingPct: '2', bufferDays: '7', terms: 'Net 45', termsHard: true,
     certsRequired: ['ISO 9001'], certsPreferred: ['AS9100D'], domestic: true, sources: '2', autoAccept: true,
     wPrice: '50', wOntime: '25', wLead: '15', wTerms: '10'
   };
@@ -40,7 +43,7 @@
   /* ── Findings on the current part ── */
   const FINDINGS = [
     { n: '1', sev: 'High', tags: ['Thin wall', 'Deep pocket'], title: 'Wall thickness vs. pocket depth', body: '0.060 in walls run 2.4 in deep on the two outboard pockets — a 40:1 ratio. Shops will slow feeds, add a semi-finish pass and expect chatter, or quote fixture work to support the walls.', impact: '+$18.40 / part', save: 14.9, fix: 'Taking the wall to 0.090 in adds 1.8 g of mass and removes a full finishing pass. At 250 ea that is $3,725 saved for a change your FEA margin already covers.' },
-    { n: '2', sev: 'Medium', tags: ['Tolerance', 'Bore'], title: 'Ø0.3750 +.0005/-.0000 on two bores', body: 'A unilateral half-thou band pushes both bores to a reamed or finish-bored op with controlled approach, plus in-process gauging. Only 4 of the 11 matched shops hold this in production.', impact: '+$6.10 / part', save: 5.2, fix: 'If the bearing is a press fit, ±.001 bilateral still seats it and opens the part to 9 shops — more competition on price than the tolerance itself is worth.' },
+    { n: '2', sev: 'Medium', tags: ['Tolerance', 'Bore'], title: 'Ø0.3750 +.0005/-.0000 on two bores', body: 'A unilateral half-thou band pushes both bores to a reamed or finish-bored op with controlled approach, plus in-process gauging. Only 2 of the 6 shops considered hold this in production.', impact: '+$6.10 / part', save: 5.2, fix: 'If the bearing is a press fit, ±.001 bilateral still seats it and opens the part to 5 shops — more competition on price than the tolerance itself is worth.' },
     { n: '3', sev: 'Low', tags: ['Feature', 'Tooling'], title: 'Internal corners at R0.031', body: 'The two internal corners call R0.031, which forces a 1/16 endmill for the last pass on an otherwise 1/2 in tool part. Tool life and cycle time both take the hit.', impact: '+$2.30 / part', save: 2.3, fix: 'R0.125 corners clear the mating flange per the print and let the whole pocket run with one tool.' },
   ];
   const SEV_STYLE = { High: 'background:var(--color-accent);color:var(--color-bg)', Medium: 'background:var(--color-accent-200);color:var(--color-accent-800)', Low: 'background:color-mix(in srgb,var(--color-text) 10%,transparent)' };
@@ -49,7 +52,7 @@
     state = Object.assign({
       screen: 'dash', tick: 0, filter: 'all',
       qty: '250', needBy: 'Nov 14, 2026',
-      applied: {}, dismissed: {}, released: false, awarded: null, selectedFinding: null,
+      applied: {}, dismissed: {}, released: false, awarded: null, declined: false, selectedFinding: null,
       userFiles: [], stlBuffer: null, dragging: false, pickedAt: null,
       awards: [], quoteFor: null, quoteFrom: 'offers', badgeBump: 0, bioOpen: {},
       agent: 'min', chat: [], chatInput: '', chatSeen: 0,
@@ -72,10 +75,12 @@
       v.postMessage({ type: 'load', model: {
         name: (this.state.userFiles.find((f) => f.kind === 'STL') || {}).name || 'HAL-4417 Actuator Housing',
         stlBuffer: this.state.stlBuffer, pdf: '/assets/parts/actuator-housing.pdf',
+        // Anchors are bounding-box fractions of the 213.4 x 105.4 x 66 housing: the thin outboard end walls,
+        // the two bores in the centre block, and a far corner of each pocket.
         findings: [
-          { id: 'f1', n: '1', sev: 'High', title: 'Wall thickness vs. pocket depth', regions: [{ at: [0.36, 0.5, 0.85], type: 'sphere', radiusFrac: 0.09 }, { at: [0.64, 0.5, 0.85], type: 'sphere', radiusFrac: 0.09 }] },
-          { id: 'f2', n: '2', sev: 'Medium', title: 'Ø0.3750 bores, half-thou band', regions: [{ at: [0.19, 0.11, 1], type: 'sphere', radiusFrac: 0.06 }, { at: [0.81, 0.11, 1], type: 'sphere', radiusFrac: 0.06 }] },
-          { id: 'f3', n: '3', sev: 'Low', title: 'Internal corners at R0.031', regions: [{ at: [0.11, 0.23, 0.7], type: 'sphere', radiusFrac: 0.045 }, { at: [0.89, 0.77, 0.7], type: 'sphere', radiusFrac: 0.045 }] },
+          { id: 'f1', n: '1', sev: 'High', title: 'Wall thickness vs. pocket depth', regions: [{ at: [0.02, 0.5, 0.6], type: 'sphere', radiusFrac: 0.09 }, { at: [0.98, 0.5, 0.6], type: 'sphere', radiusFrac: 0.09 }] },
+          { id: 'f2', n: '2', sev: 'Medium', title: 'Ø0.3750 bores, half-thou band', regions: [{ at: [0.5, 0.2, 1], type: 'sphere', radiusFrac: 0.06 }, { at: [0.5, 0.8, 1], type: 'sphere', radiusFrac: 0.06 }] },
+          { id: 'f3', n: '3', sev: 'Low', title: 'Internal corners at R0.031', regions: [{ at: [0.05, 0.1, 0.5], type: 'sphere', radiusFrac: 0.045 }, { at: [0.95, 0.9, 0.5], type: 'sphere', radiusFrac: 0.045 }] },
         ] } }, '*');
     }
     // Files from the picker or a drop. The output is predetermined; the file names are the buyer's.
@@ -89,7 +94,7 @@
       const stl = files.find((f) => f.kind === 'STL');
       const readBuffer = (file) => file.arrayBuffer ? file.arrayBuffer() : new Promise((res) => { const rd = new FileReader(); rd.onload = () => res(rd.result); rd.readAsArrayBuffer(file); });
       const stlBuffer = stl ? await readBuffer(stl.file) : null;
-      this.setState({ userFiles: files.map(({ file, ...rest }) => rest), stlBuffer, dragging: false, pickedAt: Date.now(), applied: {}, dismissed: {}, released: false, awarded: null, selectedFinding: null });
+      this.setState({ userFiles: files.map(({ file, ...rest }) => rest), stlBuffer, dragging: false, pickedAt: Date.now(), applied: {}, dismissed: {}, released: false, awarded: null, declined: false, selectedFinding: null });
       this.run();
     }
     viewer() { const f = document.querySelector('iframe[title="Part viewer"]'); return f && f.contentWindow; }
@@ -222,15 +227,15 @@
 
       /* ── Queue ── */
       const rowDefs = [
-        { id: 'RFQ-4417', ago: '2 h ago', part: 'Actuator Housing', sub: 'Rev C · 3 setups · ±.0005 bore', qty: st.qty, mat: '6061-T6', base: st.awarded ? 5 : st.released ? 3 : 1, live: true, band: money(bandLoF).replace('.00', '') + ' – ' + money(bandHiF).replace('.00', ''), need: 'Nov 14' },
-        { id: 'RFQ-1235', ago: '3 h ago', part: 'Industrial bracket + plate', sub: 'Rev A vs Rev B conflict · Cascade CNC quoting', qty: '10', mat: '6061-T6', base: 3, band: '$448 – $471', need: 'Nov 3' },
+        { id: 'RFQ-4417', ago: '2 h ago', part: 'Actuator Housing', sub: 'Rev C · 3 setups · ±.0005 bore', qty: st.qty, mat: '6061-T6', base: st.awarded ? 5 : st.declined ? 1 : st.released ? 3 : 1, live: true, band: moneyTrim(bandLoF) + ' – ' + moneyTrim(bandHiF), need: 'Nov 14' },
+        { id: 'RFQ-1235', ago: '3 h ago', part: 'Industrial bracket + plate', sub: 'Rev A vs Rev B conflict · Cascade CNC quoting', qty: '50', mat: '6061-T6', base: 3, band: '$90 – $94', need: 'Nov 3' },
         { id: 'RFQ-4402', ago: '1 d ago', part: 'Manifold Block', sub: 'Rev A · cross-drilled · deburr critical', qty: '120', mat: 'Ti-6Al-4V', base: 4, band: '$412 – $487', need: 'Dec 02' },
         { id: 'RFQ-4396', ago: '3 d ago', part: 'Sensor Bracket', sub: 'Rev F · repeat order, 4th release', qty: '1,000', mat: '304 SS', base: 5, band: '$11.40 firm', need: 'Oct 28' },
         { id: 'RFQ-4388', ago: '4 d ago', part: 'Isogrid Panel', sub: 'Rev B · thin wall .090 ribs', qty: '25', mat: '6061-T6', base: 2, band: 'pricing…', need: 'Dec 19' },
         { id: 'RFQ-4371', ago: '9 d ago', part: 'Valve Body', sub: 'Rev B · awarded to Cascade CNC', qty: '500', mat: '17-4 PH', base: 5, band: '$61.80 firm', need: 'Oct 02' },
       ];
       const stageNames = ['Uploaded', 'Priced', 'Matched', 'Negotiating', 'Offers ready · needs your approval', 'Awarded'];
-      const agentLines = { 'RFQ-4417': st.awarded ? 'Award sent to the shop; PO draft ready' : st.released ? 'Negotiating: countered Midstate at $455, holding Net 45' : 'Priced from the model; release checks ' + (5 - failing.length) + ' of 5', 'RFQ-1235': 'Buyer final $4,480 is under the shop floor; waiting on Cascade CNC', 'RFQ-4402': 'Ranked 4 offers by your weights; recommending Midstate at $412', 'RFQ-4396': 'Repeat order awarded to the same shop as the last three', 'RFQ-4388': 'Matched 5 shops; pricing the .090 ribs at low confidence', 'RFQ-4371': 'Awarded to Cascade CNC at $61.80; on schedule for Oct 02' };
+      const agentLines = { 'RFQ-4417': st.awarded ? 'Award sent to the shop; PO draft ready' : st.declined ? 'Declined all offers; waiting on a re-release' : st.released ? 'Negotiating: countered Midstate at ' + bid(96.4) + ', holding Net 45' : 'Priced from the model; release checks ' + (5 - failing.length) + ' of 5', 'RFQ-1235': 'Buyer final $4,480 is under the shop floor; waiting on Cascade CNC', 'RFQ-4402': 'Ranked 4 offers by your weights; recommending Midstate at $412', 'RFQ-4396': 'Repeat order awarded to the same shop as the last three', 'RFQ-4388': 'Matched 3 shops; pricing the .090 ribs at low confidence', 'RFQ-4371': 'Awarded to Cascade CNC at $61.80; on schedule for Oct 02' };
       const awardedTo = { 'RFQ-4417': st.awarded ? (st.awarded.key === 'split' ? 'Ridgeline + Midstate' : (st.awarded.label || '').split(' · ')[0]) : '', 'RFQ-4396': 'Ridgeline Tool Works', 'RFQ-4371': 'Cascade CNC' };
       const rowsAll = rowDefs.map((r, i) => {
         const adv = r.live ? (r.base === 3 && t > 2 ? 4 : r.base) : (r.base >= 5 ? 5 : Math.min(4, r.base + (t > i * 2 ? 1 : 0)));
@@ -249,10 +254,15 @@
         label: l, go: () => this.setState({ filter: k }), on: st.filter === k ? 'background:var(--color-text);color:var(--color-bg)' : ''
       }));
       const needsCount = rowsAll.filter((r) => r.needs).length;
+      // What is waiting on the buyer: offers to approve (stage 4) and requests to release (stage 1).
+      const offersToApprove = rowsAll.filter((r) => r.adv === 4).length;
+      const releasesWaiting = rowsAll.filter((r) => r.adv === 1).length;
+      const negotiatingCount = rowsAll.filter((r) => r.adv === 3).length;
+      const pricingCount = rowsAll.filter((r) => r.adv === 2).length;
       const filterNeeds = () => this.setState({ filter: 'needs' });
       const kpis = [
-        { l: 'Open requests', v: '13', s: needsCount + ' awaiting your decision' },
-        { l: 'In negotiation', v: '5', s: 'agents active now' },
+        { l: 'Open requests', v: String(rowsAll.length), s: needsCount + ' awaiting your decision' },
+        { l: 'In negotiation', v: String(negotiatingCount), s: 'agents active now' },
         { l: 'Avg. time to price', v: '84 s', s: 'was 3.4 days' },
         { l: 'Savings YTD', v: '$214k', s: 'vs. 2025 award prices' }
       ];
@@ -277,7 +287,7 @@
       const stepDefs = [
         [0, 'Reading ' + cadName], [2, '412 faces, 34 holes, 3 setups found'], [4, 'Reading the print: 12 tolerances, 7 GD&T frames, Ra 32'],
         [6, 'Terms applied from your profile: ' + P.terms + ', ' + (P.certsRequired.join(', ') || 'no certs') + ' required'], [8, 'Pricing against 4 comparable parts'],
-        [11, 'Priced: $' + likely.toFixed(2) + ' ± $14, 4 to 6 weeks'], [12, 'Release checks: ' + (5 - failing.length) + ' of 5 passing'],
+        [11, 'Priced: ' + money(likely) + ' ± $8, 4 to 6 weeks'], [12, 'Release checks: ' + (5 - failing.length) + ' of 5 passing'],
       ];
       const agentSteps = stepDefs.filter(([at]) => t >= at).map(([at, text], i, arr) => {
         const current = i === arr.length - 1 && t < 12;
@@ -286,12 +296,13 @@
       const agentElapsed = t >= 12 ? 'done in ' + (t * 0.42).toFixed(0) + ' s' : (t * 0.42).toFixed(0) + ' s';
       const feed = [
         st.awarded ? { when: 'just now', text: 'Awarded RFQ-4417: ' + st.awarded.label } : null,
+        st.declined ? { when: 'just now', text: 'Declined all offers on RFQ-4417. Back in your queue at Priced.' } : null,
         st.released ? { when: 'just now', text: 'Released RFQ-4417 to ' + qualifying.length + ' verified shops inside your mandate (ceiling ' + money(ceiling) + ')' } : null,
-        st.pickedAt ? { when: 'just now', text: 'Read ' + st.userFiles.length + ' file' + (st.userFiles.length === 1 ? '' : 's') + ' for RFQ-4417 and priced the part at ' + money(likely) } : null,
-        { when: '2 min', text: 'Countered Midstate at $455 on RFQ-4417. Net 45 is hard in your mandate.' },
+        st.pickedAt ? { when: 'just now', text: 'Read ' + plural(st.userFiles.length, 'file') + ' for RFQ-4417 and priced the part at ' + money(likely) } : null,
+        { when: '2 min', text: 'Countered Midstate at ' + bid(96.4) + ' on RFQ-4417. Net 45 is hard in your mandate.' },
         { when: '14 min', text: 'RFQ-1235: the shop paused under its own floor on your $4,480 final. Waiting on Cascade CNC.' },
         { when: '1 h', text: 'Ranked 4 offers on RFQ-4402 by your weights. Recommending Midstate at $412.' },
-        { when: '3 h', text: 'Priced RFQ-4388 Isogrid Panel: $312 to $355, low confidence on the .090 ribs.' },
+        { when: '3 h', text: 'Priced RFQ-4388 Isogrid Panel: first pass $312 to $355, low confidence on the .090 ribs.' },
         { when: '1 d', text: 'RFQ-4396 reorder: matched the same 3 shops as the last three releases.' },
       ].filter(Boolean).slice(0, 6);
       const reqFields = [
@@ -322,9 +333,10 @@
         { who: 'Canyon · your agent', ini: 'CY', me: true, t: '09:02', body: 'Released RFQ-4417 to ' + qualifying.length + ' verified shops holding 6061 plate capacity and ' + P.certsRequired.join(', ') + '. Mandate: unit ≤ ' + money(ceiling) + ' at ' + st.qty + ' ea, delivery by Nov 14, ' + P.terms + ', minimum ' + sources + ' qualified source' + (sources > 1 ? 's' : '') + '.' },
         { who: 'Midstate Precision', ini: 'MP', t: '09:19', body: 'Can run it. Price assumes our standard Net 30 and a 5-week slot; Nov 14 is tight against our current queue.', terms: [['Unit', bid(104.2)], ['Lead', '5 wk'], ['Terms', 'Net 30']] },
         { who: 'Canyon · your agent', ini: 'CY', me: true, t: '09:21', body: P.terms + (P.termsHard ? ' is a hard requirement — Halcyon pays on it across all 40 suppliers.' : ' is preferred.') + ' Would a 400-piece ceiling at the same unit price make the terms work? Buyer reorders this part quarterly.' },
-        { who: 'Ridgeline Tool Works', ini: 'RT', t: '09:34', body: 'Bidding at ' + st.qty + '. We have a Haas cell open the week of Oct 20 and we already hold the 6061 plate. Price holds 90 days and Net 45 is standard for us.', terms: [['Unit', bid(97.8)], ['Lead', '4 wk'], ['Terms', 'Net 45']] },
+        { who: 'Ridgeline Tool Works', ini: 'RT', t: '09:34', body: 'Bidding at ' + st.qty + '. We have a VMC cell open the week of Oct 20 and we already hold the 6061 plate. Price holds 90 days and Net 45 is standard for us.', terms: [['Unit', bid(97.8)], ['Lead', '4 wk'], ['Terms', 'Net 45']] },
         { who: 'Midstate Precision', ini: 'MP', t: '09:41', body: 'Revised. Net 45 accepted against the 400-piece ceiling, and we pulled a half-week out by running the roughing on the older machine.', terms: [['Unit', bid(96.4)], ['Lead', '4.5 wk'], ['Terms', 'Net 45']] },
-        { who: 'Ridgeline Tool Works', ini: 'RT', t: '09:52', body: 'Matching to hold position, conditional on release by Oct 10.', terms: [['Unit', bid(94.9)], ['Lead', '4 wk'], ['Terms', 'Net 45']] },
+        { who: 'Cascade CNC', ini: 'CC', t: '09:45', body: 'Bidding at ' + st.qty + '. ' + bid(99.1) + ' at 6 weeks, Net 45; our 5-axis is booked through October.', terms: [['Unit', bid(99.1)], ['Lead', '6 wk'], ['Terms', 'Net 45']] },
+        { who: 'Ridgeline Tool Works', ini: 'RT', t: '09:52', body: 'Going to ' + bid(94.9) + ' to hold position, conditional on release by Oct 10.', terms: [['Unit', bid(94.9)], ['Lead', '4 wk'], ['Terms', 'Net 45']] },
         { who: 'Canyon · your agent', ini: 'CY', me: true, t: '09:58', body: 'Round closed. Surfacing offers ranked on your mandate. I am recommending a 60/40 split to keep two sources qualified for the quarterly reorder.' }
       ];
       const msgShown = Math.min(msgDefs.length, Math.max(1, t));
@@ -343,10 +355,13 @@
         { l: 'Sources required', v: sources + ' qualified' },
         { l: 'Auto-accept', v: P.autoAccept ? 'on, inside all bounds' : 'off' }
       ];
+      // Rail prices step with the thread: `at` is the index of the shop's first message, and each later
+      // entry is the price on screen once one more message has landed.
+      const finalAt = msgDefs.length - 1; // the closing agent message
       const shopPrices = [
-        { name: 'Ridgeline Tool Works', at: 3, prices: [bid(97.8), bid(97.8), bid(94.9), bid(94.9)] },
-        { name: 'Midstate Precision', at: 1, prices: [bid(104.2), bid(96.4), bid(96.4), bid(96.4)] },
-        { name: 'Cascade CNC', at: 4, prices: [bid(99.1)] },
+        { name: 'Ridgeline Tool Works', at: 3, prices: [bid(97.8), bid(97.8), bid(97.8), bid(94.9), bid(94.9)] },
+        { name: 'Midstate Precision', at: 1, prices: [bid(104.2), bid(104.2), bid(104.2), bid(96.4), bid(96.4), bid(96.4), bid(96.4)] },
+        { name: 'Cascade CNC', at: 5, prices: [bid(99.1)] },
         { name: 'Delta Contract Mfg', at: 99, prices: [] }
       ].filter((s) => qualifying.some((q) => q.name === s.name));
       const shopStates = shopPrices.map((s) => {
@@ -354,7 +369,7 @@
         const idx = Math.max(0, Math.min(s.prices.length - 1, msgShown - s.at - 1));
         return {
           name: s.name, price: responded && s.prices.length ? s.prices[idx] : '—', vis: responded ? 'opacity:1' : 'opacity:.3',
-          st: s.prices.length === 0 ? 'No bid — queue full' : responded ? (msgShown >= 6 ? 'Final' : 'Countered') : 'Reviewing…',
+          st: s.prices.length === 0 ? 'No bid — queue full' : responded ? (msgShown >= finalAt ? 'Final' : 'Countered') : 'Reviewing…',
           stColor: s.prices.length === 0 ? MUTED : responded ? ACC : MUTED
         };
       });
@@ -369,14 +384,16 @@
         { key: 'd', name: 'Delta Contract Mfg', loc: 'Mesa, AZ', note: 'No bid — 5-axis cell booked through Nov', certs: ['AS9100D'], prices: [null, null, null], leads: ['—', '—', '—'], ranks: [3, 3, 3], bars: [['On-time', 89], ['Quality', 95], ['Response', 60]] }
       ].filter((o) => qualifying.some((q) => q.name === o.name));
       const qtyN = Math.max(1, Math.round(num(st.qty, 250)));
+      const splitA = Math.round(qtyN * 0.6), splitB = qtyN - splitA;
       const bids = offerDefs.filter((o) => o.prices[phase] != null);
       const inside = bids.filter((o) => o.prices[phase] * k <= ceiling);
       const noneInside = phase === 2 && bids.length > 0 && inside.length === 0;
       const award = (key, label, shop, price, qty, lead) => (e) => {
         const from = e && e.target && e.target.closest ? e.target.closest('[data-offer], [data-reco]') : null;
         this.fly(from, 'Awarded · ' + shop + ' · ' + money(price)).then(() => {
-          const entry = { key, rfq: 'RFQ-4417', part: 'Actuator Housing', shop, price: money(price), qty: String(qty), lead, when: 'just now', viewQuote: () => this.setState({ screen: 'quote', quoteFor: key, quoteFrom: 'profile' }) };
-          this.setState({ awarded: { key, label }, awards: [entry].concat(st.awards), badgeBump: Date.now() });
+          const line = key === 'split' ? splitA + ' ea at ' + bid(94.9) + ' + ' + splitB + ' ea at ' + bid(96.4) : qty + ' ea at ' + money(price);
+          const entry = { key, rfq: 'RFQ-4417', part: 'Actuator Housing', shop, price: money(price), qty: String(qty), line, lead, when: 'just now', viewQuote: () => this.setState({ screen: 'quote', quoteFor: key, quoteFrom: 'profile' }) };
+          this.setState({ awarded: { key, label }, declined: false, awards: [entry].concat(st.awards), badgeBump: Date.now() });
           setTimeout(() => this.setState({ badgeBump: 0 }), 800);
         });
       };
@@ -399,17 +416,21 @@
           bars: o.bars.map(([l, v]) => ({ l, v: v + '%', w: 'width:' + v + '%' }))
         };
       });
-      const chatAll = [{ who: 'Your agent', time: '09:58', text: st.awarded ? 'Award sent. I will draft the PO and watch the first-article date.' : st.released ? 'Two sources are inside your mandate. I am recommending a 60/40 split so both stay qualified for the quarterly reorder.' : 'I priced HAL-4417 at ' + money(likely) + ' from 4 comparable parts. Release checks: ' + (5 - failing.length) + ' of 5 passing.' }].concat(st.chat);
-      const splitA = Math.round(qtyN * 0.6), splitB = qtyN - splitA;
+      const chatAll = [{ who: 'Your agent', time: '09:58', text: st.awarded ? 'Award sent. I will draft the PO and watch the first-article date.' : st.declined ? 'Declined all offers. I will re-release when the part or your mandate changes.' : st.released ? 'Two sources are inside your mandate. I am recommending a 60/40 split so both stay qualified for the quarterly reorder.' : 'I priced HAL-4417 at ' + money(likely) + ' from 4 comparable parts. Release checks: ' + (5 - failing.length) + ' of 5 passing.' }].concat(st.chat);
+      const splitCost = splitB * (96.4 - 94.9) * k; // what the second source costs over giving Ridgeline the lot
       const quoteDefs = { r: ['Ridgeline Tool Works', 'Elkhart, IN', 94.9, '4 weeks'], m: ['Midstate Precision', 'Dayton, OH', 96.4, '4.5 weeks'], c: ['Cascade CNC', 'Bend, OR', 99.1, '6 weeks'], split: ['Ridgeline Tool Works', 'Elkhart, IN', 94.9, '4 weeks'] };
       const qd = quoteDefs[st.quoteFor] || quoteDefs.c;
       const qQty = st.quoteFor === 'split' || (st.awarded && st.awarded.key === 'r' && st.quoteFor === 'r') ? splitA : qtyN;
       const qPrice = qd[2] * k;
-      const quote = { no: 'Q-4417-' + (st.quoteFor || 'c').toUpperCase().slice(0, 1), shop: qd[0], loc: qd[1], lead: qd[3], terms: P.terms, qty: String(qQty),
+      const quote = { no: 'Q-4417-' + (st.quoteFor || 'c').toUpperCase().slice(0, 1), date: today(), shop: qd[0], loc: qd[1], lead: qd[3], terms: P.terms, qty: String(qQty),
         lines: [{ qty: String(qQty), price: money(qPrice), total: '$' + Math.round(qPrice * qQty).toLocaleString('en-US') }], total: '$' + Math.round(qPrice * qQty).toLocaleString('en-US'),
         note: st.quoteFor === 'split' ? 'this is the Ridgeline half of a 60/40 split award.' : 'price holds 90 days from release.' };
-      const agentStatus = st.awarded ? 'Sent your award to ' + awardedTo['RFQ-4417'] + '. Negotiating 2 other RFQs.' : needsCountEarly() + ' offer' + (needsCountEarly() === 1 ? '' : 's') + ' ready for your approval. Negotiating 2 RFQs, pricing 1.';
-      function needsCountEarly() { return rowsAll.filter((r) => r.needs).length; }
+      const workload = 'Negotiating ' + plural(negotiatingCount, 'RFQ') + (pricingCount ? ', pricing ' + pricingCount : '') + '.';
+      const agentStatus = st.awarded ? 'Sent your award to ' + awardedTo['RFQ-4417'] + '. ' + workload
+        : st.declined ? 'Declined. Re-release when the part or mandate changes.'
+        : (offersToApprove ? plural(offersToApprove, 'offer') + ' ready for your approval' : 'No offers waiting') + (releasesWaiting ? ', ' + plural(releasesWaiting, 'release') + ' waiting on you' : '') + '. ' + workload;
+      const ctaLabel = offersToApprove ? 'Approve ' + plural(offersToApprove, 'offer') : 'Release ' + plural(releasesWaiting, 'request');
+      const ctaNote = offersToApprove && releasesWaiting ? 'Plus ' + plural(releasesWaiting, 'release') + ' waiting on you.' : 'The only thing waiting on you.';
 
       return {
         tabs, isHome: sc === 'home', isDash: sc === 'dash', isRfq: sc === 'rfq', isPart: sc === 'part', isNeg: sc === 'neg', isOffers: sc === 'offers', isProfile: sc === 'profile',
@@ -424,16 +445,16 @@
         dragOver: (e) => { e.preventDefault(); if (!st.dragging) this.setState({ dragging: true }); },
         dragLeave: () => { if (st.dragging) this.setState({ dragging: false }); },
         dropSt: st.dragging ? 'border-color:var(--color-accent);background:var(--color-accent-100)' : '',
-        dropNote: st.userFiles.length ? st.userFiles.length + ' file' + (st.userFiles.length === 1 ? '' : 's') + ' from your machine' : 'or drop them here',
+        dropNote: st.userFiles.length ? plural(st.userFiles.length, 'file') + ' from your machine' : 'or drop them here',
         agentSteps, agentElapsed, agentDotSt: t >= 12 ? 'animation:none;background:var(--color-good)' : '',
         // queue
         feed: feed.slice(0, 3), agentStatus, agentSub: 'Working inside your mandate. It stops only for release, design changes, and awards.',
-        needsCount: String(needsCount), needsPlural: needsCount === 1 ? '' : 's', needsAny: needsCount > 0, needsNone: needsCount === 0, filterNeeds,
+        needsCount: String(needsCount), needsAny: needsCount > 0, needsNone: needsCount === 0, filterNeeds, ctaLabel, ctaNote,
         // awards and quote
         awards: st.awards, awardsAny: st.awards.length > 0, awardsCount: String(st.awards.length),
         isQuote: sc === 'quote', quote, quoteBack: this.go(st.quoteFrom === 'profile' ? 'profile' : st.quoteFrom === 'dash' ? 'dash' : 'offers'),
         priceVis: pct >= 100 ? 'opacity:1' : 'opacity:.25;pointer-events:none',
-        unitPrice: money(likely), bandText: '± $14 · 4–6 weeks' + (savings ? ' · re-priced after ' + Object.keys(st.applied).filter((k) => st.applied[k]).length + ' change' + (savings > 14.9 ? 's' : '') : ''),
+        unitPrice: money(likely), bandText: '± $8 · 4–6 weeks' + (savings ? ' · re-priced after ' + plural(Object.keys(st.applied).filter((x) => st.applied[x]).length, 'change') : ''),
         qtyLabel: st.qty + ' ea',
         // agent drawer
         agentOpen: st.agent === 'open', agentMin: st.agent === 'min',
@@ -441,13 +462,13 @@
         agentToggle: () => this.setState({ agent: st.agent === 'open' ? 'min' : 'open', chatSeen: chatAll.length }),
         agentMinimize: () => this.setState({ agent: 'min' }), agentClose: () => this.setState({ agent: 'closed' }),
         agentExpand: () => this.setState({ agent: 'open', chatSeen: chatAll.length }),
-        agentContext: 'on RFQ-4417 · ' + (st.awarded ? 'awarded' : st.released ? 'negotiating' : 'priced'),
+        agentContext: 'on RFQ-4417 · ' + (st.awarded ? 'awarded' : st.declined ? 'declined' : st.released ? 'negotiating' : 'priced'),
         agentUnread: chatAll.length > st.chatSeen, agentUnreadCount: String(chatAll.length - st.chatSeen),
         chat: chatAll.map((m) => ({ who: m.who, time: m.time, text: m.text, align: m.who === 'You' ? 'flex-end' : 'flex-start', bg: m.who === 'You' ? 'var(--color-surface)' : 'var(--color-accent-100)', rule: m.who === 'You' ? 'transparent' : 'var(--color-accent)' })),
         suggestions: [
           { label: 'Why this ceiling?', ask: () => this.ask('Why this ceiling?', 'Your profile sets the ceiling at Canyon\'s likely price' + (ceilingPct ? ' plus ' + ceilingPct + '%' : '') + '. On this part that is ' + money(ceiling) + '. ' + (bids.filter((o) => o.prices[phase] * k <= ceiling).length || 'None') + ' of ' + (bids.length || 3) + ' bids sit inside it.') },
           { label: 'Why these shops?', ask: () => this.ask('Why these shops?', 'Six verified shops were considered against your mandate. ' + excluded.map((x) => x.name + ' is out: ' + x.why).join('. ') + '. ' + qualifying.map((q) => q.name).join(', ') + ' pass every hard criterion.') },
-          { label: 'What changed the price?', ask: () => this.ask('What changed the price?', savings ? 'Applying ' + Object.keys(st.applied).filter((x) => st.applied[x]).length + ' design change(s) took ' + money(savings) + ' off the likely price and scaled every bid by the same ' + Math.round((1 - k) * 100) + '%. The band is now ' + money(bandLoF) + ' to ' + money(bandHiF) + '.' : 'Nothing yet. The likely price is ' + money(likely) + ' from 4 comparable parts. Applying finding 1 on Part & DFM would take $14.90 off it and move every bid with it.') },
+          { label: 'What changed the price?', ask: () => this.ask('What changed the price?', savings ? 'Applying ' + plural(Object.keys(st.applied).filter((x) => st.applied[x]).length, 'design change') + ' took ' + money(savings) + ' off the likely price and scaled every bid by the same ' + Math.round((1 - k) * 100) + '%. The band is now ' + money(bandLoF) + ' to ' + money(bandHiF) + '.' : 'Nothing yet. The likely price is ' + money(likely) + ' from 4 comparable parts. Applying finding 1 on Part & DFM would take $14.90 off it and move every bid with it.') },
         ],
         chatInput: st.chatInput, chatType: (e) => this.setState({ chatInput: e.target.value }),
         chatSend: () => { const q = (st.chatInput || '').trim(); if (q) this.ask(q, 'I can check that against your mandate and the negotiation record for RFQ-4417. Ridgeline\'s ' + bid(94.9) + ' is the best live offer inside your ' + money(ceiling) + ' ceiling; say the word and I will surface the offers.'); },
@@ -466,23 +487,26 @@
         releaseStyle: safe ? 'background:var(--color-accent);color:var(--color-bg)' : 'background:transparent;color:var(--color-accent);border:2px solid var(--color-accent)',
         releaseNote: safe ? qualifying.length + ' verified shops qualify. Your agent negotiates inside your mandate.' : failing.length + ' check' + (failing.length === 1 ? '' : 's') + ' failing. You can still release; you will be asked to confirm.',
         // part
-        findings, drivers, partMeta, openCount: String(openFindings.length),
-        bandPos: 'left:' + b[0] + '%;right:' + b[1] + '%', bandLo: money(b[2] - savings).replace('.00', ''), bandMid: money(likely).replace('.20', ''), bandHi: money(b[3] - savings).replace('.00', ''), bandConf: b[4],
+        findings, drivers, partMeta, openCountText: plural(openFindings.length, 'finding'),
+        bandPos: 'left:' + b[0] + '%;right:' + b[1] + '%', bandLo: moneyTrim(b[2] - savings), bandMid: moneyTrim(likely), bandHi: moneyTrim(b[3] - savings), bandConf: b[4],
         // negotiation
         msgs, mandate, shopStates, matched, excluded, considered, consideredCount: String(SHOPS.length), matchedCount: String(qualifying.length), excludedCount: String(excluded.length),
-        roundNo: String(Math.min(3, Math.ceil(msgShown / 3))),
+        roundText: msgShown > finalAt ? 'Round closed' : 'Round ' + Math.min(3, Math.ceil(msgShown / 3)) + ' of 3 · live',
+        roundSt: msgShown > finalAt ? MUTED : 'color:var(--color-good)',
+        roundDotSt: msgShown > finalAt ? 'animation:none;background:currentColor' : '',
         typingVis: nextMsg ? 'opacity:1' : 'opacity:0',
         typingWho: nextMsg ? nextMsg.who + ' is responding…' : 'Round closed',
-        bestPrice: msgShown >= 6 ? bid(94.9) : msgShown >= 5 ? bid(96.4) : msgShown >= 4 ? bid(97.8) : '—',
-        bestWho: msgShown >= 6 ? 'Ridgeline Tool Works · 4 wk · Net 45' : msgShown >= 5 ? 'Midstate Precision · 4.5 wk' : msgShown >= 4 ? 'Ridgeline Tool Works · 4 wk' : 'awaiting first bid',
+        bestPrice: msgShown >= 7 ? bid(94.9) : msgShown >= 5 ? bid(96.4) : msgShown >= 4 ? bid(97.8) : '—',
+        bestWho: msgShown >= 7 ? 'Ridgeline Tool Works · 4 wk · Net 45' : msgShown >= 5 ? 'Midstate Precision · 4.5 wk' : msgShown >= 4 ? 'Ridgeline Tool Works · 4 wk' : 'awaiting first bid',
         // offers
-        offers, stackH: 'height:' + (offerDefs.length * 138 + 16) + 'px', respondedCount: String(bids.length),
+        offers, stackH: 'height:' + (offerDefs.length * 138 + 16) + 'px', respondedText: plural(bids.length, 'shop'),
         weightsLine: 'unit price ' + P.wPrice + '% · on-time record ' + P.wOntime + '% · lead time ' + P.wLead + '% · terms ' + P.wTerms + '%',
         noneInside, ceilingText: money(ceiling),
         awarded: !!st.awarded, awardedText: st.awarded ? st.awarded.label : '', notAwarded: !st.awarded,
-        splitText: splitA + ' ea to Ridgeline at ' + bid(94.9) + ' and ' + splitB + ' ea to Midstate at ' + bid(96.4) + '. Both hold Net 45. Dual-sourcing costs $225 total and removes single-shop schedule risk on a part you reorder quarterly.',
+        declined: st.declined && !st.awarded, declinedText: 'Declined all offers. The RFQ is back in your queue at Priced.',
+        splitText: splitA + ' ea to Ridgeline at ' + bid(94.9) + ' and ' + splitB + ' ea to Midstate at ' + bid(96.4) + '. Both hold Net 45. Dual-sourcing costs $' + Math.round(splitCost).toLocaleString('en-US') + ' total and removes single-shop schedule risk on a part you reorder quarterly.',
         acceptSplit: award('split', '60/40 split · Ridgeline ' + splitA + ' ea at ' + bid(94.9) + ' · Midstate ' + splitB + ' ea at ' + bid(96.4), 'Ridgeline + Midstate', 94.9 * k, qtyN, '4 to 4.5 weeks'),
-        declineAll: () => this.setState({ awarded: { key: 'declined', label: 'Declined all offers. The RFQ is back in your queue at Priced.' } }),
+        declineAll: () => this.setState({ declined: true }),
         // profile
         profile: P,
         setCeilingPct: this.setField('ceilingPct'), setBufferDays: this.setField('bufferDays'), setTerms: this.setField('terms'), setSources: this.setField('sources'),
@@ -508,12 +532,12 @@
         ],
         steps: [
           { n: '1', time: '0:00', title: 'Drop the CAD', body: 'STEP, native part files, or a folder with the bubbled print. Canyon reads both.' },
-          { n: '2', time: '0:90', title: 'Get a band', body: 'A price band, a lead-time range, and the manufacturability findings that move either one.' },
+          { n: '2', time: '1:30', title: 'Get a band', body: 'A price band, a lead-time range, and the manufacturability findings that move either one.' },
           { n: '3', time: 'Same day', title: 'Agents negotiate', body: 'Verified shops bid and counter against your mandate. You watch or you ignore it.' },
           { n: '4', time: 'Day 1', title: 'Award', body: 'Ranked offers with on-time records attached. Single or split award, your call.' }
         ],
         marketStats: [
-          { v: '$44.6B', l: 'US machine shop industry, fragmented across ~17,253 establishments' },
+          { v: '$47.8B', l: 'US machine shop industry, fragmented across about 17,100 shops' },
           { v: '2–5 days', l: 'Typical wait for a single quote today — per shop, per revision' },
           { v: '20–60 min', l: 'Estimator time burned per RFQ, most of it on jobs the shop never wins' },
           { v: '0', l: 'Shops on Canyon that have not had their machines and certifications verified' }

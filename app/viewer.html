@@ -264,16 +264,17 @@ window.addEventListener("message", (e) => {
 });
 
 if (new URLSearchParams(location.search).get("demo") === "1") {
-  // The stand-in Actuator Housing: a 180 x 110 x 25 plate with three pockets. Anchors are bounding-box fractions,
-  // so they land on the same features when the real STL replaces the file.
+  // The stand-in Actuator Housing: a 213.4 x 105.4 x 66 mm block (8.40 x 4.15 x 2.60 in) with two outboard
+  // pockets 61 mm deep behind 1.52 mm end walls, and two Ø9.525 bores through the centre block. Anchors are
+  // bounding-box fractions, so they land on the same features when the real STL replaces the file.
   loadModel({
     name: "HAL-4417 Actuator Housing",
     stl: "/assets/parts/actuator-housing.stl",
     pdf: "/assets/parts/actuator-housing.pdf",
     findings: [
-      { id: "f1", n: "1", sev: "High", title: "Wall thickness vs. pocket depth", regions: [{ at: [65 / 180, 0.5, 0.85], type: "box", size: [14, 64, 18] }, { at: [115 / 180, 0.5, 0.85], type: "box", size: [14, 64, 18] }] },
-      { id: "f2", n: "2", sev: "Medium", title: "Ø0.3750 bores, half-thou band", regions: [{ at: [35 / 180, 12 / 110, 1], type: "sphere", radius: 9 }, { at: [145 / 180, 12 / 110, 1], type: "sphere", radius: 9 }] },
-      { id: "f3", n: "3", sev: "Low", title: "Internal corners at R0.031", regions: [{ at: [20 / 180, 25 / 110, 0.7], type: "sphere", radius: 6 }, { at: [160 / 180, 85 / 110, 0.7], type: "sphere", radius: 6 }] },
+      { id: "f1", n: "1", sev: "High", title: "Wall thickness vs. pocket depth", regions: [{ at: [1.5 / 213.4, 0.5, 0.6], type: "box", size: [8, 92, 62] }, { at: [211.9 / 213.4, 0.5, 0.6], type: "box", size: [8, 92, 62] }] },
+      { id: "f2", n: "2", sev: "Medium", title: "Ø0.3750 bores, half-thou band", regions: [{ at: [0.5, 21 / 105.4, 1], type: "sphere", radius: 9 }, { at: [0.5, 84.4 / 105.4, 1], type: "sphere", radius: 9 }] },
+      { id: "f3", n: "3", sev: "Low", title: "Internal corners at R0.031", regions: [{ at: [1.5 / 213.4, 8 / 105.4, 0.5], type: "sphere", radius: 6 }, { at: [211.9 / 213.4, 97.4 / 105.4, 0.5], type: "sphere", radius: 6 }] },
     ],
   });
 }

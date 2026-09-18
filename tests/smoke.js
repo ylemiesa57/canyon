@@ -108,7 +108,7 @@ async function load(file, reducedMotion) {
 
   console.log("Shop app");
   const s = await load(path.join(dir, "shop.html"), false);
-  check((s.text().match(/RFQ \d{4}/g) || []).length >= 8, "inbox lists the RFQs");
+  check((s.text().match(/RFQ-\d{4}/g) || []).length >= 8, "inbox lists the RFQs");
   check(s.has("Halcyon Industrial") && !s.has("US$"), "cast and currency are synced with the buyer side");
   await s.click(s.btn("Parts"), 60);
   const strip = () => Array.from(s.root.querySelectorAll(".stage-strip button"));

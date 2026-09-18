@@ -83,7 +83,7 @@
   </section>
 
   <!-- The network, from the other side's point of view -->
-  <section class="section-tight" aria-label="On the network">
+  <section class="section-tight" id="network" aria-label="On the network">
     <div class="wrap">
       <div class="panel trusted reveal">
         <p class="trusted-label"><span data-audience="buyer">Verified shops</span><span data-audience="shop">Buyers sending RFQs</span></p>
@@ -93,14 +93,14 @@
              Canyon is not the same as his lab or his department endorsing it. Get written
              sign-off from each group, or drop the name, before this ships.
              Shop names remain stand-ins until real shops onboard. -->
-        <ul class="logo-row" data-audience="buyer">
+        <ul class="logo-row stagger" data-audience="buyer">
           <li class="w1">Ridgeline</li>
           <li class="w2">Ironwood</li>
           <li class="w3">cascade_cnc</li>
           <li class="w4">Midstate Precision</li>
           <li class="w5">Halvorsen</li>
         </ul>
-        <ul class="logo-row" data-audience="shop">
+        <ul class="logo-row stagger" data-audience="shop">
           <li class="w1">MIT MechE</li>
           <li class="w2">Edgerton Center</li>
           <li class="w3">mit_nano</li>
@@ -112,34 +112,34 @@
   </section>
 
   <!-- Vista: the canyon shows through, one line of type -->
-  <div class="vista" aria-hidden="true">
+  <div class="vista" id="vista-1" aria-hidden="true">
     <p class="vista-line reveal">The weeks were never the machining.</p>
   </div>
 
   <!-- Where the weeks go: the five costs the framing collapses, today against Canyon.
-       The 2 to 5 day quote wait and the 20 to 60 minute estimator figure come from the
-       market stats in app/buyer.js. The rest are qualitative until pilot data replaces them. -->
+       Written in words on purpose. The figures behind each line live in the demo and the
+       consoles (app/buyer.js, app/shop/shop.js); the landing page only has to earn the click. -->
   <section class="section" id="minutes">
     <div class="wrap">
-      <div class="panel reveal">
+      <div class="panel reveal from-left">
         <h2>Where the weeks go</h2>
-        <ol class="compress" data-audience="buyer">
+        <ol class="compress stagger" data-audience="buyer">
           <li class="compress-head" aria-hidden="true"><span class="stage"></span><span class="was">Sourcing a part today</span><span class="now">On Canyon</span></li>
-          <li><span class="stage">Quoting</span><span class="was">Two to five days for one number, per shop, per revision.</span><span class="now">Ninety seconds, off the model and the print.</span></li>
+          <li><span class="stage">Quoting</span><span class="was">Days for one number, per shop, per revision.</span><span class="now">Before your coffee is cold, off the model and the print.</span></li>
           <li><span class="stage">Compatibility</span><span class="was">Emails asking who can actually hold the bore.</span><span class="now">Envelopes, held tolerances and materials filtered before release.</span></li>
-          <li><span class="stage">Verification</span><span class="was">Cert PDFs, three references, and a site visit you never take.</span><span class="now">Machines, certifications and queue depth verified before a shop can bid.</span></li>
-          <li><span class="stage">Choosing</span><span class="was">Eight quotes in eight formats, none of them comparable.</span><span class="now">One ranked list, weighted the way you set it once.</span></li>
-          <li><span class="stage">Negotiating</span><span class="was">A week of email per shop, then you take the first yes.</span><span class="now">Three rounds the same morning, inside your mandate.</span></li>
+          <li><span class="stage">Verification</span><span class="was">Cert PDFs, references, and a site visit you never take.</span><span class="now">Machines, certifications and queue depth verified before a shop can bid.</span></li>
+          <li><span class="stage">Choosing</span><span class="was">A pile of quotes in as many formats, none of them comparable.</span><span class="now">One ranked list, weighted the way you set it once.</span></li>
+          <li><span class="stage">Negotiating</span><span class="was">A week of email per shop, then you take the first yes.</span><span class="now">A few rounds the same morning, inside your mandate.</span></li>
           <li class="compress-total"><span class="stage">Start to award</span><span class="was">Weeks, sometimes months.</span><span class="now">The afternoon you upload the file.</span></li>
         </ol>
-        <ol class="compress" data-audience="shop">
+        <ol class="compress stagger" data-audience="shop">
           <li class="compress-head" aria-hidden="true"><span class="stage"></span><span class="was">Quoting today</span><span class="now">On Canyon</span></li>
-          <li><span class="stage">Quoting</span><span class="was">Twenty to sixty minutes of estimator time per RFQ.</span><span class="now">Four minutes, with the thread, print, BOM and model already read.</span></li>
+          <li><span class="stage">Quoting</span><span class="was">An estimator's hour per RFQ, most of it on jobs you lose.</span><span class="now">Minutes, with the thread, print, BOM and model already read.</span></li>
           <li><span class="stage">Compatibility</span><span class="was">Reading a whole package to find it needs a machine you don't have.</span><span class="now">Marketplace RFQs arrive filtered to your envelopes and your certs.</span></li>
           <li><span class="stage">Verification</span><span class="was">Proving the shop again for every new buyer.</span><span class="now">One verified profile. On-time, quality and response travel with every bid.</span></li>
           <li><span class="stage">Choosing</span><span class="was">Guessing which RFQs are worth the estimator's morning.</span><span class="now">Costed before you commit, so you chase the ones you win.</span></li>
           <li><span class="stage">Negotiating</span><span class="was">Phone tag with purchasing while the spindle waits.</span><span class="now">Your agent holds your floor and wakes you only when a buyer goes under it.</span></li>
-          <li class="compress-total"><span class="stage">Inbox to quote</span><span class="was">Most of a week, mostly on jobs you lose.</span><span class="now">Four minutes, on work you can actually run.</span></li>
+          <li class="compress-total"><span class="stage">Inbox to quote</span><span class="was">Most of a week, mostly on jobs you lose.</span><span class="now">Minutes, on work you can actually run.</span></li>
         </ol>
       </div>
     </div>
@@ -148,19 +148,19 @@
   <!-- How it works -->
   <section class="section" id="how">
     <div class="wrap">
-      <div class="panel reveal">
+      <div class="panel reveal" id="how-panel">
         <h2>How it works</h2>
-        <ol class="steps timed" data-audience="buyer">
-          <li><span class="time">0:00</span><h3>Upload</h3><p>STEP, IGES, native CAD, the bubbled print, your terms sheet. Canyon reads all of them.</p></li>
-          <li><span class="time">1:30</span><h3>Read the band</h3><p>A price band, a lead time, and the manufacturability findings that move either one.</p></li>
-          <li><span class="time">Same day</span><h3>Release</h3><p>One click to the verified shops that qualify, then the agents run the rounds.</p></li>
-          <li><span class="time">Day one</span><h3>Award</h3><p>Offers ranked on your own weights. One shop, or split the order across two.</p></li>
+        <ol class="steps stagger" data-audience="buyer">
+          <li><h3>Upload</h3><p>STEP, IGES, native CAD, the bubbled print, your terms sheet. Canyon reads all of them.</p></li>
+          <li><h3>Read the band</h3><p>A price band, a lead time, and the manufacturability findings that move either one.</p></li>
+          <li><h3>Release</h3><p>One click to the verified shops that qualify, then the agents run the rounds.</p></li>
+          <li><h3>Award</h3><p>Offers ranked on your own weights. One shop, or split the order across two.</p></li>
         </ol>
-        <ol class="steps timed" data-audience="shop">
-          <li><span class="time">0:00</span><h3>RFQs land</h3><p>Forward the email, drop the files, or take marketplace work.</p></li>
-          <li><span class="time">0:41</span><h3>Canyon reads them</h3><p>Seven files: the thread, the BOM, the bubbled print and the model, linked to the right part.</p></li>
-          <li><span class="time">4:00</span><h3>You sign off</h3><p>Check the steps, flip an outside op in or out, send the quote.</p></li>
-          <li><span class="time">Same day</span><h3>The agent holds the line</h3><p>It negotiates inside your floor and stops to ask you the moment a buyer goes under it.</p></li>
+        <ol class="steps stagger" data-audience="shop">
+          <li><h3>RFQs land</h3><p>Forward the email, drop the files, or take marketplace work.</p></li>
+          <li><h3>Canyon reads them</h3><p>The whole package: the thread, the BOM, the bubbled print and the model, linked to the right part.</p></li>
+          <li><h3>You sign off</h3><p>Check the steps, flip an outside op in or out, send the quote.</p></li>
+          <li><h3>The agent holds the line</h3><p>It negotiates inside your floor and stops to ask you the moment a buyer goes under it.</p></li>
         </ol>
       </div>
     </div>
@@ -169,13 +169,13 @@
   <!-- What you get: what you send on the left, what comes back on the right, in plain words -->
   <section class="section" id="inside">
     <div class="wrap">
-      <div class="panel reveal">
-        <h2><span data-audience="buyer">Upload a file. Get a real price.</span><span data-audience="shop">An RFQ lands. A quote comes out.</span></h2>
+      <div class="panel reveal from-left">
+        <h2><span data-audience="buyer">Upload a file. Read the band.</span><span data-audience="shop">An RFQ lands. A quote comes out.</span></h2>
 
         <div class="inside" data-audience="buyer">
-          <div class="inside-col">
+          <div class="inside-col stagger">
             <p class="col-label">You send</p>
-            <ul class="spec">
+            <ul class="spec stagger">
               <li><span class="k">The 3D model</span><span class="v">Whatever your CAD program saves. You do not have to prepare anything.</span></li>
               <li><span class="k">The drawing</span><span class="v">If you have one. Canyon reads the dimensions and the notes off it.</span></li>
               <li><span class="k">Your terms</span><span class="v">How you pay, what certifications you need. Set once, applied to everything after.</span></li>
@@ -183,30 +183,30 @@
           </div>
           <div class="inside-col">
             <p class="col-label">Canyon sends back</p>
-            <ul class="spec">
-              <li><span class="k">A price</span><span class="v">$88 to $104 a part at 250. The range tightens as real shops confirm it.</span></li>
+            <ul class="spec stagger">
+              <li><span class="k">A price band</span><span class="v">A range, not a guess. It tightens as real shops confirm it.</span></li>
               <li><span class="k">A date</span><span class="v">A lead time checked against how booked those shops actually are.</span></li>
-              <li><span class="k">Why it costs that</span><span class="v">Most of it is machine time. One wall is thinner than it needs to be: thicken it a little and this order drops $3,725.</span></li>
+              <li><span class="k">Why it costs that</span><span class="v">Most of it is machine time. One wall is thinner than it needs to be: thicken it a little and the whole order gets cheaper.</span></li>
             </ul>
             <p class="callout">You never check Canyon's work. You say how many you want and when you need them, and that is the whole job.</p>
           </div>
         </div>
 
         <div class="inside" data-audience="shop">
-          <div class="inside-col">
+          <div class="inside-col stagger">
             <p class="col-label">What lands</p>
-            <ul class="spec">
-              <li><span class="k">The whole thread</span><span class="v">Six files and four emails. Canyon reads them together instead of one at a time.</span></li>
+            <ul class="spec stagger">
+              <li><span class="k">The whole thread</span><span class="v">Every file and every email in the thread. Canyon reads them together instead of one at a time.</span></li>
               <li><span class="k">A model, a drawing</span><span class="v">Size, features and every note on the print, pulled off both and matched up.</span></li>
               <li><span class="k">The contradiction</span><span class="v">The drawing said Rev A and the email said Rev B. Canyon caught it and held the quote.</span></li>
             </ul>
           </div>
           <div class="inside-col">
             <p class="col-label">What comes out</p>
-            <ul class="spec">
+            <ul class="spec stagger">
               <li><span class="k">Your real cost</span><span class="v">Each step priced on the machine that would run it, at the rate you set. Not an industry average.</span></li>
-              <li><span class="k">Every quantity</span><span class="v">$54.32 for one. $43.18 each at ten. $39.21 each at fifty.</span></li>
-              <li><span class="k">A quote to sign</span><span class="v">Four minutes after it landed. Change a number if you want, then send it.</span></li>
+              <li><span class="k">Every quantity</span><span class="v">One price per break, each one costed on your own machines.</span></li>
+              <li><span class="k">A quote to sign</span><span class="v">Minutes after it landed. Change a number if you want, then send it.</span></li>
             </ul>
             <p class="callout">Your rates and your floor never leave the shop. Canyon quotes with them. The buyer only ever sees a price.</p>
           </div>
@@ -215,18 +215,19 @@
     </div>
   </section>
 
-  <!-- Demo video. Nothing is recorded yet; the slot stays honest until it is. -->
+  <!-- Demo video: the Loom walkthrough (about seven minutes, 4:3). Swap data-src to change it. -->
   <section class="section" id="demo">
     <div class="wrap">
       <div class="panel reveal">
-        <h2>Canyon in two minutes</h2>
+        <h2>Here's the whole thing, in seven minutes.</h2>
+        <p class="demo-sub">A thorough walkthrough: an RFQ lands, Canyon reads it, prices it op by op, and the agents negotiate the award. Then open both consoles and click anything.</p>
         <!-- data-src is the walkthrough embed URL (Loom, YouTube or Vimeo). Empty it to hide the player. -->
         <div class="video" id="video" data-src="https://www.loom.com/embed/7b182f71c0154541a348fb44ba2e569c">
           <button class="video-poster" type="button" id="video-play" aria-label="Play the demo video">
             <span class="play" aria-hidden="true">
               <svg width="26" height="26" viewBox="0 0 22 22" fill="currentColor"><path d="M6 3l13 8-13 8z"/></svg>
             </span>
-            <span class="video-caption">Upload, price, negotiate, award</span>
+            <span class="video-caption">Full walkthrough · 7 min</span>
           </button>
         </div>
         <div class="demo-links">
@@ -239,14 +240,14 @@
   </section>
 
   <!-- Vista -->
-  <div class="vista" aria-hidden="true">
+  <div class="vista" id="vista-2" aria-hidden="true">
     <p class="vista-line reveal">Then the agents talk.</p>
   </div>
 
   <!-- Animated back and forth, with the bounds it runs inside -->
   <section class="section" id="exchange">
     <div class="wrap">
-      <div class="panel reveal">
+      <div class="panel reveal from-right" id="exchange-panel">
         <h2><span data-audience="buyer">Your agent negotiates. You award.</span><span data-audience="shop">Your agent answers while you're at the machine.</span></h2>
         <div class="exchange">
           <div class="thread" id="thread" aria-live="off">
@@ -256,40 +257,30 @@
               <span class="side right"><span data-audience="buyer">Verified shops</span><span data-audience="shop">Your agent</span></span>
             </div>
             <ol class="messages" id="messages" data-audience="buyer">
-              <li class="msg left" data-offer="Released"><span>RFQ-4417 out to 4 shops holding 6061 plate and ISO 9001.</span></li>
-              <li class="msg right" data-offer="$104.20"><span>Midstate Precision: $104.20 at 5 weeks, our standard Net 30.</span></li>
-              <li class="msg left" data-offer="Net 45"><span>Net 45 is hard. There is a 400 piece ceiling if it helps.</span></li>
-              <li class="msg right" data-offer="$97.80"><span>Ridgeline Tool Works: $97.80 at 4 weeks, Net 45.</span></li>
-              <li class="msg right" data-offer="$96.40"><span>Midstate: $96.40 at 4.5 weeks, Net 45 accepted.</span></li>
-              <li class="msg right" data-offer="$94.90"><span>Ridgeline: $94.90 if the PO lands by Oct 10.</span></li>
-              <li class="msg match" data-offer="2 sources"><span>Two sources inside your mandate. Canyon recommends 150 ea to Ridgeline, 100 ea to Midstate.</span></li>
+              <li class="msg left" data-offer="Released"><span>Released to the verified shops that qualify.</span></li>
+              <li class="msg right" data-offer="Net 30"><span>Midstate Precision: five weeks, our standard Net 30.</span></li>
+              <li class="msg left" data-offer="Net 45"><span>Net 45 is hard. There is a bigger ceiling if it helps.</span></li>
+              <li class="msg right" data-offer="Net 45"><span>Ridgeline Tool Works: four weeks, Net 45, and a sharper price to hold position.</span></li>
+              <li class="msg match" data-offer="Two sources"><span>Two sources inside your mandate. Canyon recommends splitting the order.</span></li>
             </ol>
             <ol class="messages" id="messages-shop" data-audience="shop">
-              <li class="msg left" data-offer="$4,400"><span>Halcyon wants $4,400 all in for both parts at the ten, delivered in 8 days.</span></li>
-              <li class="msg right" data-offer="$4,620"><span>$4,710 at 8 to 10 days. $4,620 if the PO lands this week.</span></li>
-              <li class="msg left" data-offer="$4,450"><span>$4,450 and we drop the anodize on the plate.</span></li>
-              <li class="msg right" data-offer="$4,540"><span>Anodize off saves $118 and a day. $4,540 at 8 days.</span></li>
-              <li class="msg left" data-offer="$4,480"><span>$4,480, final. Our prior vendor is $5,120 at 12 days.</span></li>
-              <li class="msg flag" data-offer="Paused"><span>$4,480 is under your 15% floor. Paused, and waiting for you.</span></li>
+              <li class="msg left" data-offer="Under quote"><span>Halcyon wants both parts under your quote, and wants them next week.</span></li>
+              <li class="msg right" data-offer="Within rules"><span>Quoted as costed. A little off if the PO lands this week.</span></li>
+              <li class="msg left" data-offer="Final"><span>Their final. The prior vendor was slower and dearer.</span></li>
+              <li class="msg flag" data-offer="Paused"><span>Under your floor. Paused, and waiting for you.</span></li>
             </ol>
           </div>
           <aside class="rules">
             <p class="col-label"><span data-audience="buyer">Your mandate</span><span data-audience="shop">Your rules</span></p>
-            <dl data-audience="buyer">
-              <div><dt>Unit price ceiling</dt><dd>$95.00 at 250</dd></div>
-              <div><dt>Delivery</dt><dd>On or before Nov 14</dd></div>
+            <dl class="stagger" data-audience="buyer">
+              <div><dt>Unit price ceiling</dt><dd>Canyon's likely price</dd></div>
               <div><dt>Payment terms</dt><dd>Net 45, hard</dd></div>
-              <div><dt>Certifications</dt><dd>ISO 9001 minimum</dd></div>
-              <div><dt>Sources required</dt><dd>2 qualified</dd></div>
-              <div><dt>Auto accept</dt><dd>Inside all bounds</dd></div>
+              <div><dt>Sources</dt><dd>Two qualified</dd></div>
             </dl>
-            <dl data-audience="shop">
-              <div><dt>Floor margin</dt><dd>15%, or $4,500</dd></div>
-              <div><dt>Auto accept at</dt><dd>$4,600 and up</dd></div>
-              <div><dt>Minimum lead time</dt><dd>7 days</dd></div>
-              <div><dt>Concessions</dt><dd>3 rounds</dd></div>
+            <dl class="stagger" data-audience="shop">
+              <div><dt>Floor</dt><dd>Your markup, never under</dd></div>
               <div><dt>Escalate on</dt><dd>Scope change, under floor</dd></div>
-              <div><dt>Offer validity</dt><dd>48 hours</dd></div>
+              <div><dt>Offer validity</dt><dd>Two days</dd></div>
             </dl>
             <p class="rules-note"><span data-audience="buyer">Set once in your profile. Every request inherits it, and Canyon will not accept outside it.</span><span data-audience="shop">Set once for the shop. The agent stops and asks you when a buyer is close but under.</span></p>
           </aside>
@@ -361,7 +352,7 @@
           <div class="form-fields" style="display:grid;gap:16px">
             <div class="field">
               <label for="trial-email">Work email</label>
-              <input id="trial-email" name="email" type="email" autocomplete="email" placeholder="you@shop.com" required>
+              <input id="trial-email" name="email" type="email" autocomplete="email" placeholder="you@company.com" required>
               <span class="error">Enter a valid email address.</span>
             </div>
             <div class="field">

@@ -3,9 +3,11 @@
 //    For a shop it is a part being cut: wireframe forward, an end mill working a
 //    raster toolpath, pulses radiating outward like chips. For a buyer it is a
 //    survey: contours forward, no tool, a slow wavefront crossing the terrain and
-//    pulses that collapse inward. Scroll flies the camera; clicking sends a pulse.
+//    pulses that collapse inward. Scrolling flies the camera between one pose per
+//    section; clicking sends a pulse.
 // 2. Audience toggle (buyer vs machine shop).
-// 3. Scroll reveal for panels, the looping agent exchange, the demo video slot, the trial form.
+// 3. Scroll choreography: staggered reveals, the steps rail, the looping agent exchange,
+//    the demo video slot, the trial form.
 
 import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js";
 
@@ -232,21 +234,51 @@ const viewport = (function viewport() {
     rippleSlot = (rippleSlot + 1) % MAX_RIPPLES;
   };
 
-  // --- Camera: a path down the canyon driven by scroll, plus a nudge from the pointer.
+  // --- Camera: one pose per section of the page, blended as you scroll, plus a nudge from the pointer.
+  // t runs the length of the canyon (0 at the top of the page, 1 at the bottom), dip drops the camera
+  // into the cut, lift raises it, back pulls it away from what it is looking at, down tilts the gaze.
+  const POSES = [
+    { id: "top",       t: 0.00, dip: 0.00, lift: 0,  back: 1.00, down: 0 },
+    { id: "network",   t: 0.07, dip: 0.15, lift: 0,  back: 1.00, down: 0 },
+    { id: "vista-1",   t: 0.15, dip: 0.55, lift: 0,  back: 0.95, down: 1 },
+    { id: "minutes",   t: 0.27, dip: 1.00, lift: -2, back: 0.85, down: 3 },
+    { id: "how",       t: 0.40, dip: 0.55, lift: 8,  back: 1.05, down: 0 },
+    { id: "inside",    t: 0.53, dip: 0.20, lift: 4,  back: 1.30, down: -1 },
+    { id: "demo",      t: 0.64, dip: 0.35, lift: 2,  back: 1.10, down: 0 },
+    { id: "vista-2",   t: 0.71, dip: 0.80, lift: -1, back: 0.90, down: 2 },
+    { id: "exchange",  t: 0.80, dip: 0.90, lift: -3, back: 0.80, down: 4 },
+    { id: "voices",    t: 0.88, dip: 0.40, lift: 3,  back: 1.05, down: 0 },
+    { id: "pricing",   t: 0.94, dip: 0.00, lift: 8,  back: 1.15, down: -2 },
+    { id: "trial",     t: 1.00, dip: 0.00, lift: 10, back: 1.20, down: -2 },
+  ];
+  const poseWant = { ...POSES[0] }, pose = { ...POSES[0] };
+  const POSE_KEYS = ["t", "dip", "lift", "back", "down"];
   const camPos = new THREE.Vector3(), camTarget = new THREE.Vector3();
   const want = { yaw: 0, pitch: 0 }, cur = { yaw: 0, pitch: 0 };
-  let scrollT = 0;         // 0 at top of page, 1 at bottom
-  let scrollTSmooth = 0;
+
+  // Which section is under the middle of the screen, and how far through it we are.
+  const sectionEls = POSES.map((p) => document.getElementById(p.id));
+  const trackSections = () => {
+    const mid = window.innerHeight * 0.5;
+    let i = 0, p = 0;
+    for (let k = 0; k < sectionEls.length; k++) {
+      const el = sectionEls[k];
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (r.top <= mid) { i = k; p = r.height > 0 ? THREE.MathUtils.clamp((mid - r.top) / r.height, 0, 1) : 0; }
+    }
+    const a = POSES[i], b = POSES[Math.min(i + 1, POSES.length - 1)];
+    const e = p * p * (3 - 2 * p);
+    POSE_KEYS.forEach((key) => { poseWant[key] = a[key] + (b[key] - a[key]) * e; });
+  };
 
   const placeCamera = () => {
-    const t = scrollTSmooth;
-    // Fly from z = +70 down to z = -70, dipping into the canyon mid-page and climbing out.
-    const z = 70 - 140 * t;
-    const dip = Math.sin(Math.PI * t);
-    const side = look.camSide - look.dipSide * dip;
-    const y = look.camY - look.dipY * dip;
-    camPos.set(meander(z) + side, y, z + 26);
-    camTarget.set(meander(z - 40), -6 + 4 * dip, z - 40);
+    const z = 70 - 140 * pose.t;
+    const dip = pose.dip;
+    const side = (look.camSide - look.dipSide * dip) * pose.back;
+    const y = (look.camY - look.dipY * dip) * pose.back + pose.lift;
+    camPos.set(meander(z) + side, y, z + 26 * pose.back);
+    camTarget.set(meander(z - 40), -6 + 4 * dip - pose.down, z - 40);
 
     // Pointer nudge: rotate the offset vector around the target.
     const off = camPos.clone().sub(camTarget);
@@ -288,11 +320,10 @@ const viewport = (function viewport() {
   window.addEventListener("pointerup", endDrag);
   window.addEventListener("pointercancel", () => { dragging = false; });
 
-  // Scroll: position on the page, and a ripple every so often while moving.
+  // Scroll: which section we are in, and a ripple every so often while moving.
   let rippleScrollAcc = 0, lastScrollY = window.scrollY;
   const onScroll = () => {
-    const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-    scrollT = THREE.MathUtils.clamp(window.scrollY / max, 0, 1);
+    trackSections();
     rippleScrollAcc += Math.abs(window.scrollY - lastScrollY);
     lastScrollY = window.scrollY;
     if (rippleScrollAcc > 260) {
@@ -302,6 +333,7 @@ const viewport = (function viewport() {
     }
   };
   window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", trackSections);
   onScroll();
 
   const resize = () => {
@@ -358,7 +390,7 @@ const viewport = (function viewport() {
       flute.rotation.y = cutter.rotation.y;
       cur.yaw += (want.yaw - cur.yaw) * 0.06;
       cur.pitch += (want.pitch - cur.pitch) * 0.06;
-      scrollTSmooth += (scrollT - scrollTSmooth) * 0.08;
+      POSE_KEYS.forEach((key) => { pose[key] += (poseWant[key] - pose[key]) * 0.07; });
       if (look.sweep > 0.01) {
         sweepPos += dt * SWEEP_SPEED;
         // The band is clear of the terrain at both ends, so the wrap is never seen.
@@ -371,7 +403,7 @@ const viewport = (function viewport() {
         else addRipple(meander(camTarget.z) + (Math.random() - 0.5) * 50, camTarget.z + (Math.random() - 0.5) * 50, 0.55);
       }
     } else {
-      scrollTSmooth = scrollT;
+      POSE_KEYS.forEach((key) => { pose[key] = poseWant[key]; });
     }
     applyProgress();
     applyLook();
@@ -395,11 +427,40 @@ const viewport = (function viewport() {
 (function reveal() {
   const els = $$(".reveal");
   if (!els.length) return;
+  // Children of a .stagger list get an index so CSS can delay each one a little more.
+  $$(".stagger").forEach((list) => Array.from(list.children).forEach((child, i) => child.style.setProperty("--i", i)));
   if (reduceMotion || !("IntersectionObserver" in window)) { els.forEach((el) => el.classList.add("is-in")); return; }
   const io = new IntersectionObserver((entries) => {
     entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); } });
   }, { threshold: 0.18 });
   els.forEach((el) => io.observe(el));
+})();
+
+/* ------------------------------------------------------------------ */
+/* How it works: the steps light up as you scroll through the section  */
+/* ------------------------------------------------------------------ */
+(function stepsRail() {
+  const panel = $("#how-panel");
+  if (!panel) return;
+  const lists = $$(".steps", panel);
+  if (reduceMotion) { lists.forEach((l) => $$("li", l).forEach((li) => li.classList.add("is-lit"))); return; }
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const r = panel.getBoundingClientRect();
+    const mid = window.innerHeight * 0.55;
+    // 0 when the panel's top reaches mid-screen, 1 when its bottom does.
+    const p = r.height > 0 ? Math.min(1, Math.max(0, (mid - r.top) / r.height)) : 0;
+    lists.forEach((l) => {
+      const items = $$("li", l);
+      const lit = Math.floor(p * (items.length + 0.999));
+      items.forEach((li, i) => li.classList.toggle("is-lit", i < lit));
+    });
+  };
+  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  update();
 })();
 
 /* ------------------------------------------------------------------ */
@@ -409,7 +470,16 @@ const viewport = (function viewport() {
   const thread = $("#thread");
   const lists = $$("#thread .messages");
   const offer = $("#offer");
+  const panel = $("#exchange-panel");
   if (!thread || !lists.length) return;
+  let popTimer = null;
+  const setOffer = (text) => {
+    if (!offer) return;
+    offer.textContent = text;
+    offer.classList.add("pop");
+    clearTimeout(popTimer);
+    popTimer = setTimeout(() => offer.classList.remove("pop"), 240);
+  };
 
   // Each audience has its own thread. Play whichever one is showing.
   const current = () => lists.find((l) => l.dataset.audience === document.documentElement.dataset.audience) || lists[0];
@@ -418,7 +488,7 @@ const viewport = (function viewport() {
 
   const showUpTo = (n) => {
     msgs.forEach((m, i) => m.classList.toggle("is-in", i <= n));
-    if (n >= 0 && offer) offer.textContent = msgs[n].dataset.offer;
+    if (n >= 0) setOffer(msgs[n].dataset.offer);
   };
 
   if (reduceMotion) {
@@ -436,15 +506,17 @@ const viewport = (function viewport() {
     i++;
     if (i >= msgs.length) {
       // Hold on the last line, then start over.
-      timer = setTimeout(() => { i = -1; showUpTo(-1); if (offer) offer.textContent = "Offer"; timer = setTimeout(step, 700); }, 3200);
+      if (panel) panel.classList.remove("is-talking");
+      timer = setTimeout(() => { i = -1; showUpTo(-1); if (offer) offer.textContent = "Offer"; if (panel) panel.classList.add("is-talking"); timer = setTimeout(step, 700); }, 3200);
       return;
     }
     showUpTo(i);
-    if (viewport && i < msgs.length - 1) viewport.addRipple((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60, 0.35);
-    timer = setTimeout(step, i === msgs.length - 1 ? 0 : 1150);
+    // Every message sends a pulse down the canyon behind the page.
+    if (viewport) viewport.addRipple((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60, i === msgs.length - 1 ? 0.7 : 0.35);
+    timer = setTimeout(step, i === msgs.length - 1 ? 0 : 1250);
   };
-  const start = () => { if (running) return; running = true; i = -1; showUpTo(-1); timer = setTimeout(step, 400); };
-  const stop = () => { running = false; clearTimeout(timer); };
+  const start = () => { if (running) return; running = true; i = -1; showUpTo(-1); if (panel) panel.classList.add("is-talking"); timer = setTimeout(step, 400); };
+  const stop = () => { running = false; clearTimeout(timer); if (panel) panel.classList.remove("is-talking"); };
 
   document.addEventListener("canyon:audience", () => {
     const next = current();
@@ -463,31 +535,23 @@ const viewport = (function viewport() {
   new IntersectionObserver((entries) => { entries[0].isIntersecting ? start() : stop(); }, { threshold: 0.35 }).observe(thread);
 })();
 
-/* Demo video slot                                                      */
+/* Demo video slot: the poster swaps for the player on click             */
 /* ------------------------------------------------------------------ */
 (function video() {
   const box = $("#video");
   const play = $("#video-play");
-  const empty = $("#video-empty");
   if (!box || !play) return;
   const src = box.dataset.src;
-  if (!src) return;                       // no walkthrough yet: leave the empty slot in place
-  if (empty) empty.remove();
-  play.hidden = false;
+  if (!src) { play.hidden = true; return; }
   play.addEventListener("click", () => {
-    const src = box.dataset.src;
-    if (src) {
-      const f = document.createElement("iframe");
-      // Loom reads autoplay=true; YouTube and Vimeo read autoplay=1.
-      const autoplay = src.includes("loom.com") ? "autoplay=true" : "autoplay=1";
-      f.src = src + (src.includes("?") ? "&" : "?") + autoplay;
-      f.allow = "autoplay; fullscreen; picture-in-picture";
-      f.title = "Canyon demo video";
-      box.appendChild(f);
-      play.remove();
-    } else if (note) {
-      note.hidden = false;
-    }
+    const f = document.createElement("iframe");
+    // Loom reads autoplay=true; YouTube and Vimeo read autoplay=1.
+    const autoplay = src.includes("loom.com") ? "autoplay=true" : "autoplay=1";
+    f.src = src + (src.includes("?") ? "&" : "?") + autoplay;
+    f.allow = "autoplay; fullscreen; picture-in-picture";
+    f.title = "Canyon demo video";
+    box.appendChild(f);
+    play.remove();
   });
 })();
 

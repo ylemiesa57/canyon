@@ -17,7 +17,7 @@ Files:
 - `index.html` - landing page
 - `login.html` - customer login
 - `css/styles.css` - design tokens and layout
-- `js/main.js` - hero viewport (Three.js), audience toggle, scroll reveals, the two negotiation threads, the demo video slot, trial form
+- `js/main.js` - hero viewport (Three.js) with one camera pose per section, audience toggle, staggered scroll reveals, the steps rail, the two negotiation threads, the demo video slot, trial form
 - `assets/logo.svg` - mark
 
 External dependencies load from CDNs: Three.js 0.160 from cdnjs, Archivo and IBM Plex Mono from Google Fonts.
@@ -26,12 +26,9 @@ External dependencies load from CDNs: Three.js 0.160 from cdnjs, Archivo and IBM
 
 Search the HTML for `Placeholder` comments. The wordmark strip and the plan prices are stand-ins until pilot data exists. The trial and login forms have no backend yet.
 
-Two more things are deliberately unfinished:
+**The demo video.** `#video` carries the Loom walkthrough (about seven minutes, 4:3) in `data-src`. To swap it, change that URL: Loom, YouTube and Vimeo embed URLs all work, and the script adds the right autoplay parameter. Emptying it hides the play button.
 
-- **The demo video.** `#video` has an empty `data-src`, so the slot renders as a labelled placeholder and the play button stays hidden. Set `data-src` to a YouTube or Vimeo embed URL and the script swaps in the player. Nothing else needs to change.
-- **The "today" column in `#minutes`.** The two-to-five-day quote wait and the twenty-to-sixty-minute estimator figure come from the market stats in `app/buyer.js`. The other three rows on each side are qualitative and should be replaced with pilot numbers.
-
-Every figure in `#inside` and in the two negotiation threads is taken from the console mockups (`app/buyer.js`, `app/shop/shop.js`). If you change the numbers there, change them here too.
+**Numbers.** The landing page is written in words on purpose: the only figures on it are the pricing plan and the demo length. Every number behind the copy (bands, quotes, the negotiation, the cost model) lives in the consoles (`app/buyer.js`, `app/shop/shop.js`) and in the demo, so the landing page can never disagree with them.
 
 ## Working on it
 

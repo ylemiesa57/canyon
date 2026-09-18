@@ -38,6 +38,7 @@
         <button sc-camel-on-click="{{ toggleTheme }}" class="btn btn-ghost" style="font-size:12px;padding:4px 8px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ themeLabel }}</button>
         <a href="{{ buyerLink }}" style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent);text-decoration:none;white-space:nowrap">Buyer side</a>
         <span style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);white-space:nowrap">Cascade CNC · Shop</span>
+        <span class="chip-sample">Sample data</span>
         <button sc-camel-on-click="{{ toggleAgent }}" class="btn btn-secondary" style="padding:5px 10px;font-size:12px;gap:8px;{{ agentBtnSt }}"><span style="width:8px;height:8px;background:var(--color-accent)"></span>Agent</button>
         <div style="width:28px;height:28px;background:var(--color-text);color:var(--color-bg);display:grid;place-items:center;font-family:var(--font-heading);font-weight:700;font-size:11px">CC</div>
       </div>
@@ -48,7 +49,7 @@
   <sc-if value="{{ inParts }}" hint-placeholder-val="{{ false }}">
     <div style="border-bottom:1px solid var(--color-divider);background:var(--color-surface)">
       <div style="max-width:1440px;margin:0 auto;padding:6px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-        <span style="font-weight:600;font-size:13px;font-variant-numeric:tabular-nums">RFQ 1235 <span style="font-weight:400;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Industrial bracket + plate · Halcyon Industrial</span></span>
+        <span style="font-weight:600;font-size:13px;font-variant-numeric:tabular-nums">RFQ-1235 <span style="font-weight:400;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Industrial bracket + plate · Halcyon Industrial</span></span>
         <div class="stage-strip">
           <sc-for list="{{ stages }}" as="s" hint-placeholder-count="6"><button sc-camel-on-click="{{ s.go }}" aria-current="{{ s.current }}"><span class="{{ s.markClass }}">{{ s.mark }}</span>{{ s.label }}</button><span class="sep">{{ s.sep }}</span></sc-for>
         </div>
@@ -96,7 +97,7 @@
             <input class="input" placeholder="Search RFQs, buyers, part numbers" style="max-width:320px;margin-left:auto">
           </div>
           <div style="display:grid;grid-template-columns:minmax(0,150px) minmax(0,1.4fr) 60px 60px minmax(0,90px) minmax(0,110px) minmax(0,190px) 16px;gap:14px;padding:0 0 8px;border-bottom:1px solid var(--color-divider-strong);font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent)">
-            <span>RFQ</span><span>Buyer</span><span>Parts</span><span>Files</span><span>Due</span><span>Value</span><span>Stage</span><span></span>
+            <span>RFQ</span><span>Buyer</span><span>Parts</span><span>Files</span><span>Quote by</span><span>Value</span><span>Stage</span><span></span>
           </div>
           <sc-for list="{{ rfqs }}" as="r" hint-placeholder-count="8">
             <div sc-camel-on-click="{{ r.open }}" style="display:grid;grid-template-columns:minmax(0,150px) minmax(0,1.4fr) 60px 60px minmax(0,90px) minmax(0,110px) minmax(0,190px) 16px;gap:14px;padding:15px 0;border-bottom:1px solid var(--color-divider);cursor:pointer;align-items:center" style-hover="background:color-mix(in srgb,var(--color-text) 5%,transparent)">
@@ -132,7 +133,7 @@
       <sc-if value="{{ isIngest }}" hint-placeholder-val="{{ false }}">
         <div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
-            <div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Ingest</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">RFQ 1235 <span style="color:color-mix(in srgb,var(--color-text) 55%,transparent);font-weight:400">Industrial bracket + plate</span></h2><div style="font-size:13px;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-top:4px">Halcyon Industrial · Email · 7 files read in 41 s</div></div>
+            <div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Ingest</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">RFQ-1235 <span style="color:color-mix(in srgb,var(--color-text) 55%,transparent);font-weight:400">Industrial bracket + plate</span></h2><div style="font-size:13px;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-top:4px">Halcyon Industrial · Email · 7 files read in 41 s</div></div>
             <div style="display:flex;gap:var(--space-2)"><button class="btn btn-secondary">Ask buyer about Rev B</button><button sc-camel-on-click="{{ goPart }}" class="btn btn-primary">Continue to part</button></div>
           </div>
           <div style="height:1px;background:var(--color-divider);margin:18px 0 16px"></div>
@@ -197,7 +198,7 @@
                 <button sc-camel-on-click="{{ viewDrawing }}" class="seg-opt" style="border:1px solid var(--color-divider);border-left:0;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;{{ segDrawing }}">Drawing</button>
               </div>
               <iframe src="/app/viewer.html" title="Part viewer" style="display:block;width:100%;aspect-ratio:4/3;border:1px solid var(--color-divider-strong);background:var(--color-surface)"></iframe>
-              <div style="margin-top:6px;font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Stand-in mesh of BRKT-001 until the STEP is converted. Findings are anchored by feature so they carry over.</div>
+              <div style="margin-top:6px;font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">BRKT-001 mesh from the STEP. Findings are anchored by feature.</div>
               <div style="margin-top:18px;border-top:1px solid var(--color-divider);padding-top:14px">
                 <div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Setups</div>
                 <sc-for list="{{ setups }}" as="s" hint-placeholder-count="3">
@@ -408,7 +409,7 @@
               <table class="table">
                 <thead><tr><th>Qty</th><th>Unit cost</th><th>Markup</th><th>Unit price</th><th>Line total</th><th>Margin</th></tr></thead>
                 <tbody>
-                  <tr sc-each="{{ q.breaks }}" sc-as="b"><td class="tnum">{{ b.qty }}</td><td class="tnum">{{ b.cost }}</td><td class="tnum">{{ b.mk }}</td><td class="tnum" style="font-weight:600">{{ b.price }}</td><td class="tnum">{{ b.total }}</td><td class="tnum" style="color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ b.margin }}</td></tr>
+                  <tr sc-each="{{ q.breaks }}" sc-as="b" style="{{ b.rowSt }}"><td class="tnum">{{ b.qty }} <span style="font-size:11px;font-weight:600;color:var(--color-accent-800)">{{ b.sel }}</span></td><td class="tnum">{{ b.cost }}</td><td class="tnum">{{ b.mk }}</td><td class="tnum" style="font-weight:600">{{ b.price }}</td><td class="tnum">{{ b.total }}</td><td class="tnum" style="color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ b.margin }}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -420,15 +421,15 @@
       <sc-if value="{{ isNeg }}" hint-placeholder-val="{{ false }}">
         <div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">
-            <div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Negotiation</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">RFQ 1235 <span style="color:color-mix(in srgb,var(--color-text) 55%,transparent);font-weight:400">Halcyon Industrial · round 3 of 3</span></h2></div>
-            <div data-reco style="display:flex;gap:var(--space-2)"><button sc-camel-on-click="{{ holdOffer }}" class="btn btn-secondary">Hold</button><button sc-camel-on-click="{{ counterOffer }}" class="btn btn-secondary">Counter $4,540</button><button sc-camel-on-click="{{ acceptOffer }}" class="btn btn-primary">Accept $4,480</button></div>
+            <div><div style="font-size:12px;letter-spacing:0;font-weight:500;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:6px">Negotiation</div><h2 style="margin:0;font-size:29px;letter-spacing:-0.025em">RFQ-1235 <span style="color:color-mix(in srgb,var(--color-text) 55%,transparent);font-weight:400">Halcyon Industrial · round 3 of 3</span></h2></div>
+            <sc-if value="{{ deciding }}" hint-placeholder-val="{{ true }}"><div data-reco style="display:flex;gap:var(--space-2)"><button sc-camel-on-click="{{ holdOffer }}" class="btn btn-secondary">Hold</button><button sc-camel-on-click="{{ counterOffer }}" class="btn btn-secondary">Counter {{ counterStr }}</button><button sc-camel-on-click="{{ acceptOffer }}" class="btn btn-primary">Accept $4,480</button></div></sc-if>
           </div>
           <div style="height:1px;background:var(--color-divider);margin:18px 0 16px"></div>
           <sc-if value="{{ wonBanner }}" hint-placeholder-val="{{ false }}">
             <div style="border:1px solid var(--color-good);background:var(--color-good-soft);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:var(--space-4);display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span style="width:10px;height:10px;border-radius:50%;background:var(--color-good)"></span><b>Won.</b> <span>{{ wonText }}</span><button sc-camel-on-click="{{ goShop }}" class="btn btn-secondary" style="margin-left:auto;padding:7px 12px">See it in My shop</button></div>
           </sc-if>
           <sc-if value="{{ escalated }}" hint-placeholder-val="{{ true }}">
-            <div style="display:flex;gap:12px;align-items:center;padding:12px 14px;background:var(--color-accent-100);border-left:3px solid var(--color-accent);margin-bottom:var(--space-4);font-size:13px"><span class="tag tag-accent">Escalated</span><span>The buyer's final of <b class="tnum">$4,480</b> is under your 15% floor ($4,500). Your agent paused and is waiting for you.</span></div>
+            <div style="display:flex;gap:12px;align-items:center;padding:12px 14px;background:var(--color-accent-100);border-left:3px solid var(--color-accent);margin-bottom:var(--space-4);font-size:13px"><span class="tag tag-accent">Escalated</span><span>The buyer's final of <b class="tnum">$4,480</b> is under your 15% floor ({{ floorStr }}). Your agent paused and is waiting for you.</span></div>
           </sc-if>
           <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:var(--space-6);align-items:start">
             <div>
@@ -515,20 +516,20 @@
           <div class="paper">
             <div class="paper-head">
               <div class="paper-brand"><i></i>Cascade CNC</div>
-              <div class="paper-meta">Quotation Q-1235<br>Sep 14, 2026 · valid 48 h<br>Bend, OR</div>
+              <div class="paper-meta">Quotation Q-1235<br>{{ quoteDate }} · valid 48 h<br>Bend, OR</div>
             </div>
             <div class="paper-cols">
-              <div><div class="paper-k">To</div>Halcyon Industrial<br>Grand Rapids, MI<br>RFQ 1235 · Industrial bracket + plate</div>
+              <div><div class="paper-k">To</div>Halcyon Industrial<br>Grand Rapids, MI<br>RFQ-1235 · Industrial bracket + plate</div>
               <div><div class="paper-k">Terms</div>Net 30 · Ex Works Bend, OR<br>Lead 8 to 10 business days<br>Material 6061-T6 per AMS-QQ-A-250/11</div>
             </div>
             <sc-for list="{{ quoteLines }}" as="q" hint-placeholder-count="2">
               <div class="paper-line"><b>{{ q.id }}</b> <span>{{ q.name }} · {{ q.material }}</span></div>
               <table class="paper-table">
                 <thead><tr><th>Qty</th><th>Unit price</th><th>Line total</th></tr></thead>
-                <tbody><tr sc-each="{{ q.breaks }}" sc-as="b"><td>{{ b.qty }}</td><td>{{ b.price }}</td><td>{{ b.total }}</td></tr></tbody>
+                <tbody><tr sc-each="{{ q.breaks }}" sc-as="b"><td>{{ b.qty }} <span style="font-size:10px;opacity:.7">{{ b.sel }}</span></td><td>{{ b.price }}</td><td>{{ b.total }}</td></tr></tbody>
               </table>
             </sc-for>
-            <div class="paper-totals"><div><div class="paper-row"><span>Fixture, one time</span><b class="tnum">$180.00</b></div><div class="paper-row"><span>LPI 100% (outside op)</span><b class="tnum">included</b></div><div class="paper-grand"><span>Quote total, qty 10</span><span class="tnum">$4,890.79</span></div></div></div>
+            <div class="paper-totals"><div><div class="paper-row"><span>Fixture, one time</span><b class="tnum">{{ fixtureStr }}</b></div><div class="paper-row"><span>LPI 100% (outside op)</span><b class="tnum">{{ lpiLine }}</b></div><div class="paper-grand"><span>Quote total, qty {{ selQty }}</span><span class="tnum">{{ grandStr }}</span></div></div></div>
             <div class="paper-note">Prices in USD, exclusive of taxes and freight. Drawing Rev A costed; Rev B mentioned in email is unconfirmed. Generated by Canyon for Cascade CNC.</div>
           </div>
         </div>
@@ -539,7 +540,7 @@
     <!-- ══ SHOP AGENT PANEL (from the export) ══ -->
     <sc-if value="{{ agentOpen }}" hint-placeholder-val="{{ true }}">
       <aside class="agent-drawer">
-        <div class="drawer-head"><span class="pulse-dot" style="width:8px;height:8px"></span><b style="font-family:var(--font-heading);font-weight:700;font-size:13.5px">Shop agent</b><span style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">on RFQ 1235</span><span class="ctl"><button sc-camel-on-click="{{ agentMinimize }}" title="Minimize">–</button><button sc-camel-on-click="{{ agentClose }}" title="Close">×</button></span></div>
+        <div class="drawer-head"><span class="pulse-dot" style="width:8px;height:8px"></span><b style="font-family:var(--font-heading);font-weight:700;font-size:13.5px">Shop agent</b><span style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">on RFQ-1235</span><span class="ctl"><button sc-camel-on-click="{{ agentMinimize }}" title="Minimize">–</button><button sc-camel-on-click="{{ agentClose }}" title="Close">×</button></span></div>
         <div style="flex:1 1 0%;overflow:auto;padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);font-size:13px">
           <sc-for list="{{ chat }}" as="c" hint-placeholder-count="5">
             <div style="align-self:{{ c.align }};max-width:92%;background:{{ c.bg }};padding:10px 12px;border-left:2px solid {{ c.rule }};border-radius:var(--radius-sm)"><div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:4px">{{ c.who }} · {{ c.time }}</div>{{ c.text }}</div>
